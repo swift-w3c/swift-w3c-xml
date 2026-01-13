@@ -181,9 +181,10 @@ extension W3C_XML.Parse {
     ) -> Parsing.Machine.Parser<Input, W3C_XML.Element, W3C_XML.Parse.Error>
     where Input: Sendable, Input.Element == UInt8 {
         typealias Builder = Parsing.Machine.Builder<Input, W3C_XML.Parse.Error>
-        typealias Expr = Parsing.Machine.Expr
+        typealias Expr<T> = Parsing.Machine.Expression<Input, W3C_XML.Parse.Error, T>
+        typealias Ref<T> = Parsing.Machine.Reference<Input, W3C_XML.Parse.Error, T>
 
-        return Parsing.Machine.recursive(maxDepth: maxDepth) { (builder: inout Builder, elementRef: Parsing.Machine.Ref<W3C_XML.Element>) -> Expr<W3C_XML.Element> in
+        return Parsing.Machine.recursive(maxDepth: maxDepth) { (builder: inout Builder, elementRef: Ref<W3C_XML.Element>) -> Expr<W3C_XML.Element> in
 
             // Leaf: StartTag
             let startTag: Expr<StartTagOutput> = Parsing.Machine.leaf(
@@ -216,7 +217,7 @@ extension W3C_XML.Parse {
             ).map({ W3C_XML.Content.text($0) }, in: &builder)
 
             // Recursive: Element -> Content
-            let elementContent: Expr<W3C_XML.Content> = elementRef.expr(in: &builder)
+            let elementContent: Expr<W3C_XML.Content> = elementRef.expression(in: &builder)
                 .map({ W3C_XML.Content.element($0) }, in: &builder)
 
             // ContentItem: one of the above (element first for proper recursion)
