@@ -28,6 +28,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Standard Library Extensions", package: "swift-standard-library-extensions"),
                 .product(name: "Parsing Primitives", package: "swift-parsing-primitives"),
+                .product(name: "Parsing Machine", package: "swift-parsing-primitives"),
                 .product(name: "Binary Primitives", package: "swift-binary-primitives"),
                 .product(name: "Container Primitives", package: "swift-container-primitives"),
                 .product(name: "ASCII", package: "swift-ascii"),
@@ -35,6 +36,14 @@ let package = Package(
         ),
         .testTarget(
             name: "W3C XML Tests",
+            dependencies: [
+                "W3C XML",
+                .product(name: "Parsing Primitives", package: "swift-parsing-primitives"),
+                .product(name: "Parsing Machine", package: "swift-parsing-primitives"),
+            ]
+        ),
+        .executableTarget(
+            name: "CrashRepro",
             dependencies: ["W3C XML"]
         ),
     ],

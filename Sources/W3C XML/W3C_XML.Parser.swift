@@ -433,31 +433,6 @@ extension W3C_XML.Parser {
 // MARK: - Convenience Parse Functions
 
 extension W3C_XML {
-    /// Parses an XML document from a string.
-    ///
-    /// - Parameter string: The XML string to parse.
-    /// - Returns: The parsed document.
-    /// - Throws: `W3C_XML.Parser.Error` if parsing fails.
-    @inlinable
-    public static func parse(_ string: String) throws(Parser<Parsing.CollectionInput<[UInt8]>>.Error) -> Document {
-        let input = Parsing.CollectionInput(Array(string.utf8))
-        var parser = Parser(consume input)
-        return try parser.parse()
-    }
-
-    /// Parses an XML document from UTF-8 bytes.
-    ///
-    /// - Parameter bytes: The UTF-8 encoded XML bytes.
-    /// - Returns: The parsed document.
-    /// - Throws: `W3C_XML.Parser.Error` if parsing fails.
-    @inlinable
-    public static func parse<Bytes>(_ bytes: Bytes) throws(Parser<Parsing.CollectionInput<[UInt8]>>.Error) -> Document
-    where Bytes: Collection<UInt8>, Bytes: Sendable {
-        let input = Parsing.CollectionInput(Array(bytes))
-        var parser = Parser(consume input)
-        return try parser.parse()
-    }
-
     /// Parses an XML fragment (element) from a string.
     ///
     /// - Parameter string: The XML fragment string to parse.
@@ -469,4 +444,5 @@ extension W3C_XML {
         var parser = Parser(consume input)
         return try parser.parseFragment()
     }
+
 }
