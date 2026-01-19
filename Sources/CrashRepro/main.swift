@@ -1,12 +1,12 @@
 import W3C_XML
-import Parsing_Primitives
-import Parsing_Machine
+import Parser_Primitives
+import Parser_Machine
 
 // Exact copy from test file
 func testParseWrapper(_ string: String, maxDepth: Int = 10000) throws(W3C_XML.Parse.Error) -> W3C_XML.Document {
-    var input = Parsing.CollectionInput(Array(string.utf8))
+    var input = Parser.CollectionInput(Array(string.utf8))
 
-    W3C_XML.Parse.Whitespace<Parsing.CollectionInput<[UInt8]>>().parse(&input)
+    W3C_XML.Parse.Whitespace<Parser.CollectionInput<[UInt8]>>().parse(&input)
 
     var declaration: W3C_XML.Declaration?
     if let byte = input.first, byte == .ascii.lessThanSign {
@@ -14,7 +14,7 @@ func testParseWrapper(_ string: String, maxDepth: Int = 10000) throws(W3C_XML.Pa
         _ = input.removeFirst()
         if let next = input.first, next == .ascii.questionMark {
             input = saved
-            if let decl = try? W3C_XML.Parse.XMLDeclaration<Parsing.CollectionInput<[UInt8]>>().parse(&input) {
+            if let decl = try? W3C_XML.Parse.XMLDeclaration<Parser.CollectionInput<[UInt8]>>().parse(&input) {
                 declaration = decl
             }
         } else {
@@ -22,10 +22,10 @@ func testParseWrapper(_ string: String, maxDepth: Int = 10000) throws(W3C_XML.Pa
         }
     }
 
-    W3C_XML.Parse.Whitespace<Parsing.CollectionInput<[UInt8]>>().parse(&input)
+    W3C_XML.Parse.Whitespace<Parser.CollectionInput<[UInt8]>>().parse(&input)
 
     let machineParser = W3C_XML.Parse.machineElement(maxDepth: maxDepth)
-        as Parsing.Machine.Parser<Parsing.CollectionInput<[UInt8]>, W3C_XML.Element, W3C_XML.Parse.Error>
+        as Parser.Machine.Parser<Parser.CollectionInput<[UInt8]>, W3C_XML.Element, W3C_XML.Parse.Error>
     let root = try machineParser.parse(&input)
 
     return W3C_XML.Document(

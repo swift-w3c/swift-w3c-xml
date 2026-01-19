@@ -1,8 +1,8 @@
 import Testing
 @testable import W3C_XML
 // Note: @testable re-added to test boundary isolation with _parse_internal
-import Parsing_Primitives
-import Parsing_Machine
+import Parser_Primitives
+import Parser_Machine
 
 @Suite("W3C_XML Parser Tests")
 struct ParserTests {

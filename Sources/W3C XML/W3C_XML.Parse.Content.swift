@@ -3,7 +3,7 @@
 ///
 /// Content parsers for text, comments, CDATA, and processing instructions.
 
-import Parsing_Primitives
+import Parser_Primitives
 
 // MARK: - CharData Parser
 
@@ -17,7 +17,7 @@ extension W3C_XML.Parse {
     ///
     /// Parses text until `<`, `&`, or end of input. Does not consume references.
     /// Returns empty string if no text found (to allow Many to continue).
-    public struct CharData<Input: Parsing.Input>: Parsing.Parser, Sendable
+    public struct CharData<Input: Parser.Input>: Parser.Parser, Sendable
     where Input: Sendable, Input.Element == UInt8 {
         public typealias Output = String
         public typealias Failure = Never
@@ -65,7 +65,7 @@ extension W3C_XML.Parse {
     /// Parses character data with entity references.
     ///
     /// Like CharData but also handles entity references (&lt; etc).
-    public struct TextContent<Input: Parsing.Input>: Parsing.Parser, Sendable
+    public struct TextContent<Input: Parser.Input>: Parser.Parser, Sendable
     where Input: Sendable, Input.Element == UInt8 {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
@@ -106,7 +106,7 @@ extension W3C_XML.Parse {
     /// ```
     ///
     /// Note: Comments cannot contain `--` except at the end.
-    public struct Comment<Input: Parsing.Input>: Parsing.Parser, Sendable
+    public struct Comment<Input: Parser.Input>: Parser.Parser, Sendable
     where Input: Sendable, Input.Element == UInt8 {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
@@ -162,7 +162,7 @@ extension W3C_XML.Parse {
     /// CData ::= (Char* - (Char* ']]>' Char*))
     /// CDEnd ::= ']]>'
     /// ```
-    public struct CDATASection<Input: Parsing.Input>: Parsing.Parser, Sendable
+    public struct CDATASection<Input: Parser.Input>: Parser.Parser, Sendable
     where Input: Sendable, Input.Element == UInt8 {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
@@ -218,7 +218,7 @@ extension W3C_XML.Parse {
     /// PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'
     /// PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
     /// ```
-    public struct ProcessingInstruction<Input: Parsing.Input>: Parsing.Parser, Sendable
+    public struct ProcessingInstruction<Input: Parser.Input>: Parser.Parser, Sendable
     where Input: Sendable, Input.Element == UInt8 {
         public typealias Output = W3C_XML.Instruction
         public typealias Failure = W3C_XML.Parse.Error
@@ -282,7 +282,7 @@ extension W3C_XML.Parse {
 extension W3C_XML.Parse {
     /// Expects and consumes a literal byte sequence.
     @inlinable
-    static func expectLiteral<Input: Parsing.Input>(
+    static func expectLiteral<Input: Parser.Input>(
         _ input: inout Input,
         _ string: StaticString
     ) throws(W3C_XML.Parse.Error)

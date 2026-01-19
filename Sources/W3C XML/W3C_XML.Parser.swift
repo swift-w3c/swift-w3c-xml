@@ -3,7 +3,7 @@
 ///
 /// XML parser (~Copyable)
 
-import Parsing_Primitives
+import Parser_Primitives
 
 extension W3C_XML {
     /// XML document parser.
@@ -21,11 +21,11 @@ extension W3C_XML {
     /// ## Usage
     ///
     /// ```swift
-    /// var input = Parsing.CollectionInput(bytes)
+    /// var input = Parser.CollectionInput(bytes)
     /// var parser = W3C_XML.Parser(consume input)
     /// let document = try parser.parse()
     /// ```
-    public struct Parser<Input: Parsing.Input>: ~Copyable
+    public struct Parser<Input: Parser.Input>: ~Copyable
     where Input.Element == UInt8 {
         /// The underlying lexer.
         @usableFromInline
@@ -439,8 +439,8 @@ extension W3C_XML {
     /// - Returns: The parsed element.
     /// - Throws: `W3C_XML.Parser.Error` if parsing fails.
     @inlinable
-    public static func fragment(_ string: String) throws(Parser<Parsing.CollectionInput<[UInt8]>>.Error) -> Element {
-        let input = Parsing.CollectionInput(Array(string.utf8))
+    public static func fragment(_ string: String) throws(Parser<Parser.CollectionInput<[UInt8]>>.Error) -> Element {
+        let input = Parser.CollectionInput(Array(string.utf8))
         var parser = Parser(consume input)
         return try parser.parseFragment()
     }

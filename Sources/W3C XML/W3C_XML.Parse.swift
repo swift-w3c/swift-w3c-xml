@@ -3,27 +3,27 @@
 ///
 /// Combinator-based XML parser namespace and core types.
 ///
-/// This module provides XML parsing using `Parsing.Parser` combinators from
-/// swift-parsing-primitives. The key insight enabling arbitrary nesting depth
-/// is that `Parsing.Many.Simple` uses iteration (a `while` loop), not recursion.
-/// Combined with `Parsing.Lazy` to break type cycles, this allows parsing
+/// This module provides XML parsing using `Parser.Parser` combinators from
+/// swift-parser-primitives. The key insight enabling arbitrary nesting depth
+/// is that `Parser.Many.Simple` uses iteration (a `while` loop), not recursion.
+/// Combined with `Parser.Lazy` to break type cycles, this allows parsing
 /// deeply nested XML without stack overflow.
 
-import Parsing_Primitives
+import Parser_Primitives
 
 extension W3C_XML {
     /// Namespace for combinator-based XML parsers.
     ///
-    /// All parsers in this namespace conform to `Parsing.Parser` and compose
+    /// All parsers in this namespace conform to `Parser.Parser` and compose
     /// using standard combinators (map, flatMap, OneOf, Many, etc.).
     ///
     /// ## Key Pattern: Many + Lazy for Recursion
     ///
     /// ```swift
     /// // Content parser uses Many (iterative) + Lazy (deferred)
-    /// Parsing.Many.Simple {
-    ///     Parsing.OneOf {
-    ///         Parsing.Lazy { Element(depth: depth.incremented()) }
+    /// Parser.Many.Simple {
+    ///     Parser.OneOf {
+    ///         Parser.Lazy { Element(depth: depth.incremented()) }
     ///             .map { W3C_XML.Content.element($0) }
     ///         // ...other content types
     ///     }
@@ -31,7 +31,7 @@ extension W3C_XML {
     /// ```
     ///
     /// The `Many.Simple` combinator collects results in a `while` loop (lines 70-91
-    /// of Parsing.Many.Simple.swift). Even when the element parser is wrapped in
+    /// of Parser.Many.Simple.swift). Even when the element parser is wrapped in
     /// `Lazy`, execution stays in this loop - no stack growth proportional to nesting.
     public enum Parse {}
 }
@@ -146,5 +146,5 @@ extension W3C_XML.Parse.Error: CustomStringConvertible {
 
 extension W3C_XML.Parse {
     /// Standard input type for byte parsing.
-    public typealias ByteInput = Parsing.CollectionInput<[UInt8]>
+    public typealias ByteInput = Parser.CollectionInput<[UInt8]>
 }

@@ -4,8 +4,8 @@
 /// Document-level parsers including XML declaration and DOCTYPE.
 
 import ASCII
-import Parsing_Primitives
-import Parsing_Machine
+import Parser_Primitives
+import Parser_Machine
 
 // MARK: - XML Declaration Parser
 
@@ -17,7 +17,7 @@ extension W3C_XML.Parse {
     /// XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>'
     /// VersionInfo ::= S 'version' Eq ("'" VersionNum "'" | '"' VersionNum '"')
     /// ```
-    public struct XMLDeclaration<Input: Parsing.Input>: Parsing.Parser, Sendable
+    public struct XMLDeclaration<Input: Parser.Input>: Parser.Parser, Sendable
     where Input: Sendable, Input.Element == UInt8 {
         public typealias Output = W3C_XML.Declaration
         public typealias Failure = W3C_XML.Parse.Error
@@ -139,7 +139,7 @@ extension W3C_XML.Parse {
     /// ```
     /// doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>'
     /// ```
-    public struct Doctype<Input: Parsing.Input>: Parsing.Parser, Sendable
+    public struct Doctype<Input: Parser.Input>: Parser.Parser, Sendable
     where Input: Sendable, Input.Element == UInt8 {
         public typealias Output = W3C_XML.Doctype
         public typealias Failure = W3C_XML.Parse.Error
@@ -271,7 +271,7 @@ extension W3C_XML.Parse {
     /// document ::= prolog element Misc*
     /// prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
     /// ```
-    public struct Document<Input: Parsing.Input>: Parsing.Parser, Sendable
+    public struct Document<Input: Parser.Input>: Parser.Parser, Sendable
     where Input: Sendable, Input.Element == UInt8 {
         public typealias Output = W3C_XML.Document
         public typealias Failure = W3C_XML.Parse.Error
@@ -428,10 +428,10 @@ extension W3C_XML {
         _ string: String,
         maxDepth: Int = 10000
     ) throws(Parse.Error) -> Document {
-        var input = Parsing.CollectionInput(Array(string.utf8))
+        var input = Parser.CollectionInput(Array(string.utf8))
 
         // Skip leading whitespace
-        Parse.Whitespace<Parsing.CollectionInput<[UInt8]>>().parse(&input)
+        Parse.Whitespace<Parser.CollectionInput<[UInt8]>>().parse(&input)
 
         // Check for XML declaration
         var declaration: Declaration?
@@ -440,7 +440,7 @@ extension W3C_XML {
             _ = input.removeFirst()
             if let next = input.first, next == .ascii.questionMark {
                 input = saved
-                if let decl = try? Parse.XMLDeclaration<Parsing.CollectionInput<[UInt8]>>().parse(&input) {
+                if let decl = try? Parse.XMLDeclaration<Parser.CollectionInput<[UInt8]>>().parse(&input) {
                     declaration = decl
                 } else {
                     // XMLDeclaration parsing failed - restore input for prologue parsing
@@ -454,7 +454,7 @@ extension W3C_XML {
         // Parse prologue (processing instructions and comments before root)
         var prologue: [Instruction] = []
         while true {
-            Parse.Whitespace<Parsing.CollectionInput<[UInt8]>>().parse(&input)
+            Parse.Whitespace<Parser.CollectionInput<[UInt8]>>().parse(&input)
             guard let byte = input.first, byte == .ascii.lessThanSign else { break }
 
             let saved = input
@@ -467,7 +467,7 @@ extension W3C_XML {
             if next == .ascii.questionMark {
                 // Processing instruction
                 input = saved
-                if let pi = try? Parse.ProcessingInstruction<Parsing.CollectionInput<[UInt8]>>().parse(&input) {
+                if let pi = try? Parse.ProcessingInstruction<Parser.CollectionInput<[UInt8]>>().parse(&input) {
                     prologue.append(pi)
                     continue
                 }
@@ -477,7 +477,7 @@ extension W3C_XML {
                 // Could be comment (<!--) - skip for now, comments aren't instructions
                 input = saved
                 // Try to parse comment and discard
-                if let _ = try? Parse.Comment<Parsing.CollectionInput<[UInt8]>>().parse(&input) {
+                if let _ = try? Parse.Comment<Parser.CollectionInput<[UInt8]>>().parse(&input) {
                     continue
                 }
                 input = saved
@@ -491,13 +491,13 @@ extension W3C_XML {
 
         // Parse root element using Machine parser
         let machineParser = Parse.machineElement(maxDepth: maxDepth)
-            as Parsing.Machine.Parser<Parsing.CollectionInput<[UInt8]>, Element, Parse.Error>
+            as Parser.Machine.Parser<Parser.CollectionInput<[UInt8]>, Element, Parse.Error>
         let root = try machineParser.parse(&input)
 
         // Parse epilogue (processing instructions and comments after root)
         var epilogue: [Content] = []
         while true {
-            Parse.Whitespace<Parsing.CollectionInput<[UInt8]>>().parse(&input)
+            Parse.Whitespace<Parser.CollectionInput<[UInt8]>>().parse(&input)
             guard let byte = input.first, byte == .ascii.lessThanSign else { break }
 
             let saved = input
@@ -510,7 +510,7 @@ extension W3C_XML {
             if next == .ascii.questionMark {
                 // Processing instruction
                 input = saved
-                if let pi = try? Parse.ProcessingInstruction<Parsing.CollectionInput<[UInt8]>>().parse(&input) {
+                if let pi = try? Parse.ProcessingInstruction<Parser.CollectionInput<[UInt8]>>().parse(&input) {
                     epilogue.append(.instruction(pi))
                     continue
                 }
@@ -519,7 +519,7 @@ extension W3C_XML {
             } else if next == UInt8.ascii.exclamationPoint {
                 // Could be comment (<!--)
                 input = saved
-                if let comment = try? Parse.Comment<Parsing.CollectionInput<[UInt8]>>().parse(&input) {
+                if let comment = try? Parse.Comment<Parser.CollectionInput<[UInt8]>>().parse(&input) {
                     epilogue.append(.comment(comment))
                     continue
                 }
@@ -533,7 +533,7 @@ extension W3C_XML {
         }
 
         // Verify no remaining non-whitespace content
-        Parse.Whitespace<Parsing.CollectionInput<[UInt8]>>().parse(&input)
+        Parse.Whitespace<Parser.CollectionInput<[UInt8]>>().parse(&input)
         if !input.isEmpty {
             throw Parse.Error.expected("end of input (multiple root elements not allowed)")
         }
@@ -562,10 +562,10 @@ extension W3C_XML {
         maxDepth: Int = 10000
     ) throws(Parse.Error) -> Document
     where Bytes: Collection<UInt8>, Bytes: Sendable {
-        var input = Parsing.CollectionInput(Array(bytes))
+        var input = Parser.CollectionInput(Array(bytes))
 
         // Skip leading whitespace
-        Parse.Whitespace<Parsing.CollectionInput<[UInt8]>>().parse(&input)
+        Parse.Whitespace<Parser.CollectionInput<[UInt8]>>().parse(&input)
 
         // Check for XML declaration
         var declaration: Declaration?
@@ -574,7 +574,7 @@ extension W3C_XML {
             _ = input.removeFirst()
             if let next = input.first, next == .ascii.questionMark {
                 input = saved
-                if let decl = try? Parse.XMLDeclaration<Parsing.CollectionInput<[UInt8]>>().parse(&input) {
+                if let decl = try? Parse.XMLDeclaration<Parser.CollectionInput<[UInt8]>>().parse(&input) {
                     declaration = decl
                 } else {
                     // XMLDeclaration parsing failed - restore input for prologue parsing
@@ -586,11 +586,11 @@ extension W3C_XML {
         }
 
         // Skip whitespace before root
-        Parse.Whitespace<Parsing.CollectionInput<[UInt8]>>().parse(&input)
+        Parse.Whitespace<Parser.CollectionInput<[UInt8]>>().parse(&input)
 
         // Parse root element using Machine parser
         let machineParser = Parse.machineElement(maxDepth: maxDepth)
-            as Parsing.Machine.Parser<Parsing.CollectionInput<[UInt8]>, Element, Parse.Error>
+            as Parser.Machine.Parser<Parser.CollectionInput<[UInt8]>, Element, Parse.Error>
         let root = try machineParser.parse(&input)
 
         return Document(
@@ -616,11 +616,11 @@ extension W3C_XML {
         _ string: String,
         maxDepth: Int = 10000
     ) throws(Parse.Error) -> Element {
-        var input = Parsing.CollectionInput(Array(string.utf8))
-        Parse.Whitespace<Parsing.CollectionInput<[UInt8]>>().parse(&input)
+        var input = Parser.CollectionInput(Array(string.utf8))
+        Parse.Whitespace<Parser.CollectionInput<[UInt8]>>().parse(&input)
 
         let machineParser = Parse.machineElement(maxDepth: maxDepth)
-            as Parsing.Machine.Parser<Parsing.CollectionInput<[UInt8]>, Element, Parse.Error>
+            as Parser.Machine.Parser<Parser.CollectionInput<[UInt8]>, Element, Parse.Error>
         return try machineParser.parse(&input)
     }
 }

@@ -3,8 +3,7 @@
 ///
 /// Zero-copy XML lexer (~Copyable)
 
-import Container_Primitives
-import Parsing_Primitives
+import Parser_Primitives
 
 extension W3C_XML {
     /// Zero-copy XML lexer.
@@ -15,13 +14,13 @@ extension W3C_XML {
     /// ## Usage
     ///
     /// ```swift
-    /// var input = Parsing.CollectionInput(bytes)
+    /// var input = Parser.CollectionInput(bytes)
     /// var lexer = W3C_XML.Lexer(consume input)
     /// while let token = try lexer.next() {
     ///     print(token)
     /// }
     /// ```
-    public struct Lexer<Input: Parsing.Input>: ~Copyable
+    public struct Lexer<Input: Parser.Input>: ~Copyable
     where Input.Element == UInt8 {
         /// The input being lexed.
         @usableFromInline

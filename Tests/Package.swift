@@ -18,8 +18,7 @@ let package = Package(
         .package(path: "../../../swift-foundations/swift-testing"),
         // Test primitives (for test utilities)
         .package(path: "../../../swift-primitives/swift-test-primitives"),
-        .package(path: "../../../swift-primitives/swift-parsing-primitives"),
-        .package(path: "../../../swift-primitives/swift-parsing-primitives"),
+        .package(path: "../../../swift-primitives/swift-parser-primitives"),
     ],
     targets: [
         .testTarget(
@@ -28,8 +27,8 @@ let package = Package(
                 .product(name: "W3C XML", package: "swift-w3c-xml"),
                 .product(name: "Testing", package: "swift-testing"),
                 .product(name: "Test Primitives", package: "swift-test-primitives"),
-                .product(name: "Parsing Machine", package: "swift-parsing-primitives"),
-                .product(name: "Parsing Primitives", package: "swift-parsing-primitives"),
+                .product(name: "Parser Machine", package: "swift-parser-primitives"),
+                .product(name: "Parser Primitives", package: "swift-parser-primitives"),
             ],
             path: "Sources/W3C XML Tests"
         )
