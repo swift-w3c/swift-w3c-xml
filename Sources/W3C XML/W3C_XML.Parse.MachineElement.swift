@@ -4,7 +4,7 @@
 /// Stack-safe element parser using Parser.Machine for arbitrary nesting depth.
 
 import Parser_Primitives
-import Parser_Machine
+import Parser_Machine_Primitives
 
 // MARK: - StartTag Parser
 

@@ -5,7 +5,7 @@
 
 import ASCII_Primitives
 import Parser_Primitives
-import Parser_Machine
+import Parser_Machine_Primitives
 
 // MARK: - XML Declaration Parser
 

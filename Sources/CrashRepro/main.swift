@@ -1,6 +1,6 @@
 import W3C_XML
 import Parser_Primitives
-import Parser_Machine
+import Parser_Machine_Primitives
 
 // Exact copy from test file
 func testParseWrapper(_ string: String, maxDepth: Int = 10000) throws(W3C_XML.Parse.Error) -> W3C_XML.Document {

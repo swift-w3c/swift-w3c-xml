@@ -18,6 +18,7 @@ let package = Package(
     dependencies: [
         .package(path: "../../swift-primitives/swift-standard-library-extensions"),
         .package(path: "../../swift-primitives/swift-parser-primitives"),
+        .package(path: "../../swift-primitives/swift-parser-machine-primitives"),
         .package(path: "../../swift-primitives/swift-binary-primitives"),
         .package(path: "../../swift-primitives/swift-ascii-primitives")
     ],
@@ -27,7 +28,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Standard Library Extensions", package: "swift-standard-library-extensions"),
                 .product(name: "Parser Primitives", package: "swift-parser-primitives"),
-                .product(name: "Parser Machine", package: "swift-parser-primitives"),
+                .product(name: "Parser Machine Primitives", package: "swift-parser-machine-primitives"),
                 .product(name: "Binary Primitives", package: "swift-binary-primitives"),
                 .product(name: "ASCII Primitives", package: "swift-ascii-primitives")
             ]
