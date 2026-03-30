@@ -3,7 +3,7 @@
 ///
 /// Document-level parsers including XML declaration and DOCTYPE.
 
-import ASCII
+import ASCII_Primitives
 import Parser_Primitives
 import Parser_Machine
 
