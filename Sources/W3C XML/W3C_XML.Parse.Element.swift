@@ -14,7 +14,7 @@ extension W3C_XML.Parse {
     /// ```
     /// Attribute ::= Name Eq AttValue
     /// ```
-    public struct Attribute<Input: Parser.Input>: Parser.Parser, Sendable
+    public struct Attribute<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
     where Input: Sendable, Input.Element == UInt8 {
         public typealias Output = W3C_XML.Attribute
         public typealias Failure = W3C_XML.Parse.Error
@@ -88,7 +88,7 @@ extension W3C_XML.Parse {
     ///
     /// This parser uses explicit depth tracking instead of relying on the call stack.
     /// Nested elements are parsed via the `Content` parser which uses `Many + Lazy`.
-    public struct Element<Input: Parser.Input>: Parser.Parser, Sendable
+    public struct Element<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
     where Input: Sendable, Input.Element == UInt8 {
         public typealias Output = W3C_XML.Element
         public typealias Failure = W3C_XML.Parse.Error
@@ -124,7 +124,7 @@ extension W3C_XML.Parse {
             // Parse attributes and namespace declarations
             var attributes: [W3C_XML.Attribute] = []
             var namespaces: [W3C_XML.Namespace] = []
-            var seenAttributes: Set<String> = []
+            var seenAttributes: Swift.Set<String> = Swift.Set()
 
             while true {
                 Whitespace<Input>().parse(&input)
@@ -239,7 +239,7 @@ extension W3C_XML.Parse {
     ///
     /// Combined with `Lazy` for the recursive Element reference, this allows
     /// parsing arbitrarily nested XML without growing the call stack.
-    public struct Content<Input: Parser.Input>: Parser.Parser, Sendable
+    public struct Content<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
     where Input: Sendable, Input.Element == UInt8 {
         public typealias Output = [W3C_XML.Content]
         public typealias Failure = W3C_XML.Parse.Error

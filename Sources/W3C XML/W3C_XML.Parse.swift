@@ -146,5 +146,5 @@ extension W3C_XML.Parse.Error: CustomStringConvertible {
 
 extension W3C_XML.Parse {
     /// Standard input type for byte parsing.
-    public typealias ByteInput = Parser.CollectionInput<[UInt8]>
+    public typealias ByteInput = Parser_Primitives.Parser.Input.Bytes
 }

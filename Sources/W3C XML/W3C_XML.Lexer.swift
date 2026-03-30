@@ -20,7 +20,7 @@ extension W3C_XML {
     ///     print(token)
     /// }
     /// ```
-    public struct Lexer<Input: Parser.Input>: ~Copyable
+    public struct Lexer<Input: Parser_Primitives.Parser.Input.Streaming>: ~Copyable
     where Input.Element == UInt8 {
         /// The input being lexed.
         @usableFromInline
@@ -883,14 +883,14 @@ extension W3C_XML.Lexer {
     /// Expects an attribute name.
     @inlinable
     internal mutating func expectAttributeName(_ name: String) throws(Error) {
-        let nameBytes = Array(name.utf8)
+        let nameBytes = Swift.Array(name.utf8)
         try expectLiteral(nameBytes)
     }
 
     /// Matches an attribute name.
     @inlinable
     internal mutating func matchAttributeName(_ name: String) -> Bool {
-        let nameBytes = Array(name.utf8)
+        let nameBytes = Swift.Array(name.utf8)
         return matchLiteral(nameBytes)
     }
 

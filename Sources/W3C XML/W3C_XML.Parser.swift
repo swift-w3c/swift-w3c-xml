@@ -25,7 +25,7 @@ extension W3C_XML {
     /// var parser = W3C_XML.Parser(consume input)
     /// let document = try parser.parse()
     /// ```
-    public struct Parser<Input: Parser.Input>: ~Copyable
+    public struct Parser<Input: Parser_Primitives.Parser.Input.Streaming>: ~Copyable
     where Input.Element == UInt8 {
         /// The underlying lexer.
         @usableFromInline
@@ -267,7 +267,7 @@ extension W3C_XML.Parser {
         // Parse attributes and namespace declarations
         var attributes: [W3C_XML.Attribute] = []
         var namespaces: [W3C_XML.Namespace] = []
-        var seenAttributes: Set<String> = []
+        var seenAttributes: Swift.Set<String> = Swift.Set()
 
         var isEmpty = false
 
@@ -439,8 +439,8 @@ extension W3C_XML {
     /// - Returns: The parsed element.
     /// - Throws: `W3C_XML.Parser.Error` if parsing fails.
     @inlinable
-    public static func fragment(_ string: String) throws(Parser<Parser.CollectionInput<[UInt8]>>.Error) -> Element {
-        let input = Parser.CollectionInput(Array(string.utf8))
+    public static func fragment(_ string: String) throws(Parser<Parser_Primitives.Parser.Input.Bytes>.Error) -> Element {
+        var input = Parser_Primitives.Parser.Input.Bytes(Swift.Array(string.utf8))
         var parser = Parser(consume input)
         return try parser.parseFragment()
     }

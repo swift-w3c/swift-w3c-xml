@@ -158,21 +158,21 @@ extension W3C_XML.Encoder {
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
         buffer.append(contentsOf: [.ascii.lessThanSign, .ascii.questionMark])  // <?
-        buffer.append(contentsOf: Array("xml".utf8))
+        buffer.append(contentsOf: Swift.Array("xml".utf8))
 
-        buffer.append(contentsOf: Array(" version=\"".utf8))
-        buffer.append(contentsOf: Array(decl.version.rawValue.utf8))
+        buffer.append(contentsOf: Swift.Array(" version=\"".utf8))
+        buffer.append(contentsOf: Swift.Array(decl.version.rawValue.utf8))
         buffer.append(.ascii.quotationMark)
 
         if let encoding = decl.encoding {
-            buffer.append(contentsOf: Array(" encoding=\"".utf8))
-            buffer.append(contentsOf: Array(encoding.utf8))
+            buffer.append(contentsOf: Swift.Array(" encoding=\"".utf8))
+            buffer.append(contentsOf: Swift.Array(encoding.utf8))
             buffer.append(.ascii.quotationMark)
         }
 
         if let standalone = decl.standalone {
-            buffer.append(contentsOf: Array(" standalone=\"".utf8))
-            buffer.append(contentsOf: Array((standalone ? "yes" : "no").utf8))
+            buffer.append(contentsOf: Swift.Array(" standalone=\"".utf8))
+            buffer.append(contentsOf: Swift.Array((standalone ? "yes" : "no").utf8))
             buffer.append(.ascii.quotationMark)
         }
 
@@ -185,24 +185,24 @@ extension W3C_XML.Encoder {
         _ doctype: W3C_XML.Doctype,
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
-        buffer.append(contentsOf: Array("<!DOCTYPE ".utf8))
-        buffer.append(contentsOf: Array(doctype.name.utf8))
+        buffer.append(contentsOf: Swift.Array("<!DOCTYPE ".utf8))
+        buffer.append(contentsOf: Swift.Array(doctype.name.utf8))
 
         if let publicID = doctype.publicID, let systemID = doctype.systemID {
-            buffer.append(contentsOf: Array(" PUBLIC \"".utf8))
-            buffer.append(contentsOf: Array(publicID.utf8))
-            buffer.append(contentsOf: Array("\" \"".utf8))
-            buffer.append(contentsOf: Array(systemID.utf8))
+            buffer.append(contentsOf: Swift.Array(" PUBLIC \"".utf8))
+            buffer.append(contentsOf: Swift.Array(publicID.utf8))
+            buffer.append(contentsOf: Swift.Array("\" \"".utf8))
+            buffer.append(contentsOf: Swift.Array(systemID.utf8))
             buffer.append(.ascii.quotationMark)
         } else if let systemID = doctype.systemID {
-            buffer.append(contentsOf: Array(" SYSTEM \"".utf8))
-            buffer.append(contentsOf: Array(systemID.utf8))
+            buffer.append(contentsOf: Swift.Array(" SYSTEM \"".utf8))
+            buffer.append(contentsOf: Swift.Array(systemID.utf8))
             buffer.append(.ascii.quotationMark)
         }
 
         if let internalSubset = doctype.internalSubset {
-            buffer.append(contentsOf: Array(" [".utf8))
-            buffer.append(contentsOf: Array(internalSubset.utf8))
+            buffer.append(contentsOf: Swift.Array(" [".utf8))
+            buffer.append(contentsOf: Swift.Array(internalSubset.utf8))
             buffer.append(.ascii.rightBracket)
         }
 
@@ -216,11 +216,11 @@ extension W3C_XML.Encoder {
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
         buffer.append(contentsOf: [.ascii.lessThanSign, .ascii.questionMark])  // <?
-        buffer.append(contentsOf: Array(instruction.target.utf8))
+        buffer.append(contentsOf: Swift.Array(instruction.target.utf8))
 
         if let data = instruction.data {
             buffer.append(.ascii.sp)
-            buffer.append(contentsOf: Array(data.utf8))
+            buffer.append(contentsOf: Swift.Array(data.utf8))
         }
 
         buffer.append(contentsOf: [.ascii.questionMark, .ascii.greaterThanSign])  // ?>
@@ -234,16 +234,16 @@ extension W3C_XML.Encoder {
     ) where Buffer.Element == UInt8 {
         // Opening tag
         buffer.append(.ascii.lessThanSign)
-        buffer.append(contentsOf: Array(element.name.qualified.utf8))
+        buffer.append(contentsOf: Swift.Array(element.name.qualified.utf8))
 
         // Namespace declarations
         for ns in element.namespaces {
             buffer.append(.ascii.sp)
             if let prefix = ns.prefix {
-                buffer.append(contentsOf: Array("xmlns:".utf8))
-                buffer.append(contentsOf: Array(prefix.utf8))
+                buffer.append(contentsOf: Swift.Array("xmlns:".utf8))
+                buffer.append(contentsOf: Swift.Array(prefix.utf8))
             } else {
-                buffer.append(contentsOf: Array("xmlns".utf8))
+                buffer.append(contentsOf: Swift.Array("xmlns".utf8))
             }
             buffer.append(contentsOf: [.ascii.equalsSign, .ascii.quotationMark])
             encodeAttributeValue(ns.uri, into: &buffer)
@@ -253,7 +253,7 @@ extension W3C_XML.Encoder {
         // Attributes
         for attr in element.attributes {
             buffer.append(.ascii.sp)
-            buffer.append(contentsOf: Array(attr.name.qualified.utf8))
+            buffer.append(contentsOf: Swift.Array(attr.name.qualified.utf8))
             buffer.append(contentsOf: [.ascii.equalsSign, .ascii.quotationMark])
             encodeAttributeValue(attr.value, into: &buffer)
             buffer.append(.ascii.quotationMark)
@@ -287,7 +287,7 @@ extension W3C_XML.Encoder {
 
             // Closing tag
             buffer.append(contentsOf: [.ascii.lessThanSign, .ascii.solidus])  // </
-            buffer.append(contentsOf: Array(element.name.qualified.utf8))
+            buffer.append(contentsOf: Swift.Array(element.name.qualified.utf8))
             buffer.append(.ascii.greaterThanSign)
         }
     }
@@ -306,14 +306,14 @@ extension W3C_XML.Encoder {
             encodeText(text, into: &buffer)
 
         case .cdata(let text):
-            buffer.append(contentsOf: Array("<![CDATA[".utf8))
-            buffer.append(contentsOf: Array(text.utf8))
-            buffer.append(contentsOf: Array("]]>".utf8))
+            buffer.append(contentsOf: Swift.Array("<![CDATA[".utf8))
+            buffer.append(contentsOf: Swift.Array(text.utf8))
+            buffer.append(contentsOf: Swift.Array("]]>".utf8))
 
         case .comment(let text):
-            buffer.append(contentsOf: Array("<!--".utf8))
-            buffer.append(contentsOf: Array(text.utf8))
-            buffer.append(contentsOf: Array("-->".utf8))
+            buffer.append(contentsOf: Swift.Array("<!--".utf8))
+            buffer.append(contentsOf: Swift.Array(text.utf8))
+            buffer.append(contentsOf: Swift.Array("-->".utf8))
 
         case .instruction(let pi):
             encodeInstruction(pi, into: &buffer)
@@ -329,11 +329,11 @@ extension W3C_XML.Encoder {
         for scalar in text.unicodeScalars {
             switch scalar.value {
             case UInt32(UInt8.ascii.lessThanSign):
-                buffer.append(contentsOf: Array("&lt;".utf8))
+                buffer.append(contentsOf: Swift.Array("&lt;".utf8))
             case UInt32(UInt8.ascii.ampersand):
-                buffer.append(contentsOf: Array("&amp;".utf8))
+                buffer.append(contentsOf: Swift.Array("&amp;".utf8))
             case UInt32(UInt8.ascii.greaterThanSign):
-                buffer.append(contentsOf: Array("&gt;".utf8))
+                buffer.append(contentsOf: Swift.Array("&gt;".utf8))
             default:
                 encodeScalarUTF8(scalar, into: &buffer)
             }
@@ -349,19 +349,19 @@ extension W3C_XML.Encoder {
         for scalar in value.unicodeScalars {
             switch scalar.value {
             case UInt32(UInt8.ascii.lessThanSign):
-                buffer.append(contentsOf: Array("&lt;".utf8))
+                buffer.append(contentsOf: Swift.Array("&lt;".utf8))
             case UInt32(UInt8.ascii.ampersand):
-                buffer.append(contentsOf: Array("&amp;".utf8))
+                buffer.append(contentsOf: Swift.Array("&amp;".utf8))
             case UInt32(UInt8.ascii.quotationMark):
-                buffer.append(contentsOf: Array("&quot;".utf8))
+                buffer.append(contentsOf: Swift.Array("&quot;".utf8))
             case UInt32(UInt8.ascii.apostrophe) where options.escapeApostrophe:
-                buffer.append(contentsOf: Array("&apos;".utf8))
+                buffer.append(contentsOf: Swift.Array("&apos;".utf8))
             case 0x09:  // Tab
-                buffer.append(contentsOf: Array("&#9;".utf8))
+                buffer.append(contentsOf: Swift.Array("&#9;".utf8))
             case 0x0A:  // LF
-                buffer.append(contentsOf: Array("&#10;".utf8))
+                buffer.append(contentsOf: Swift.Array("&#10;".utf8))
             case 0x0D:  // CR
-                buffer.append(contentsOf: Array("&#13;".utf8))
+                buffer.append(contentsOf: Swift.Array("&#13;".utf8))
             default:
                 encodeScalarUTF8(scalar, into: &buffer)
             }

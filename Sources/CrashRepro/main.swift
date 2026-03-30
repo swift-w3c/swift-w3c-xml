@@ -1,41 +1,4 @@
 import W3C_XML
-import Parser_Primitives
-import Parser_Machine_Primitives
-
-// Exact copy from test file
-func testParseWrapper(_ string: String, maxDepth: Int = 10000) throws(W3C_XML.Parse.Error) -> W3C_XML.Document {
-    var input = Parser.CollectionInput(Array(string.utf8))
-
-    W3C_XML.Parse.Whitespace<Parser.CollectionInput<[UInt8]>>().parse(&input)
-
-    var declaration: W3C_XML.Declaration?
-    if let byte = input.first, byte == .ascii.lessThanSign {
-        let saved = input
-        _ = input.removeFirst()
-        if let next = input.first, next == .ascii.questionMark {
-            input = saved
-            if let decl = try? W3C_XML.Parse.XMLDeclaration<Parser.CollectionInput<[UInt8]>>().parse(&input) {
-                declaration = decl
-            }
-        } else {
-            input = saved
-        }
-    }
-
-    W3C_XML.Parse.Whitespace<Parser.CollectionInput<[UInt8]>>().parse(&input)
-
-    let machineParser = W3C_XML.Parse.machineElement(maxDepth: maxDepth)
-        as Parser.Machine.Parser<Parser.CollectionInput<[UInt8]>, W3C_XML.Element, W3C_XML.Parse.Error>
-    let root = try machineParser.parse(&input)
-
-    return W3C_XML.Document(
-        declaration: declaration,
-        doctype: nil,
-        root: root,
-        prologue: [],
-        epilogue: []
-    )
-}
 
 // Test with DEFAULT maxDepth (10000)
 print("Testing with default maxDepth=10000...")
@@ -50,7 +13,7 @@ for depth in [100, 200, 500, 1000] {
     }
 
     do {
-        _ = try testParseWrapper(xml)  // Uses default maxDepth=10000
+        _ = try W3C_XML.parse(xml)
         print("  Depth \(depth): OK")
     } catch {
         print("  Depth \(depth): FAILED - \(error)")

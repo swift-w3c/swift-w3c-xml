@@ -1,8 +1,5 @@
 import Testing
 @testable import W3C_XML
-// Note: @testable re-added to test boundary isolation with _parse_internal
-import Parser_Primitives
-import Parser_Machine
 
 @Suite("W3C_XML Parser Tests")
 struct ParserTests {
@@ -546,46 +543,10 @@ struct CharacterValidationTests {
     }
 }
 
-// Test helper: replicates W3C_XML.parse() logic exactly
-func testParseWrapper(_ string: String, maxDepth: Int = 10000) throws(W3C_XML.Parse.Error) -> W3C_XML.Document {
-    var input = Parsing.CollectionInput(Array(string.utf8))
-
-    W3C_XML.Parse.Whitespace<Parsing.CollectionInput<[UInt8]>>().parse(&input)
-
-    var declaration: W3C_XML.Declaration?
-    if let byte = input.first, byte == .ascii.lessThanSign {
-        let saved = input
-        _ = input.removeFirst()
-        if let next = input.first, next == .ascii.questionMark {
-            input = saved
-            if let decl = try? W3C_XML.Parse.XMLDeclaration<Parsing.CollectionInput<[UInt8]>>().parse(&input) {
-                declaration = decl
-            }
-        } else {
-            input = saved
-        }
-    }
-
-    W3C_XML.Parse.Whitespace<Parsing.CollectionInput<[UInt8]>>().parse(&input)
-
-    let machineParser = W3C_XML.Parse.machineElement(maxDepth: maxDepth)
-        as Parsing.Machine.Parser<Parsing.CollectionInput<[UInt8]>, W3C_XML.Element, W3C_XML.Parse.Error>
-    let root = try machineParser.parse(&input)
-
-    return W3C_XML.Document(
-        declaration: declaration,
-        doctype: nil,
-        root: root,
-        prologue: [],
-        epilogue: []
-    )
-}
-
 @Suite("W3C_XML Deep Nesting Tests")
 struct DeepNestingTests {
     @Test("Parse 1000-level deep nesting without stack overflow")
     func parseDeepNesting1000() throws {
-        // Build XML with 1000 levels of nesting
         var xml = ""
         for i in 0..<1000 {
             xml += "<level\(i)>"
@@ -595,12 +556,9 @@ struct DeepNestingTests {
             xml += "</level\(i)>"
         }
 
-        // This should NOT cause stack overflow with combinator-based parser
-        // Use default maxDepth (10000) - smaller values trigger a Machine parser bug
         let doc = try W3C_XML.parse(xml)
         #expect(doc.root.name.local == "level0")
 
-        // Verify the structure by traversing to the deepest level
         var current: W3C_XML.Element? = doc.root
         for i in 1..<1000 {
             current = current?.child("level\(i)")
@@ -620,7 +578,6 @@ struct DeepNestingTests {
             xml += "</level\(i)>"
         }
 
-        // Use default maxDepth (10000) - smaller values trigger a Machine parser bug
         let doc = try W3C_XML.parse(xml)
         #expect(doc.root.attribute("id") == "0")
 
@@ -633,7 +590,6 @@ struct DeepNestingTests {
 
     @Test("Depth limit is enforced")
     func depthLimitEnforced() {
-        // Build XML deeper than specified limit
         var xml = ""
         for i in 0..<600 {
             xml += "<a\(i)>"
@@ -643,86 +599,13 @@ struct DeepNestingTests {
             xml += "</a\(i)>"
         }
 
-        // Explicitly set maxDepth to 500, so 600 levels should exceed it
         #expect(throws: W3C_XML.Parse.Error.self) {
             _ = try W3C_XML.parse(xml, maxDepth: 500)
         }
     }
 
-    @Test("Custom depth limit can be set - inlined code")
-    func customDepthLimitInlined() throws {
-        // Test the exact code from W3C_XML.parse() but inline here
-        let depth = 37
-        var xml = ""
-        for _ in 0..<depth {
-            xml += "<a>"
-        }
-        xml += "<inner/>"
-        for _ in 0..<depth {
-            xml += "</a>"
-        }
-
-        // Inline the exact code from W3C_XML.parse():
-        var input = Parsing.CollectionInput(Array(xml.utf8))
-
-        W3C_XML.Parse.Whitespace<Parsing.CollectionInput<[UInt8]>>().parse(&input)
-
-        var declaration: W3C_XML.Declaration?
-        if let byte = input.first, byte == .ascii.lessThanSign {
-            let saved = input
-            _ = input.removeFirst()
-            if let next = input.first, next == .ascii.questionMark {
-                input = saved
-                if let decl = try? W3C_XML.Parse.XMLDeclaration<Parsing.CollectionInput<[UInt8]>>().parse(&input) {
-                    declaration = decl
-                }
-            } else {
-                input = saved
-            }
-        }
-
-        W3C_XML.Parse.Whitespace<Parsing.CollectionInput<[UInt8]>>().parse(&input)
-
-        // Use EXACT same syntax as W3C_XML.parse():
-        let maxDepth = 10000
-        let machineParser = W3C_XML.Parse.machineElement(maxDepth: maxDepth)
-            as Parsing.Machine.Parser<Parsing.CollectionInput<[UInt8]>, W3C_XML.Element, W3C_XML.Parse.Error>
-        let root = try machineParser.parse(&input)
-
-        let doc = W3C_XML.Document(
-            declaration: declaration,
-            doctype: nil,
-            root: root,
-            prologue: [],
-            epilogue: []
-        )
-
-        #expect(doc.root.name.local == "a")
-        print("PASS inlined: depth=\(depth), name=\(doc.root.name.local)")
-    }
-
-    @Test("Custom depth limit via wrapper function in test module")
-    func customDepthLimitWrapper() throws {
-        // This test calls the wrapper function defined in the test file
-        let depth = 500
-        var xml = ""
-        for _ in 0..<depth {
-            xml += "<a>"
-        }
-        xml += "<inner/>"
-        for _ in 0..<depth {
-            xml += "</a>"
-        }
-
-        // Call the wrapper function (same code as W3C_XML.parse but in test module)
-        let doc = try testParseWrapper(xml)
-        #expect(doc.root.name.local == "a")
-        print("PASS wrapper: depth=\(depth), name=\(doc.root.name.local)")
-    }
-
     @Test("Custom depth limit via W3C_XML.parse() directly")
     func customDepthLimitDirect() throws {
-        // This test calls W3C_XML.parse() directly - crashes at depth 37
         let depth = 37
         var xml = ""
         for _ in 0..<depth {
@@ -733,12 +616,9 @@ struct DeepNestingTests {
             xml += "</a>"
         }
 
-        // Call the Machine parser version explicitly by specifying maxDepth
         let doc = try W3C_XML.parse(xml, maxDepth: 10000)
         #expect(doc.root.name.local == "a")
-        print("PASS direct: depth=\(depth), name=\(doc.root.name.local)")
     }
-
 }
 
 @Suite("W3C_XML Round-trip Tests")

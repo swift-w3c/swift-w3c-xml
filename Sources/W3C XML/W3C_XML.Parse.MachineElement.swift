@@ -30,7 +30,7 @@ extension W3C_XML.Parse {
     ///
     /// Returns the element name, attributes, namespaces, and whether it's empty (/>).
     @usableFromInline
-    struct StartTag<Input: Parser.Input>: Parser.Parser, Sendable
+    struct StartTag<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
     where Input: Sendable, Input.Element == UInt8 {
         @usableFromInline typealias Output = StartTagOutput
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
@@ -52,7 +52,7 @@ extension W3C_XML.Parse {
             // Parse attributes and namespace declarations
             var attributes: [W3C_XML.Attribute] = []
             var namespaces: [W3C_XML.Namespace] = []
-            var seenAttributes: Set<String> = []
+            var seenAttributes: Swift.Set<String> = Swift.Set()
 
             while true {
                 Whitespace<Input>().parse(&input)
@@ -114,7 +114,7 @@ extension W3C_XML.Parse {
     ///
     /// Validation of tag name matching happens in tryMap after parsing.
     @usableFromInline
-    struct EndTagAny<Input: Parser.Input>: Parser.Parser, Sendable
+    struct EndTagAny<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
     where Input: Sendable, Input.Element == UInt8 {
         @usableFromInline typealias Output = W3C_XML.Name
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
@@ -175,43 +175,42 @@ extension W3C_XML.Parse {
     ///
     /// - Parameter maxDepth: Maximum nesting depth (default: 10000).
     /// - Returns: A parser for XML elements.
-    @inlinable
-    public static func machineElement<Input: Parser.Input>(
+    static func machineElement<Input: Parser_Primitives.Parser.Input.`Protocol`>(
         maxDepth: Int = 10000
-    ) -> Parser.Machine.Parser<Input, W3C_XML.Element, W3C_XML.Parse.Error>
+    ) -> Parser_Primitives.Parser.Machine.Parser<Input, W3C_XML.Element, W3C_XML.Parse.Error>
     where Input: Sendable, Input.Element == UInt8 {
-        typealias Builder = Parser.Machine.Builder<Input, W3C_XML.Parse.Error>
-        typealias Expr<T> = Parser.Machine.Expression<Input, W3C_XML.Parse.Error, T>
-        typealias Ref<T> = Parser.Machine.Reference<Input, W3C_XML.Parse.Error, T>
+        typealias Builder = Parser_Primitives.Parser.Machine.Builder<Input, W3C_XML.Parse.Error>
+        typealias Expr<T> = Parser_Primitives.Parser.Machine.Expression<Input, W3C_XML.Parse.Error, T>
+        typealias Ref<T> = Parser_Primitives.Parser.Machine.Reference<Input, W3C_XML.Parse.Error, T>
 
-        return Parser.Machine.recursive(maxDepth: maxDepth) { (builder: inout Builder, elementRef: Ref<W3C_XML.Element>) -> Expr<W3C_XML.Element> in
+        return Parser_Primitives.Parser.Machine.recursive(maxDepth: maxDepth) { (builder: inout Builder, elementRef: Ref<W3C_XML.Element>) -> Expr<W3C_XML.Element> in
 
             // Leaf: StartTag
-            let startTag: Expr<StartTagOutput> = Parser.Machine.leaf(
+            let startTag: Expr<StartTagOutput> = Parser_Primitives.Parser.Machine.leaf(
                 StartTag<Input>(),
                 in: &builder
             )
 
             // Leaf: Comment -> Content
-            let comment: Expr<W3C_XML.Content> = Parser.Machine.leaf(
+            let comment: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
                 Comment<Input>(),
                 in: &builder
             ).map({ W3C_XML.Content.comment($0) }, in: &builder)
 
             // Leaf: CDATA -> Content
-            let cdata: Expr<W3C_XML.Content> = Parser.Machine.leaf(
+            let cdata: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
                 CDATASection<Input>(),
                 in: &builder
             ).map({ W3C_XML.Content.cdata($0) }, in: &builder)
 
             // Leaf: ProcessingInstruction -> Content
-            let pi: Expr<W3C_XML.Content> = Parser.Machine.leaf(
+            let pi: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
                 ProcessingInstruction<Input>(),
                 in: &builder
             ).map({ W3C_XML.Content.instruction($0) }, in: &builder)
 
             // Leaf: TextContent -> Content (fails if empty)
-            let text: Expr<W3C_XML.Content> = Parser.Machine.leaf(
+            let text: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
                 NonEmptyTextContent<Input>(),
                 in: &builder
             ).map({ W3C_XML.Content.text($0) }, in: &builder)
@@ -221,16 +220,16 @@ extension W3C_XML.Parse {
                 .map({ W3C_XML.Content.element($0) }, in: &builder)
 
             // ContentItem: one of the above (element first for proper recursion)
-            let contentItem: Expr<W3C_XML.Content> = Parser.Machine.oneOf(
+            let contentItem: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.oneOf(
                 [elementContent, comment, cdata, pi, text],
                 in: &builder
             )
 
             // Content: many content items
-            let content: Expr<[W3C_XML.Content]> = Parser.Machine.many(contentItem, in: &builder)
+            let content: Expr<[W3C_XML.Content]> = Parser_Primitives.Parser.Machine.many(contentItem, in: &builder)
 
             // EndTagAny: parse end tag, return name
-            let endTagAny: Expr<W3C_XML.Name> = Parser.Machine.leaf(
+            let endTagAny: Expr<W3C_XML.Name> = Parser_Primitives.Parser.Machine.leaf(
                 EndTagAny<Input>(),
                 in: &builder
             )
@@ -238,7 +237,7 @@ extension W3C_XML.Parse {
             // === Build element parsing branches ===
 
             // Build: sequence(content, endTagAny) -> ([Content], Name)
-            let contentAndEndTag: Expr<([W3C_XML.Content], W3C_XML.Name)> = Parser.Machine.sequence(
+            let contentAndEndTag: Expr<([W3C_XML.Content], W3C_XML.Name)> = Parser_Primitives.Parser.Machine.sequence(
                 content,
                 endTagAny,
                 combine: { ($0, $1) },
@@ -272,7 +271,7 @@ extension W3C_XML.Parse {
             }, in: &builder)
 
             // Non-empty: openTag -> sequence(content, endTag) -> tryMap(validate)
-            let openWithContentEnd: Expr<(StartTagOutput, ([W3C_XML.Content], W3C_XML.Name))> = Parser.Machine.sequence(
+            let openWithContentEnd: Expr<(StartTagOutput, ([W3C_XML.Content], W3C_XML.Name))> = Parser_Primitives.Parser.Machine.sequence(
                 openTag,
                 contentAndEndTag,
                 combine: { ($0, $1) },
@@ -300,7 +299,7 @@ extension W3C_XML.Parse {
             }, in: &builder)
 
             // Final element: try empty first (because /> is more specific), then non-empty
-            return Parser.Machine.oneOf([emptyElement, nonEmptyElement], in: &builder)
+            return Parser_Primitives.Parser.Machine.oneOf([emptyElement, nonEmptyElement], in: &builder)
         }
     }
 
@@ -326,7 +325,7 @@ extension W3C_XML.Parse {
     /// Parses non-empty text content (character data and/or references).
     /// Fails if the result would be empty.
     @usableFromInline
-    struct NonEmptyTextContent<Input: Parser.Input>: Parser.Parser, Sendable
+    struct NonEmptyTextContent<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
     where Input: Sendable, Input.Element == UInt8 {
         @usableFromInline typealias Output = String
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
