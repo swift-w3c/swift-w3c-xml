@@ -16,11 +16,11 @@ let package = Package(
         .library(name: "W3C XML", targets: ["W3C XML"])
     ],
     dependencies: [
-        .package(path: "../../swift-primitives/swift-standard-library-extensions"),
-        .package(path: "../../swift-primitives/swift-parser-primitives"),
-        .package(path: "../../swift-primitives/swift-parser-machine-primitives"),
-        .package(path: "../../swift-primitives/swift-binary-primitives"),
-        .package(path: "../../swift-primitives/swift-ascii-primitives")
+        .package(url: "https://github.com/swift-primitives/swift-standard-library-extensions.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-parser-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-parser-machine-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-binary-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-ascii-primitives.git", branch: "main")
     ],
     targets: [
         .target(
