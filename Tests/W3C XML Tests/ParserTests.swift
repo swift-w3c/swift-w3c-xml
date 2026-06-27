@@ -1,7 +1,10 @@
 import Testing
 @testable import W3C_XML
 
-@Suite("W3C_XML Parser Tests")
+@Suite(
+    "W3C_XML Parser Tests",
+    .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
+)
 struct ParserTests {
     @Test("Parse simple element")
     func parseSimpleElement() throws {
@@ -103,7 +106,10 @@ struct ParserTests {
     }
 }
 
-@Suite("W3C_XML Error Handling Tests")
+@Suite(
+    "W3C_XML Error Handling Tests",
+    .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
+)
 struct ErrorHandlingTests {
     @Test("Reject unclosed element")
     func rejectUnclosedElement() {
@@ -323,7 +329,10 @@ struct EncoderTests {
     }
 }
 
-@Suite("W3C_XML Parser Edge Cases")
+@Suite(
+    "W3C_XML Parser Edge Cases",
+    .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
+)
 struct ParserEdgeCases {
     @Test("Parse empty element with explicit close tag")
     func parseEmptyElementExplicitClose() throws {
@@ -530,20 +539,29 @@ struct CharacterValidationTests {
         #expect(!W3C_XML.isChar(Unicode.Scalar(0x1F)!))  // Control
     }
 
-    @Test("Parse Unicode element name")
+    @Test(
+        "Parse Unicode element name",
+        .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
+    )
     func parseUnicodeElementName() throws {
         let doc = try W3C_XML.parse("<日本語/>")
         #expect(doc.root.name.local == "日本語")
     }
 
-    @Test("Parse Unicode text content")
+    @Test(
+        "Parse Unicode text content",
+        .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
+    )
     func parseUnicodeTextContent() throws {
         let doc = try W3C_XML.parse("<root>日本語 🎉 émojis</root>")
         #expect(doc.root.textContent == "日本語 🎉 émojis")
     }
 }
 
-@Suite("W3C_XML Deep Nesting Tests")
+@Suite(
+    "W3C_XML Deep Nesting Tests",
+    .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
+)
 struct DeepNestingTests {
     @Test("Parse 1000-level deep nesting without stack overflow")
     func parseDeepNesting1000() throws {
@@ -621,7 +639,10 @@ struct DeepNestingTests {
     }
 }
 
-@Suite("W3C_XML Round-trip Tests")
+@Suite(
+    "W3C_XML Round-trip Tests",
+    .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
+)
 struct RoundtripTests {
     @Test("Round-trip simple document")
     func roundtripSimple() throws {
