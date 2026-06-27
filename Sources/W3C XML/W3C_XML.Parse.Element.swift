@@ -3,6 +3,7 @@
 ///
 /// Element and content parsers using Many + Lazy for arbitrary nesting depth.
 
+public import Input_Primitives
 import Parser_Primitives
 
 // MARK: - Attribute Parser
@@ -14,8 +15,8 @@ extension W3C_XML.Parse {
     /// ```
     /// Attribute ::= Name Eq AttValue
     /// ```
-    public struct Attribute<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct Attribute<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Attribute
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -31,7 +32,7 @@ extension W3C_XML.Parse {
             Whitespace<Input>().parse(&input)
 
             // Expect =
-            guard input.first == .ascii.equalsSign else {
+            guard input.first == ASCII.Code.equalsSign.byte else {
                 throw .expected("=")
             }
             _ = input.removeFirst()
@@ -48,7 +49,7 @@ extension W3C_XML.Parse {
         @inlinable
         func parseAttValue(_ input: inout Input) throws(Failure) -> String {
             guard let quote = input.first,
-                  quote == .ascii.quotationMark || quote == .ascii.apostrophe else {
+                  quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte else {
                 throw .expected("\" or '")
             }
             _ = input.removeFirst()
@@ -59,11 +60,11 @@ extension W3C_XML.Parse {
                 if byte == quote {
                     _ = input.removeFirst()
                     return result
-                } else if byte == .ascii.ampersand {
+                } else if byte == ASCII.Code.ampersand.byte {
                     // Parse reference
                     let resolved = try Reference<Input>().parse(&input)
                     result += resolved
-                } else if byte == .ascii.lessThanSign {
+                } else if byte == ASCII.Code.lessThanSign.byte {
                     // < not allowed in attribute values
                     throw .expected("valid attribute character (not <)")
                 } else {
@@ -88,8 +89,8 @@ extension W3C_XML.Parse {
     ///
     /// This parser uses explicit depth tracking instead of relying on the call stack.
     /// Nested elements are parsed via the `Content` parser which uses `Many + Lazy`.
-    public struct Element<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct Element<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Element
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -113,7 +114,7 @@ extension W3C_XML.Parse {
             }
 
             // Expect <
-            guard input.first == .ascii.lessThanSign else {
+            guard input.first == ASCII.Code.lessThanSign.byte else {
                 throw .expected("<")
             }
             _ = input.removeFirst()
@@ -134,14 +135,14 @@ extension W3C_XML.Parse {
                 }
 
                 // Check for tag end
-                if byte == .ascii.greaterThanSign {
+                if byte == ASCII.Code.greaterThanSign.byte {
                     _ = input.removeFirst()
                     break  // Non-empty element
                 }
 
-                if byte == .ascii.solidus {
+                if byte == ASCII.Code.solidus.byte {
                     _ = input.removeFirst()
-                    guard input.first == .ascii.greaterThanSign else {
+                    guard input.first == ASCII.Code.greaterThanSign.byte else {
                         throw .expected(">")
                     }
                     _ = input.removeFirst()
@@ -176,12 +177,12 @@ extension W3C_XML.Parse {
             let content = try Content<Input>(depth: depth).parse(&input)
 
             // Parse end tag
-            guard input.first == .ascii.lessThanSign else {
+            guard input.first == ASCII.Code.lessThanSign.byte else {
                 throw .expected("</")
             }
             _ = input.removeFirst()
 
-            guard input.first == .ascii.solidus else {
+            guard input.first == ASCII.Code.solidus.byte else {
                 throw .expected("</")
             }
             _ = input.removeFirst()
@@ -191,7 +192,7 @@ extension W3C_XML.Parse {
 
             Whitespace<Input>().parse(&input)
 
-            guard input.first == .ascii.greaterThanSign else {
+            guard input.first == ASCII.Code.greaterThanSign.byte else {
                 throw .expected(">")
             }
             _ = input.removeFirst()
@@ -239,8 +240,8 @@ extension W3C_XML.Parse {
     ///
     /// Combined with `Lazy` for the recursive Element reference, this allows
     /// parsing arbitrarily nested XML without growing the call stack.
-    public struct Content<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct Content<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = [W3C_XML.Content]
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -260,7 +261,7 @@ extension W3C_XML.Parse {
             // Parse content items until we hit an end tag or end of input
             while let byte = input.first {
                 // End tag starts content parsing
-                if byte == .ascii.lessThanSign {
+                if byte == ASCII.Code.lessThanSign.byte {
                     // Peek at next character
                     let saved = input
                     _ = input.removeFirst()
@@ -270,17 +271,17 @@ extension W3C_XML.Parse {
                         throw .unexpectedEndOfInput(expected: "element or end tag")
                     }
 
-                    if next == .ascii.solidus {
+                    if next == ASCII.Code.solidus.byte {
                         // End tag - restore and return
                         input = saved
                         return content
-                    } else if next == .ascii.exclamationPoint {
+                    } else if next == ASCII.Code.exclamationPoint.byte {
                         // Could be comment or CDATA
                         input = saved
                         if let item = try parseMarkup(&input) {
                             content.append(item)
                         }
-                    } else if next == .ascii.questionMark {
+                    } else if next == ASCII.Code.questionMark.byte {
                         // Processing instruction
                         input = saved
                         let pi = try ProcessingInstruction<Input>().parse(&input)
@@ -291,7 +292,7 @@ extension W3C_XML.Parse {
                         let element = try Element<Input>(depth: depth.incremented()).parse(&input)
                         content.append(.element(element))
                     }
-                } else if byte == .ascii.ampersand {
+                } else if byte == ASCII.Code.ampersand.byte {
                     // Reference
                     let resolved = try Reference<Input>().parse(&input)
                     appendText(&content, resolved)
@@ -317,12 +318,12 @@ extension W3C_XML.Parse {
             let saved = input
 
             // Consume <
-            guard input.first == .ascii.lessThanSign else {
+            guard input.first == ASCII.Code.lessThanSign.byte else {
                 return nil
             }
             _ = input.removeFirst()
 
-            guard input.first == .ascii.exclamationPoint else {
+            guard input.first == ASCII.Code.exclamationPoint.byte else {
                 input = saved
                 return nil
             }
@@ -333,12 +334,12 @@ extension W3C_XML.Parse {
                 throw .unexpectedEndOfInput(expected: "comment or CDATA")
             }
 
-            if next == .ascii.hyphen {
+            if next == ASCII.Code.hyphen.byte {
                 // Comment
                 input = saved
                 let text = try Comment<Input>().parse(&input)
                 return .comment(text)
-            } else if next == .ascii.leftBracket {
+            } else if next == ASCII.Code.leftBracket.byte {
                 // CDATA
                 input = saved
                 let text = try CDATASection<Input>().parse(&input)

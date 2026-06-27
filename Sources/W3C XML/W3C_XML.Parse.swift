@@ -9,6 +9,7 @@
 /// Combined with `Parser.Lazy` to break type cycles, this allows parsing
 /// deeply nested XML without stack overflow.
 
+public import Byte_Parser_Primitives
 import Parser_Primitives
 
 extension W3C_XML {
@@ -146,5 +147,5 @@ extension W3C_XML.Parse.Error: CustomStringConvertible {
 
 extension W3C_XML.Parse {
     /// Standard input type for byte parsing.
-    public typealias ByteInput = Parser_Primitives.Parser.Input.Bytes
+    public typealias ByteInput = Byte.Input
 }

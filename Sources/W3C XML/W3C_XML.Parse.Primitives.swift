@@ -3,7 +3,11 @@
 ///
 /// Primitive parsers for XML character classes and names.
 
+public import Input_Primitives
 import Parser_Primitives
+import ASCII_Decimal_Parser_Primitives
+import ASCII_Hexadecimal_Parser_Primitives
+public import Byte_Parser_Primitives
 
 // MARK: - Whitespace Parser
 
@@ -12,8 +16,8 @@ extension W3C_XML.Parse {
     ///
     /// Consumes zero or more whitespace characters (space, tab, CR, LF).
     /// Always succeeds, even if no whitespace is present.
-    public struct Whitespace<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct Whitespace<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = Void
         public typealias Failure = Never
 
@@ -29,8 +33,8 @@ extension W3C_XML.Parse {
     }
 
     /// Parses required XML whitespace (at least one character).
-    public struct RequiredWhitespace<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct RequiredWhitespace<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = Void
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -60,8 +64,8 @@ extension W3C_XML.Parse {
     /// ```
     ///
     /// Returns a `W3C_XML.Name` with prefix and local parts if a colon is present.
-    public struct Name<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct Name<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Name
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -70,7 +74,7 @@ extension W3C_XML.Parse {
 
         @inlinable
         public func parse(_ input: inout Input) throws(Failure) -> Output {
-            var bytes: [UInt8] = []
+            var bytes: [Byte] = []
 
             // First character must be NameStartChar
             guard let first = input.first else {
@@ -126,7 +130,7 @@ extension W3C_XML.Parse {
         @inlinable
         func consumeUTF8Scalar(
             _ input: inout Input,
-            bytes: inout [UInt8],
+            bytes: inout [Byte],
             checkStart: Bool
         ) throws(Failure) -> Unicode.Scalar {
             guard let first = input.first else {
@@ -189,8 +193,8 @@ extension W3C_XML.Parse {
     /// ```
     ///
     /// Returns the resolved character(s) as a String.
-    public struct Reference<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct Reference<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -200,7 +204,7 @@ extension W3C_XML.Parse {
         @inlinable
         public func parse(_ input: inout Input) throws(Failure) -> Output {
             // Expect '&'
-            guard input.first == .ascii.ampersand else {
+            guard input.first == ASCII.Code.ampersand.byte else {
                 throw .expected("&")
             }
             _ = input.removeFirst()
@@ -209,7 +213,7 @@ extension W3C_XML.Parse {
                 throw .unexpectedEndOfInput(expected: "entity or character reference")
             }
 
-            if next == .ascii.numberSign {
+            if next == ASCII.Code.numberSign.byte {
                 // Character reference
                 _ = input.removeFirst()
                 return try parseCharRef(&input)
@@ -219,46 +223,56 @@ extension W3C_XML.Parse {
             }
         }
 
-        @inlinable
+        // `@usableFromInline` (not `@inlinable`): the body references the L1
+        // ASCII parser / `Byte.Input` types through internal (default) imports,
+        // which an `@inlinable` body may not do under `InternalImportsByDefault`.
+        // Keeping it non-inlinable avoids widening this module's re-export
+        // surface with `public import`s; the public `@inlinable parse` entry
+        // point still calls it.
+        @usableFromInline
         func parseCharRef(_ input: inout Input) throws(Failure) -> String {
             var isHex = false
 
-            if input.first == .ascii.x || input.first == .ascii.X {
+            if input.first == ASCII.Code.x.byte || input.first == ASCII.Code.X.byte {
                 isHex = true
                 _ = input.removeFirst()
             }
 
-            var value: UInt32 = 0
-            var hasDigits = false
-
-            while let byte = input.first, byte != .ascii.semicolon {
-                hasDigits = true
-                if isHex {
-                    if byte >= .ascii.`0` && byte <= .ascii.`9` {
-                        value = value * 16 + UInt32(byte - .ascii.`0`)
-                    } else if byte >= .ascii.a && byte <= .ascii.f {
-                        value = value * 16 + UInt32(byte - .ascii.a + 10)
-                    } else if byte >= .ascii.A && byte <= .ascii.F {
-                        value = value * 16 + UInt32(byte - .ascii.A + 10)
-                    } else {
-                        throw .invalidCharacterReference(isHex ? "&#x..." : "&#...")
-                    }
-                } else {
-                    if byte >= .ascii.`0` && byte <= .ascii.`9` {
-                        value = value * 10 + UInt32(byte - .ascii.`0`)
-                    } else {
-                        throw .invalidCharacterReference("&#...")
-                    }
-                }
+            // Drain the digit run (everything up to ';' or end of input) into a
+            // byte buffer, then delegate the numeric decode to the L1 ASCII
+            // parser (greedy, no sign — byte-for-byte the historical
+            // accumulation, with overflow now reported rather than trapped).
+            var digits: [Byte] = []
+            while let byte = input.first, byte != ASCII.Code.semicolon.byte {
+                digits.append(byte)
                 _ = input.removeFirst()
             }
 
-            guard hasDigits else {
+            guard !digits.isEmpty else {
                 throw .invalidCharacterReference(isHex ? "&#x;" : "&#;")
             }
 
+            var slice = Byte.Input(digits)
+            let value: UInt32
+            do {
+                if isHex {
+                    value = try ASCII.Hexadecimal.Parser<Byte.Input, UInt32>().parse(&slice)
+                } else {
+                    value = try ASCII.Decimal.Parser<Byte.Input, UInt32>().parse(&slice)
+                }
+            } catch {
+                // No digits, a non-digit byte, or overflow — all map onto the
+                // single invalid-character-reference outcome the loop produced.
+                throw .invalidCharacterReference(isHex ? "&#x..." : "&#...")
+            }
+            // A non-digit byte before ';' (e.g. "&#x1g2;") leaves an unconsumed
+            // remainder; reject it exactly as the per-byte validation did.
+            guard slice.isEmpty else {
+                throw .invalidCharacterReference(isHex ? "&#x..." : "&#...")
+            }
+
             // Expect ';'
-            guard input.first == .ascii.semicolon else {
+            guard input.first == ASCII.Code.semicolon.byte else {
                 throw .expected(";")
             }
             _ = input.removeFirst()
@@ -277,7 +291,7 @@ extension W3C_XML.Parse {
             let name = try Name<Input>().parse(&input)
 
             // Expect ';'
-            guard input.first == .ascii.semicolon else {
+            guard input.first == ASCII.Code.semicolon.byte else {
                 throw .expected(";")
             }
             _ = input.removeFirst()

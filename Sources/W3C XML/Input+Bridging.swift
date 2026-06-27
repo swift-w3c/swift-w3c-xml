@@ -4,7 +4,11 @@
 /// Bridging extensions for Input.Streaming to provide `first` and `removeFirst()`
 /// convenience methods used throughout the XML parser codebase.
 
-import Input_Primitives
+// `public import`: the `first` / `removeFirst` bridging members below are
+// `@inlinable`, so the `Input.Streaming` protocol and its `Element` associated
+// type they reference must be visible at the inlinable surface — an internal
+// import leaves them internal-only ([MemberImportVisibility]).
+public import Input_Primitives
 
 // MARK: - first / removeFirst bridging
 

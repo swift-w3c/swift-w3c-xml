@@ -3,6 +3,7 @@
 ///
 /// Content parsers for text, comments, CDATA, and processing instructions.
 
+public import Input_Primitives
 import Parser_Primitives
 
 // MARK: - CharData Parser
@@ -17,8 +18,8 @@ extension W3C_XML.Parse {
     ///
     /// Parses text until `<`, `&`, or end of input. Does not consume references.
     /// Returns empty string if no text found (to allow Many to continue).
-    public struct CharData<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct CharData<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
         public typealias Failure = Never
 
@@ -27,32 +28,32 @@ extension W3C_XML.Parse {
 
         @inlinable
         public func parse(_ input: inout Input) -> Output {
-            var bytes: [UInt8] = []
+            var bytes: [Byte] = []
 
             while let byte = input.first {
                 // Stop at < or &
-                if byte == .ascii.lessThanSign || byte == .ascii.ampersand {
+                if byte == ASCII.Code.lessThanSign.byte || byte == ASCII.Code.ampersand.byte {
                     break
                 }
                 // Check for forbidden ]]> sequence
-                if byte == .ascii.rightBracket {
+                if byte == ASCII.Code.rightBracket.byte {
                     // Look ahead for ]>
                     let saved = input
                     _ = input.removeFirst()
-                    if input.first == .ascii.rightBracket {
+                    if input.first == ASCII.Code.rightBracket.byte {
                         _ = input.removeFirst()
-                        if input.first == .ascii.greaterThanSign {
+                        if input.first == ASCII.Code.greaterThanSign.byte {
                             // Found ]]> - restore and stop
                             input = saved
                             break
                         }
                         // Not ]]>, add both ] to bytes
-                        bytes.append(.ascii.rightBracket)
-                        bytes.append(.ascii.rightBracket)
+                        bytes.append(ASCII.Code.rightBracket.byte)
+                        bytes.append(ASCII.Code.rightBracket.byte)
                         continue
                     }
                     // Single ], add to bytes
-                    bytes.append(.ascii.rightBracket)
+                    bytes.append(ASCII.Code.rightBracket.byte)
                     continue
                 }
                 bytes.append(input.removeFirst())
@@ -65,8 +66,8 @@ extension W3C_XML.Parse {
     /// Parses character data with entity references.
     ///
     /// Like CharData but also handles entity references (&lt; etc).
-    public struct TextContent<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct TextContent<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -78,9 +79,9 @@ extension W3C_XML.Parse {
             var result = ""
 
             while let byte = input.first {
-                if byte == .ascii.lessThanSign {
+                if byte == ASCII.Code.lessThanSign.byte {
                     break
-                } else if byte == .ascii.ampersand {
+                } else if byte == ASCII.Code.ampersand.byte {
                     // Parse reference
                     let resolved = try Reference<Input>().parse(&input)
                     result += resolved
@@ -106,8 +107,8 @@ extension W3C_XML.Parse {
     /// ```
     ///
     /// Note: Comments cannot contain `--` except at the end.
-    public struct Comment<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct Comment<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -119,29 +120,29 @@ extension W3C_XML.Parse {
             // Match <!--
             try expectLiteral(&input, "<!--")
 
-            var bytes: [UInt8] = []
+            var bytes: [Byte] = []
 
             while true {
                 guard let byte = input.first else {
                     throw .unexpectedEndOfInput(expected: "-->")
                 }
 
-                if byte == .ascii.hyphen {
+                if byte == ASCII.Code.hyphen.byte {
                     _ = input.removeFirst()
                     guard let next = input.first else {
                         throw .unexpectedEndOfInput(expected: "-->")
                     }
-                    if next == .ascii.hyphen {
+                    if next == ASCII.Code.hyphen.byte {
                         _ = input.removeFirst()
                         // Must be followed by >
-                        guard input.first == .ascii.greaterThanSign else {
+                        guard input.first == ASCII.Code.greaterThanSign.byte else {
                             throw .expected("> after --")
                         }
                         _ = input.removeFirst()
                         return String(decoding: bytes, as: UTF8.self)
                     }
                     // Single -, add to content
-                    bytes.append(.ascii.hyphen)
+                    bytes.append(ASCII.Code.hyphen.byte)
                     continue
                 }
                 bytes.append(input.removeFirst())
@@ -162,8 +163,8 @@ extension W3C_XML.Parse {
     /// CData ::= (Char* - (Char* ']]>' Char*))
     /// CDEnd ::= ']]>'
     /// ```
-    public struct CDATASection<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct CDATASection<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -175,31 +176,31 @@ extension W3C_XML.Parse {
             // Match <![CDATA[
             try expectLiteral(&input, "<![CDATA[")
 
-            var bytes: [UInt8] = []
+            var bytes: [Byte] = []
 
             while true {
                 guard let byte = input.first else {
                     throw .unexpectedEndOfInput(expected: "]]>")
                 }
 
-                if byte == .ascii.rightBracket {
+                if byte == ASCII.Code.rightBracket.byte {
                     _ = input.removeFirst()
                     guard let next = input.first else {
                         throw .unexpectedEndOfInput(expected: "]]>")
                     }
-                    if next == .ascii.rightBracket {
+                    if next == ASCII.Code.rightBracket.byte {
                         _ = input.removeFirst()
-                        if input.first == .ascii.greaterThanSign {
+                        if input.first == ASCII.Code.greaterThanSign.byte {
                             _ = input.removeFirst()
                             return String(decoding: bytes, as: UTF8.self)
                         }
                         // Not end, add both ]
-                        bytes.append(.ascii.rightBracket)
-                        bytes.append(.ascii.rightBracket)
+                        bytes.append(ASCII.Code.rightBracket.byte)
+                        bytes.append(ASCII.Code.rightBracket.byte)
                         continue
                     }
                     // Single ]
-                    bytes.append(.ascii.rightBracket)
+                    bytes.append(ASCII.Code.rightBracket.byte)
                     continue
                 }
                 bytes.append(input.removeFirst())
@@ -218,8 +219,8 @@ extension W3C_XML.Parse {
     /// PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'
     /// PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
     /// ```
-    public struct ProcessingInstruction<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct ProcessingInstruction<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Instruction
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -245,16 +246,16 @@ extension W3C_XML.Parse {
             if let byte = input.first, W3C_XML.isWhitespace(byte) {
                 Whitespace<Input>().parse(&input)
 
-                var bytes: [UInt8] = []
+                var bytes: [Byte] = []
 
                 while true {
                     guard let byte = input.first else {
                         throw .unexpectedEndOfInput(expected: "?>")
                     }
 
-                    if byte == .ascii.questionMark {
+                    if byte == ASCII.Code.questionMark.byte {
                         _ = input.removeFirst()
-                        if input.first == .ascii.greaterThanSign {
+                        if input.first == ASCII.Code.greaterThanSign.byte {
                             _ = input.removeFirst()
                             if !bytes.isEmpty {
                                 data = String(decoding: bytes, as: UTF8.self)
@@ -262,7 +263,7 @@ extension W3C_XML.Parse {
                             return W3C_XML.Instruction(target: target.qualified, data: data)
                         }
                         // Not end, add ?
-                        bytes.append(.ascii.questionMark)
+                        bytes.append(ASCII.Code.questionMark.byte)
                         continue
                     }
                     bytes.append(input.removeFirst())
@@ -282,11 +283,11 @@ extension W3C_XML.Parse {
 extension W3C_XML.Parse {
     /// Expects and consumes a literal byte sequence.
     @inlinable
-    static func expectLiteral<Input: Parser_Primitives.Parser.Input.Streaming>(
+    static func expectLiteral<Input: Input_Primitives.Input.Streaming>(
         _ input: inout Input,
         _ string: StaticString
     ) throws(W3C_XML.Parse.Error)
-    where Input.Element == UInt8 {
+    where Input.Element == Byte {
         let bytes = Swift.Array(string.utf8Start.withMemoryRebound(
             to: UInt8.self,
             capacity: string.utf8CodeUnitCount
@@ -298,7 +299,7 @@ extension W3C_XML.Parse {
             guard let actual = input.first else {
                 throw .unexpectedEndOfInput(expected: String(cString: string.utf8Start))
             }
-            guard actual == expected else {
+            guard actual.underlying == expected else {
                 throw .expected(String(cString: string.utf8Start))
             }
             _ = input.removeFirst()

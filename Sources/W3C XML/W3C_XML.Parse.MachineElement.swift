@@ -3,6 +3,7 @@
 ///
 /// Stack-safe element parser using Parser.Machine for arbitrary nesting depth.
 
+public import Input_Primitives
 import Parser_Primitives
 import Parser_Machine_Primitives
 
@@ -30,8 +31,8 @@ extension W3C_XML.Parse {
     ///
     /// Returns the element name, attributes, namespaces, and whether it's empty (/>).
     @usableFromInline
-    struct StartTag<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    struct StartTag<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         @usableFromInline typealias Output = StartTagOutput
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
 
@@ -41,7 +42,7 @@ extension W3C_XML.Parse {
         @usableFromInline
         func parse(_ input: inout Input) throws(Failure) -> Output {
             // Expect <
-            guard input.first == .ascii.lessThanSign else {
+            guard input.first == ASCII.Code.lessThanSign.byte else {
                 throw .expected("<")
             }
             _ = input.removeFirst()
@@ -62,7 +63,7 @@ extension W3C_XML.Parse {
                 }
 
                 // Check for tag end
-                if byte == .ascii.greaterThanSign {
+                if byte == ASCII.Code.greaterThanSign.byte {
                     _ = input.removeFirst()
                     return StartTagOutput(
                         name: name,
@@ -72,9 +73,9 @@ extension W3C_XML.Parse {
                     )
                 }
 
-                if byte == .ascii.solidus {
+                if byte == ASCII.Code.solidus.byte {
                     _ = input.removeFirst()
-                    guard input.first == .ascii.greaterThanSign else {
+                    guard input.first == ASCII.Code.greaterThanSign.byte else {
                         throw .expected(">")
                     }
                     _ = input.removeFirst()
@@ -114,8 +115,8 @@ extension W3C_XML.Parse {
     ///
     /// Validation of tag name matching happens in tryMap after parsing.
     @usableFromInline
-    struct EndTagAny<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    struct EndTagAny<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         @usableFromInline typealias Output = W3C_XML.Name
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
 
@@ -125,12 +126,12 @@ extension W3C_XML.Parse {
         @usableFromInline
         func parse(_ input: inout Input) throws(Failure) -> W3C_XML.Name {
             // Expect </
-            guard input.first == .ascii.lessThanSign else {
+            guard input.first == ASCII.Code.lessThanSign.byte else {
                 throw .expected("</")
             }
             _ = input.removeFirst()
 
-            guard input.first == .ascii.solidus else {
+            guard input.first == ASCII.Code.solidus.byte else {
                 throw .expected("</")
             }
             _ = input.removeFirst()
@@ -140,7 +141,7 @@ extension W3C_XML.Parse {
 
             Whitespace<Input>().parse(&input)
 
-            guard input.first == .ascii.greaterThanSign else {
+            guard input.first == ASCII.Code.greaterThanSign.byte else {
                 throw .expected(">")
             }
             _ = input.removeFirst()
@@ -175,10 +176,10 @@ extension W3C_XML.Parse {
     ///
     /// - Parameter maxDepth: Maximum nesting depth (default: 10000).
     /// - Returns: A parser for XML elements.
-    static func machineElement<Input: Parser_Primitives.Parser.Input.`Protocol`>(
+    static func machineElement<Input: Input_Primitives.Input.`Protocol`>(
         maxDepth: Int = 10000
     ) -> Parser_Primitives.Parser.Machine.Parser<Input, W3C_XML.Element, W3C_XML.Parse.Error>
-    where Input: Sendable, Input.Element == UInt8 {
+    where Input: Sendable, Input.Element == Byte {
         typealias Builder = Parser_Primitives.Parser.Machine.Builder<Input, W3C_XML.Parse.Error>
         typealias Expr<T> = Parser_Primitives.Parser.Machine.Expression<Input, W3C_XML.Parse.Error, T>
         typealias Ref<T> = Parser_Primitives.Parser.Machine.Reference<Input, W3C_XML.Parse.Error, T>
@@ -325,8 +326,8 @@ extension W3C_XML.Parse {
     /// Parses non-empty text content (character data and/or references).
     /// Fails if the result would be empty.
     @usableFromInline
-    struct NonEmptyTextContent<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    struct NonEmptyTextContent<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         @usableFromInline typealias Output = String
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
 
@@ -335,7 +336,7 @@ extension W3C_XML.Parse {
 
         @usableFromInline
         func parse(_ input: inout Input) throws(Failure) -> String {
-            var result: [UInt8] = []
+            var result: [Byte] = []
             var iterationCount = 0
             let maxIterations = 1_000_000 // Safety limit
 
@@ -343,10 +344,10 @@ extension W3C_XML.Parse {
                 iterationCount += 1
                 precondition(iterationCount < maxIterations, "NonEmptyTextContent: runaway loop detected")
 
-                if byte == .ascii.lessThanSign {
+                if byte == ASCII.Code.lessThanSign.byte {
                     // Start of tag or other markup
                     break
-                } else if byte == .ascii.ampersand {
+                } else if byte == ASCII.Code.ampersand.byte {
                     // Reference - must consume &
                     let resolved = try Reference<Input>().parse(&input)
                     result.append(contentsOf: resolved.utf8)

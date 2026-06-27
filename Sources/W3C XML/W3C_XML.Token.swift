@@ -80,7 +80,7 @@ extension W3C_XML {
         case instruction
         case xmlDeclaration
         case doctype
-        case unknown(UInt8)
+        case unknown(Byte)
     }
 }
 

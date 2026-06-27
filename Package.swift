@@ -20,7 +20,9 @@ let package = Package(
         .package(url: "https://github.com/swift-primitives/swift-parser-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-parser-machine-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-binary-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-ascii-primitives.git", branch: "main")
+        .package(url: "https://github.com/swift-primitives/swift-ascii-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-ascii-parser-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-byte-parser-primitives.git", branch: "main")
     ],
     targets: [
         .target(
@@ -30,7 +32,10 @@ let package = Package(
                 .product(name: "Parser Primitives", package: "swift-parser-primitives"),
                 .product(name: "Parser Machine Primitives", package: "swift-parser-machine-primitives"),
                 .product(name: "Binary Primitives", package: "swift-binary-primitives"),
-                .product(name: "ASCII Primitives", package: "swift-ascii-primitives")
+                .product(name: "ASCII Primitives", package: "swift-ascii-primitives"),
+                .product(name: "ASCII Decimal Parser Primitives", package: "swift-ascii-parser-primitives"),
+                .product(name: "ASCII Hexadecimal Parser Primitives", package: "swift-ascii-parser-primitives"),
+                .product(name: "Byte Parser Primitives", package: "swift-byte-parser-primitives")
             ]
         ),
         .executableTarget(

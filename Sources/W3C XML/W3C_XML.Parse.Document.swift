@@ -4,6 +4,8 @@
 /// Document-level parsers including XML declaration and DOCTYPE.
 
 import ASCII_Primitives
+public import Input_Primitives
+public import Byte_Parser_Primitives
 import Parser_Primitives
 import Parser_Machine_Primitives
 
@@ -17,8 +19,8 @@ extension W3C_XML.Parse {
     /// XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>'
     /// VersionInfo ::= S 'version' Eq ("'" VersionNum "'" | '"' VersionNum '"')
     /// ```
-    public struct XMLDeclaration<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct XMLDeclaration<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Declaration
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -89,12 +91,12 @@ extension W3C_XML.Parse {
         @inlinable
         func parseQuotedValue(_ input: inout Input) throws(Failure) -> String {
             guard let quote = input.first,
-                  quote == .ascii.quotationMark || quote == .ascii.apostrophe else {
+                  quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte else {
                 throw .expected("\" or '")
             }
             _ = input.removeFirst()
 
-            var bytes: [UInt8] = []
+            var bytes: [Byte] = []
             while let byte = input.first, byte != quote {
                 bytes.append(input.removeFirst())
             }
@@ -119,7 +121,7 @@ extension W3C_XML.Parse {
 
             let saved = input
             for expected in bytes {
-                guard let actual = input.first, actual == expected else {
+                guard let actual = input.first, actual.underlying == expected else {
                     input = saved
                     return false
                 }
@@ -139,8 +141,8 @@ extension W3C_XML.Parse {
     /// ```
     /// doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>'
     /// ```
-    public struct Doctype<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct Doctype<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Doctype
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -178,18 +180,18 @@ extension W3C_XML.Parse {
             Whitespace<Input>().parse(&input)
 
             // Check for internal subset
-            if input.first == .ascii.leftBracket {
+            if input.first == ASCII.Code.leftBracket.byte {
                 _ = input.removeFirst()
-                var bytes: [UInt8] = []
+                var bytes: [Byte] = []
                 var depth = 1
 
                 while depth > 0 {
                     guard let byte = input.first else {
                         throw .unexpectedEndOfInput(expected: "]")
                     }
-                    if byte == .ascii.leftBracket {
+                    if byte == ASCII.Code.leftBracket.byte {
                         depth += 1
-                    } else if byte == .ascii.rightBracket {
+                    } else if byte == ASCII.Code.rightBracket.byte {
                         depth -= 1
                         if depth == 0 {
                             _ = input.removeFirst()
@@ -203,7 +205,7 @@ extension W3C_XML.Parse {
 
             Whitespace<Input>().parse(&input)
 
-            guard input.first == .ascii.greaterThanSign else {
+            guard input.first == ASCII.Code.greaterThanSign.byte else {
                 throw .expected(">")
             }
             _ = input.removeFirst()
@@ -220,12 +222,12 @@ extension W3C_XML.Parse {
         @inlinable
         func parseQuotedValue(_ input: inout Input) throws(Failure) -> String {
             guard let quote = input.first,
-                  quote == .ascii.quotationMark || quote == .ascii.apostrophe else {
+                  quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte else {
                 throw .expected("\" or '")
             }
             _ = input.removeFirst()
 
-            var bytes: [UInt8] = []
+            var bytes: [Byte] = []
             while let byte = input.first, byte != quote {
                 bytes.append(input.removeFirst())
             }
@@ -250,7 +252,7 @@ extension W3C_XML.Parse {
 
             let saved = input
             for expected in bytes {
-                guard let actual = input.first, actual == expected else {
+                guard let actual = input.first, actual.underlying == expected else {
                     input = saved
                     return false
                 }
@@ -271,8 +273,8 @@ extension W3C_XML.Parse {
     /// document ::= prolog element Misc*
     /// prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
     /// ```
-    public struct Document<Input: Parser_Primitives.Parser.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct Document<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Document
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -298,7 +300,7 @@ extension W3C_XML.Parse {
 
             // Parse prolog
             while let byte = input.first {
-                if byte == .ascii.lessThanSign {
+                if byte == ASCII.Code.lessThanSign.byte {
                     let saved = input
                     _ = input.removeFirst()
 
@@ -307,7 +309,7 @@ extension W3C_XML.Parse {
                         throw .unexpectedEndOfInput(expected: "element")
                     }
 
-                    if next == .ascii.questionMark {
+                    if next == ASCII.Code.questionMark.byte {
                         // PI or XML declaration
                         input = saved
 
@@ -322,7 +324,7 @@ extension W3C_XML.Parse {
                                 epilogue.append(.instruction(pi))
                             }
                         }
-                    } else if next == .ascii.exclamationPoint {
+                    } else if next == ASCII.Code.exclamationPoint.byte {
                         // Comment or DOCTYPE
                         _ = input.removeFirst()
                         guard let third = input.first else {
@@ -330,7 +332,7 @@ extension W3C_XML.Parse {
                             throw .unexpectedEndOfInput(expected: "comment or DOCTYPE")
                         }
 
-                        if third == .ascii.hyphen {
+                        if third == ASCII.Code.hyphen.byte {
                             // Comment
                             input = saved
                             let text = try Comment<Input>().parse(&input)
@@ -338,7 +340,7 @@ extension W3C_XML.Parse {
                                 epilogue.append(.comment(text))
                             }
                             // Comments before root are ignored per XML spec
-                        } else if third == .ascii.D {
+                        } else if third == ASCII.Code.D.byte {
                             // DOCTYPE
                             input = saved
                             doctype = try Doctype<Input>().parse(&input)
@@ -380,10 +382,10 @@ extension W3C_XML.Parse {
             let saved = input
 
             // Check for <?xml followed by whitespace
-            let pattern: [UInt8] = [
-                .ascii.lessThanSign,
-                .ascii.questionMark,
-                .ascii.x, .ascii.m, .ascii.l
+            let pattern: [Byte] = [
+                ASCII.Code.lessThanSign.byte,
+                ASCII.Code.questionMark.byte,
+                ASCII.Code.x.byte, ASCII.Code.m.byte, ASCII.Code.l.byte
             ]
 
             for expected in pattern {
@@ -428,19 +430,19 @@ extension W3C_XML {
         _ string: String,
         maxDepth: Int = 10000
     ) throws(Parse.Error) -> Document {
-        var input = Parser_Primitives.Parser.Input.Bytes(Swift.Array(string.utf8))
+        var input = Byte.Input(Swift.Array(string.utf8))
 
         // Skip leading whitespace
-        Parse.Whitespace<Parser_Primitives.Parser.Input.Bytes>().parse(&input)
+        Parse.Whitespace<Byte.Input>().parse(&input)
 
         // Check for XML declaration
         var declaration: Declaration?
-        if let byte = input.first, byte == .ascii.lessThanSign {
+        if let byte = input.first, byte == ASCII.Code.lessThanSign.byte {
             let saved = input
             _ = input.removeFirst()
-            if let next = input.first, next == .ascii.questionMark {
+            if let next = input.first, next == ASCII.Code.questionMark.byte {
                 input = saved
-                if let decl = try? Parse.XMLDeclaration<Parser_Primitives.Parser.Input.Bytes>().parse(&input) {
+                if let decl = try? Parse.XMLDeclaration<Byte.Input>().parse(&input) {
                     declaration = decl
                 } else {
                     // XMLDeclaration parsing failed - restore input for prologue parsing
@@ -454,8 +456,8 @@ extension W3C_XML {
         // Parse prologue (processing instructions and comments before root)
         var prologue: [Instruction] = []
         while true {
-            Parse.Whitespace<Parser_Primitives.Parser.Input.Bytes>().parse(&input)
-            guard let byte = input.first, byte == .ascii.lessThanSign else { break }
+            Parse.Whitespace<Byte.Input>().parse(&input)
+            guard let byte = input.first, byte == ASCII.Code.lessThanSign.byte else { break }
 
             let saved = input
             _ = input.removeFirst()
@@ -464,20 +466,20 @@ extension W3C_XML {
                 break
             }
 
-            if next == .ascii.questionMark {
+            if next == ASCII.Code.questionMark.byte {
                 // Processing instruction
                 input = saved
-                if let pi = try? Parse.ProcessingInstruction<Parser_Primitives.Parser.Input.Bytes>().parse(&input) {
+                if let pi = try? Parse.ProcessingInstruction<Byte.Input>().parse(&input) {
                     prologue.append(pi)
                     continue
                 }
                 input = saved
                 break
-            } else if next == UInt8.ascii.exclamationPoint {
+            } else if next == ASCII.Code.exclamationPoint.byte {
                 // Could be comment (<!--) - skip for now, comments aren't instructions
                 input = saved
                 // Try to parse comment and discard
-                if let _ = try? Parse.Comment<Parser_Primitives.Parser.Input.Bytes>().parse(&input) {
+                if let _ = try? Parse.Comment<Byte.Input>().parse(&input) {
                     continue
                 }
                 input = saved
@@ -491,14 +493,14 @@ extension W3C_XML {
 
         // Parse root element using Machine parser
         let machineParser = Parse.machineElement(maxDepth: maxDepth)
-            as Parser_Primitives.Parser.Machine.Parser<Parser_Primitives.Parser.Input.Bytes, Element, Parse.Error>
+            as Parser_Primitives.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
         let root = try machineParser.parse(&input)
 
         // Parse epilogue (processing instructions and comments after root)
         var epilogue: [Content] = []
         while true {
-            Parse.Whitespace<Parser_Primitives.Parser.Input.Bytes>().parse(&input)
-            guard let byte = input.first, byte == .ascii.lessThanSign else { break }
+            Parse.Whitespace<Byte.Input>().parse(&input)
+            guard let byte = input.first, byte == ASCII.Code.lessThanSign.byte else { break }
 
             let saved = input
             _ = input.removeFirst()
@@ -507,19 +509,19 @@ extension W3C_XML {
                 break
             }
 
-            if next == .ascii.questionMark {
+            if next == ASCII.Code.questionMark.byte {
                 // Processing instruction
                 input = saved
-                if let pi = try? Parse.ProcessingInstruction<Parser_Primitives.Parser.Input.Bytes>().parse(&input) {
+                if let pi = try? Parse.ProcessingInstruction<Byte.Input>().parse(&input) {
                     epilogue.append(.instruction(pi))
                     continue
                 }
                 input = saved
                 break
-            } else if next == UInt8.ascii.exclamationPoint {
+            } else if next == ASCII.Code.exclamationPoint.byte {
                 // Could be comment (<!--)
                 input = saved
-                if let comment = try? Parse.Comment<Parser_Primitives.Parser.Input.Bytes>().parse(&input) {
+                if let comment = try? Parse.Comment<Byte.Input>().parse(&input) {
                     epilogue.append(.comment(comment))
                     continue
                 }
@@ -533,7 +535,7 @@ extension W3C_XML {
         }
 
         // Verify no remaining non-whitespace content
-        Parse.Whitespace<Parser_Primitives.Parser.Input.Bytes>().parse(&input)
+        Parse.Whitespace<Byte.Input>().parse(&input)
         if !input.isEmpty {
             throw Parse.Error.expected("end of input (multiple root elements not allowed)")
         }
@@ -561,19 +563,19 @@ extension W3C_XML {
         maxDepth: Int = 10000
     ) throws(Parse.Error) -> Document
     where Bytes: Swift.Collection<UInt8>, Bytes: Sendable {
-        var input = Parser_Primitives.Parser.Input.Bytes(Swift.Array(bytes))
+        var input = Byte.Input(Swift.Array(bytes))
 
         // Skip leading whitespace
-        Parse.Whitespace<Parser_Primitives.Parser.Input.Bytes>().parse(&input)
+        Parse.Whitespace<Byte.Input>().parse(&input)
 
         // Check for XML declaration
         var declaration: Declaration?
-        if let byte = input.first, byte == .ascii.lessThanSign {
+        if let byte = input.first, byte == ASCII.Code.lessThanSign.byte {
             let saved = input
             _ = input.removeFirst()
-            if let next = input.first, next == .ascii.questionMark {
+            if let next = input.first, next == ASCII.Code.questionMark.byte {
                 input = saved
-                if let decl = try? Parse.XMLDeclaration<Parser_Primitives.Parser.Input.Bytes>().parse(&input) {
+                if let decl = try? Parse.XMLDeclaration<Byte.Input>().parse(&input) {
                     declaration = decl
                 } else {
                     // XMLDeclaration parsing failed - restore input for prologue parsing
@@ -585,11 +587,11 @@ extension W3C_XML {
         }
 
         // Skip whitespace before root
-        Parse.Whitespace<Parser_Primitives.Parser.Input.Bytes>().parse(&input)
+        Parse.Whitespace<Byte.Input>().parse(&input)
 
         // Parse root element using Machine parser
         let machineParser = Parse.machineElement(maxDepth: maxDepth)
-            as Parser_Primitives.Parser.Machine.Parser<Parser_Primitives.Parser.Input.Bytes, Element, Parse.Error>
+            as Parser_Primitives.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
         let root = try machineParser.parse(&input)
 
         return Document(
@@ -614,11 +616,11 @@ extension W3C_XML {
         _ string: String,
         maxDepth: Int = 10000
     ) throws(Parse.Error) -> Element {
-        var input = Parser_Primitives.Parser.Input.Bytes(Swift.Array(string.utf8))
-        Parse.Whitespace<Parser_Primitives.Parser.Input.Bytes>().parse(&input)
+        var input = Byte.Input(Swift.Array(string.utf8))
+        Parse.Whitespace<Byte.Input>().parse(&input)
 
         let machineParser = Parse.machineElement(maxDepth: maxDepth)
-            as Parser_Primitives.Parser.Machine.Parser<Parser_Primitives.Parser.Input.Bytes, Element, Parse.Error>
+            as Parser_Primitives.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
         return try machineParser.parse(&input)
     }
 }

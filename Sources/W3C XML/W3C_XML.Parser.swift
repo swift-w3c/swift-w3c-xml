@@ -3,6 +3,11 @@
 ///
 /// XML parser (~Copyable)
 
+public import Input_Primitives
+public import Byte_Parser_Primitives
+public import Buffer_Linear_Primitive
+public import Buffer_Linear_Primitives
+public import Shared_Primitive
 import Parser_Primitives
 
 extension W3C_XML {
@@ -25,8 +30,8 @@ extension W3C_XML {
     /// var parser = W3C_XML.Parser(consume input)
     /// let document = try parser.parse()
     /// ```
-    public struct Parser<Input: Parser_Primitives.Parser.Input.Streaming>: ~Copyable
-    where Input.Element == UInt8 {
+    public struct Parser<Input: Input_Primitives.Input.Streaming>: ~Copyable
+    where Input.Element == Byte {
         /// The underlying lexer.
         @usableFromInline
         internal var lexer: Lexer<Input>
@@ -439,8 +444,8 @@ extension W3C_XML {
     /// - Returns: The parsed element.
     /// - Throws: `W3C_XML.Parser.Error` if parsing fails.
     @inlinable
-    public static func fragment(_ string: String) throws(Parser<Parser_Primitives.Parser.Input.Bytes>.Error) -> Element {
-        var input = Parser_Primitives.Parser.Input.Bytes(Swift.Array(string.utf8))
+    public static func fragment(_ string: String) throws(Parser<Byte.Input>.Error) -> Element {
+        var input = Byte.Input(Swift.Array(string.utf8))
         var parser = Parser(consume input)
         return try parser.parseFragment()
     }

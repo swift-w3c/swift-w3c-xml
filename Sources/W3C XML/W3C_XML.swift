@@ -56,16 +56,16 @@ extension W3C_XML {
     ///
     /// Space (0x20), Tab (0x09), Carriage Return (0x0D), Line Feed (0x0A).
     @usableFromInline
-    static let whitespace: Set<UInt8> = [
-        .ascii.sp,      // Space (0x20)
-        .ascii.htab,    // Horizontal tab (0x09)
-        .ascii.cr,      // Carriage return (0x0D)
-        .ascii.lf,      // Line feed (0x0A)
+    static let whitespace: Set<Byte> = [
+        ASCII.Code.sp.byte,      // Space (0x20)
+        ASCII.Code.htab.byte,    // Horizontal tab (0x09)
+        ASCII.Code.cr.byte,      // Carriage return (0x0D)
+        ASCII.Code.lf.byte,      // Line feed (0x0A)
     ]
 
     /// Returns true if the byte is XML whitespace.
     @inlinable
-    public static func isWhitespace(_ byte: UInt8) -> Bool {
+    public static func isWhitespace(_ byte: Byte) -> Bool {
         whitespace.contains(byte)
     }
 }
@@ -124,19 +124,19 @@ extension W3C_XML {
 
     /// Returns true if the byte is a valid ASCII NameStartChar (fast path).
     @inlinable
-    public static func isASCIINameStartChar(_ byte: UInt8) -> Bool {
-        byte == .ascii.colon ||
-        (byte >= .ascii.A && byte <= .ascii.Z) ||
-        byte == .ascii.underline ||
-        (byte >= .ascii.a && byte <= .ascii.z)
+    public static func isASCIINameStartChar(_ byte: Byte) -> Bool {
+        byte == ASCII.Code.colon.byte ||
+        (byte >= ASCII.Code.A.byte && byte <= ASCII.Code.Z.byte) ||
+        byte == ASCII.Code.underline.byte ||
+        (byte >= ASCII.Code.a.byte && byte <= ASCII.Code.z.byte)
     }
 
     /// Returns true if the byte is a valid ASCII NameChar (fast path).
     @inlinable
-    public static func isASCIINameChar(_ byte: UInt8) -> Bool {
+    public static func isASCIINameChar(_ byte: Byte) -> Bool {
         isASCIINameStartChar(byte) ||
-        byte == .ascii.hyphen ||
-        byte == .ascii.period ||
+        byte == ASCII.Code.hyphen.byte ||
+        byte == ASCII.Code.period.byte ||
         (byte >= .ascii.`0` && byte <= .ascii.`9`)
     }
 }
