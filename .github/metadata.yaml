@@ -1,6 +1,6 @@
 # .github/metadata.yaml
 # Triaged by AI-assisted bulk pass (2026-04-29).
-description: "Swift implementation of W3C Extensible Markup Language (XML)."
+description: "Swift implementation of W3C Extensible Markup Language (XML) 1.0 (Fifth Edition)."
 topics:
   - standards
   - w3c
