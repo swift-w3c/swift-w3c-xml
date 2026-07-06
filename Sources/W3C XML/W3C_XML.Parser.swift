@@ -72,54 +72,15 @@ extension W3C_XML {
 
 extension W3C_XML.Parser {
     /// Parser errors.
-    public enum Error: Swift.Error, Sendable, Hashable {
-        /// Lexer error (wrapped).
-        case lexer(W3C_XML.Lexer<Input>.Error)
-
-        /// Unexpected token.
-        case unexpectedToken(found: W3C_XML.TokenKind, expected: String, at: W3C_XML.Position)
-
-        /// Unexpected end of input.
-        case unexpectedEndOfInput(expected: String, at: W3C_XML.Position)
-
-        /// Mismatched element tags.
-        case mismatchedTags(open: String, close: String, at: W3C_XML.Position)
-
-        /// Depth exceeded.
-        case depthExceeded(limit: Int, at: W3C_XML.Position)
-
-        /// Duplicate attribute.
-        case duplicateAttribute(name: String, at: W3C_XML.Position)
-
-        /// Missing root element.
-        case missingRootElement(at: W3C_XML.Position)
-
-        /// Multiple root elements.
-        case multipleRootElements(at: W3C_XML.Position)
-    }
-}
-
-extension W3C_XML.Parser.Error: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .lexer(let error):
-            return "Lexer error: \(error)"
-        case .unexpectedToken(let found, let expected, let pos):
-            return "Unexpected \(found) at \(pos), expected \(expected)"
-        case .unexpectedEndOfInput(let expected, let pos):
-            return "Unexpected end of input at \(pos), expected \(expected)"
-        case .mismatchedTags(let open, let close, let pos):
-            return "Mismatched tags at \(pos): opened '\(open)' but closed '\(close)'"
-        case .depthExceeded(let limit, let pos):
-            return "Maximum nesting depth (\(limit)) exceeded at \(pos)"
-        case .duplicateAttribute(let name, let pos):
-            return "Duplicate attribute '\(name)' at \(pos)"
-        case .missingRootElement(let pos):
-            return "Missing root element at \(pos)"
-        case .multipleRootElements(let pos):
-            return "Multiple root elements at \(pos)"
-        }
-    }
+    ///
+    /// Spelled `W3C_XML.Parser.Error`; the underlying type is the module-scope,
+    /// non-generic `__W3CXMLParserError`, hoisted out of the generic `Parser<Input>`
+    /// context so the `@error` SIL result carries no phantom `Input` type
+    /// parameter - the structural fix for the `FunctionSignatureOpts` release-build
+    /// ICE (`SILArgument.cpp:40`; Research section A13 / swiftlang/swift#89617).
+    /// The wrapped lexer error is the module-scope `__W3CXMLLexerError` (spelled
+    /// `Lexer.Error`).
+    public typealias Error = __W3CXMLParserError
 }
 
 // MARK: - Parser Public API

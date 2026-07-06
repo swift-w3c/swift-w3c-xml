@@ -73,49 +73,13 @@ extension W3C_XML.Lexer {
 
 extension W3C_XML.Lexer {
     /// Lexer errors.
-    public enum Error: Swift.Error, Sendable, Hashable {
-        /// Invalid character encountered.
-        case invalidCharacter(Unicode.Scalar, at: W3C_XML.Position)
-
-        /// Unexpected end of input.
-        case unexpectedEndOfInput(expected: String, at: W3C_XML.Position)
-
-        /// Invalid entity reference.
-        case invalidEntity(String, at: W3C_XML.Position)
-
-        /// Invalid name character.
-        case invalidName(at: W3C_XML.Position)
-
-        /// Invalid UTF-8 byte sequence.
-        case invalidUTF8(byte: Byte, at: W3C_XML.Position)
-
-        /// Unterminated construct.
-        case unterminated(construct: String, at: W3C_XML.Position)
-
-        /// Invalid XML declaration.
-        case invalidDeclaration(reason: String, at: W3C_XML.Position)
-    }
-}
-
-extension W3C_XML.Lexer.Error: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .invalidCharacter(let scalar, let pos):
-            return "Invalid character U+\(String(scalar.value, radix: 16, uppercase: true)) at \(pos)"
-        case .unexpectedEndOfInput(let expected, let pos):
-            return "Unexpected end of input at \(pos), expected \(expected)"
-        case .invalidEntity(let name, let pos):
-            return "Invalid entity reference '\(name)' at \(pos)"
-        case .invalidName(let pos):
-            return "Invalid name at \(pos)"
-        case .invalidUTF8(let byte, let pos):
-            return "Invalid UTF-8 byte 0x\(String(byte, radix: 16)) at \(pos)"
-        case .unterminated(let construct, let pos):
-            return "Unterminated \(construct) at \(pos)"
-        case .invalidDeclaration(let reason, let pos):
-            return "Invalid XML declaration at \(pos): \(reason)"
-        }
-    }
+    ///
+    /// Spelled `W3C_XML.Lexer.Error`; the underlying type is the module-scope,
+    /// non-generic `__W3CXMLLexerError`, hoisted out of the generic `Lexer<Input>`
+    /// context so the `@error` SIL result carries no phantom `Input` type
+    /// parameter - the structural fix for the `FunctionSignatureOpts` release-build
+    /// ICE (`SILArgument.cpp:40`; Research section A13 / swiftlang/swift#89617).
+    public typealias Error = __W3CXMLLexerError
 }
 
 // MARK: - Lexer Core Methods
