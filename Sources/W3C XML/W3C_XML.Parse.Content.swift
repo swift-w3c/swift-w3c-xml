@@ -288,12 +288,14 @@ extension W3C_XML.Parse {
         _ string: StaticString
     ) throws(W3C_XML.Parse.Error)
     where Input.Element == Byte {
-        let bytes = Swift.Array(string.utf8Start.withMemoryRebound(
-            to: UInt8.self,
-            capacity: string.utf8CodeUnitCount
-        ) {
-            UnsafeBufferPointer(start: $0, count: string.utf8CodeUnitCount)
-        })
+        let bytes = Swift.Array(
+            string.utf8Start.withMemoryRebound(
+                to: UInt8.self,
+                capacity: string.utf8CodeUnitCount
+            ) {
+                UnsafeBufferPointer(start: $0, count: string.utf8CodeUnitCount)
+            }
+        )
 
         for expected in bytes {
             guard let actual = input.first else {

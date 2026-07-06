@@ -1,8 +1,8 @@
-/// Input+Bridging.swift
-/// swift-w3c-xml
-///
-/// Bridging extensions for Input.Streaming to provide `first` and `removeFirst()`
-/// convenience methods used throughout the XML parser codebase.
+// Input+Bridging.swift
+// swift-w3c-xml
+//
+// Bridging extensions for Input.Streaming to provide `first` and `removeFirst()`
+// convenience methods used throughout the XML parser codebase.
 
 // `public import`: the `first` / `removeFirst` bridging members below are
 // `@inlinable`, so the `Input.Streaming` protocol and its `Element` associated

@@ -49,7 +49,8 @@ extension W3C_XML.Parse {
         @inlinable
         func parseAttValue(_ input: inout Input) throws(Failure) -> String {
             guard let quote = input.first,
-                  quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte else {
+                quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte
+            else {
                 throw .expected("\" or '")
             }
             _ = input.removeFirst()

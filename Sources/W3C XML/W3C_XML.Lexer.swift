@@ -112,7 +112,7 @@ extension W3C_XML.Lexer {
         }
 
         switch byte {
-        case ASCII.Code.lessThanSign.byte:           // <
+        case ASCII.Code.lessThanSign.byte:  // <
             return try lexMarkup()
 
         default:
@@ -124,22 +124,22 @@ extension W3C_XML.Lexer {
     @inlinable
     internal mutating func lexMarkup() throws(Error) -> W3C_XML.Token {
         let startPos = position
-        advance() // consume <
+        advance()  // consume <
 
         guard let byte = input.first else {
             throw .unexpectedEndOfInput(expected: "tag name or markup", at: startPos)
         }
 
         switch byte {
-        case ASCII.Code.solidus.byte:            // </  (end tag)
+        case ASCII.Code.solidus.byte:  // </  (end tag)
             advance()
             return try lexEndTag()
 
-        case ASCII.Code.exclamationPoint.byte:   // <!  (comment, CDATA, DOCTYPE)
+        case ASCII.Code.exclamationPoint.byte:  // <!  (comment, CDATA, DOCTYPE)
             advance()
             return try lexBangMarkup(startPos: startPos)
 
-        case ASCII.Code.questionMark.byte:       // <?  (PI or XML declaration)
+        case ASCII.Code.questionMark.byte:  // <?  (PI or XML declaration)
             advance()
             return try lexProcessingInstruction(startPos: startPos)
 
@@ -174,12 +174,12 @@ extension W3C_XML.Lexer {
         }
 
         switch byte {
-        case ASCII.Code.greaterThanSign.byte:        // >
+        case ASCII.Code.greaterThanSign.byte:  // >
             advance()
             state = .content
             return .tagClose
 
-        case ASCII.Code.solidus.byte:            // />
+        case ASCII.Code.solidus.byte:  // />
             advance()
             guard input.first == ASCII.Code.greaterThanSign.byte else {
                 throw .unexpectedEndOfInput(expected: "'>'", at: position)
@@ -188,7 +188,7 @@ extension W3C_XML.Lexer {
             state = .content
             return .emptyTagClose
 
-        case ASCII.Code.equalsSign.byte:         // =
+        case ASCII.Code.equalsSign.byte:  // =
             advance()
             return .equals
 
@@ -283,13 +283,13 @@ extension W3C_XML.Lexer {
         }
 
         switch byte {
-        case ASCII.Code.hyphen.byte:             // <!-- comment
+        case ASCII.Code.hyphen.byte:  // <!-- comment
             return try lexComment(startPos: startPos)
 
-        case ASCII.Code.leftBracket.byte:        // <![CDATA[
+        case ASCII.Code.leftBracket.byte:  // <![CDATA[
             return try lexCDATA(startPos: startPos)
 
-        case ASCII.Code.D.byte:                  // <!DOCTYPE
+        case ASCII.Code.D.byte:  // <!DOCTYPE
             return try lexDoctype(startPos: startPos)
 
         default:
@@ -337,7 +337,7 @@ extension W3C_XML.Lexer {
     @inlinable
     internal mutating func lexCDATA(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
         // Expect CDATA[
-        advance() // [
+        advance()  // [
         try expectLiteral([ASCII.Code.C.byte, ASCII.Code.D.byte, ASCII.Code.A.byte, ASCII.Code.T.byte, ASCII.Code.A.byte, ASCII.Code.leftBracket.byte])
 
         var text = ""
@@ -407,12 +407,14 @@ extension W3C_XML.Lexer {
         }
         advance()
 
-        return .doctype(W3C_XML.Doctype(
-            name: name,
-            publicID: publicID,
-            systemID: systemID,
-            internalSubset: internalSubset
-        ))
+        return .doctype(
+            W3C_XML.Doctype(
+                name: name,
+                publicID: publicID,
+                systemID: systemID,
+                internalSubset: internalSubset
+            )
+        )
     }
 
     /// Lexes the internal subset of a DOCTYPE.
@@ -559,11 +561,13 @@ extension W3C_XML.Lexer {
         }
         advance()
 
-        return .xmlDeclaration(W3C_XML.Declaration(
-            version: version,
-            encoding: encoding,
-            standalone: standalone
-        ))
+        return .xmlDeclaration(
+            W3C_XML.Declaration(
+                version: version,
+                encoding: encoding,
+                standalone: standalone
+            )
+        )
     }
 }
 
@@ -601,7 +605,7 @@ extension W3C_XML.Lexer {
     @inlinable
     internal mutating func lexEntityReference() throws(Error) -> Unicode.Scalar {
         let startPos = position
-        advance() // consume &
+        advance()  // consume &
 
         guard let firstByte = input.first else {
             throw .unexpectedEndOfInput(expected: "entity name", at: startPos)
@@ -868,7 +872,8 @@ extension W3C_XML.Lexer {
         let startPos = position
 
         guard let quote = input.first,
-              quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte else {
+            quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte
+        else {
             throw .unexpectedEndOfInput(expected: "quoted string", at: position)
         }
         advance()

@@ -3,10 +3,10 @@
 ///
 /// XML parser (~Copyable)
 
-public import Input_Primitives
-public import Byte_Parser_Primitives
 public import Buffer_Linear_Primitive
 public import Buffer_Linear_Primitives
+public import Byte_Parser_Primitives
+public import Input_Primitives
 public import Ownership_Shared_Primitive
 import Parser_Primitives
 
@@ -118,7 +118,7 @@ extension W3C_XML.Parser {
                 if root != nil {
                     epilogue.append(.comment(text))
                 }
-                // Comments before root are ignored
+            // Comments before root are ignored
 
             case .text(let text):
                 // Whitespace before root is ignored
@@ -226,7 +226,8 @@ extension W3C_XML.Parser {
 
         // Get start tag
         guard let startToken = try nextToken(),
-              case .startTagOpen(let name) = startToken else {
+            case .startTagOpen(let name) = startToken
+        else {
             throw .unexpectedEndOfInput(expected: "start tag", at: lexer.currentPosition)
         }
 

@@ -3,11 +3,11 @@
 ///
 /// Primitive parsers for XML character classes and names.
 
-public import Input_Primitives
-import Parser_Primitives
 import ASCII_Decimal_Parser_Primitives
 import ASCII_Hexadecimal_Parser_Primitives
 public import Byte_Parser_Primitives
+public import Input_Primitives
+import Parser_Primitives
 
 // MARK: - Whitespace Parser
 
@@ -25,7 +25,7 @@ extension W3C_XML.Parse {
         public init() {}
 
         @inlinable
-        public func parse(_ input: inout Input) -> Void {
+        public func parse(_ input: inout Input) {
             while let byte = input.first, W3C_XML.isWhitespace(byte) {
                 _ = input.removeFirst()
             }
@@ -42,7 +42,7 @@ extension W3C_XML.Parse {
         public init() {}
 
         @inlinable
-        public func parse(_ input: inout Input) throws(Failure) -> Void {
+        public func parse(_ input: inout Input) throws(Failure) {
             guard let byte = input.first, W3C_XML.isWhitespace(byte) else {
                 throw .expected("whitespace")
             }

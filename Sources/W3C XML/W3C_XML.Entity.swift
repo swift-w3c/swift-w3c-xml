@@ -52,12 +52,12 @@ extension W3C_XML.Entity {
     @inlinable
     public static func predefined(_ name: String) -> Unicode.Scalar? {
         switch name {
-        case "lt":   return Unicode.Scalar(0x3C)    // <
-        case "gt":   return Unicode.Scalar(0x3E)    // >
-        case "amp":  return Unicode.Scalar(0x26)    // &
-        case "apos": return Unicode.Scalar(0x27)    // '
-        case "quot": return Unicode.Scalar(0x22)    // "
-        default:     return nil
+        case "lt": return Unicode.Scalar(0x3C)  // <
+        case "gt": return Unicode.Scalar(0x3E)  // >
+        case "amp": return Unicode.Scalar(0x26)  // &
+        case "apos": return Unicode.Scalar(0x27)  // '
+        case "quot": return Unicode.Scalar(0x22)  // "
+        default: return nil
         }
     }
 
@@ -86,12 +86,7 @@ extension W3C_XML.Entity {
 
         // Validate against XML Char production
         // Production [2]: Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
-        guard value == 0x09 ||
-              value == 0x0A ||
-              value == 0x0D ||
-              (value >= 0x20 && value <= 0xD7FF) ||
-              (value >= 0xE000 && value <= 0xFFFD) ||
-              (value >= 0x10000 && value <= 0x10FFFF) else {
+        guard value == 0x09 || value == 0x0A || value == 0x0D || (value >= 0x20 && value <= 0xD7FF) || (value >= 0xE000 && value <= 0xFFFD) || (value >= 0x10000 && value <= 0x10FFFF) else {
             return nil
         }
 

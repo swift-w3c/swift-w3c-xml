@@ -4,10 +4,10 @@
 /// Document-level parsers including XML declaration and DOCTYPE.
 
 import ASCII_Primitives
-public import Input_Primitives
 public import Byte_Parser_Primitives
-import Parser_Primitives
+public import Input_Primitives
 import Parser_Machine_Primitives
+import Parser_Primitives
 
 // MARK: - XML Declaration Parser
 
@@ -91,7 +91,8 @@ extension W3C_XML.Parse {
         @inlinable
         func parseQuotedValue(_ input: inout Input) throws(Failure) -> String {
             guard let quote = input.first,
-                  quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte else {
+                quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte
+            else {
                 throw .expected("\" or '")
             }
             _ = input.removeFirst()
@@ -112,12 +113,14 @@ extension W3C_XML.Parse {
         /// Tries to match a literal, returning true if successful.
         @inlinable
         func matchLiteral(_ input: inout Input, _ string: StaticString) -> Bool {
-            let bytes = Swift.Array(string.utf8Start.withMemoryRebound(
-                to: UInt8.self,
-                capacity: string.utf8CodeUnitCount
-            ) {
-                UnsafeBufferPointer(start: $0, count: string.utf8CodeUnitCount)
-            })
+            let bytes = Swift.Array(
+                string.utf8Start.withMemoryRebound(
+                    to: UInt8.self,
+                    capacity: string.utf8CodeUnitCount
+                ) {
+                    UnsafeBufferPointer(start: $0, count: string.utf8CodeUnitCount)
+                }
+            )
 
             let saved = input
             for expected in bytes {
@@ -222,7 +225,8 @@ extension W3C_XML.Parse {
         @inlinable
         func parseQuotedValue(_ input: inout Input) throws(Failure) -> String {
             guard let quote = input.first,
-                  quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte else {
+                quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte
+            else {
                 throw .expected("\" or '")
             }
             _ = input.removeFirst()
@@ -243,12 +247,14 @@ extension W3C_XML.Parse {
         /// Tries to match a literal.
         @inlinable
         func matchLiteral(_ input: inout Input, _ string: StaticString) -> Bool {
-            let bytes = Swift.Array(string.utf8Start.withMemoryRebound(
-                to: UInt8.self,
-                capacity: string.utf8CodeUnitCount
-            ) {
-                UnsafeBufferPointer(start: $0, count: string.utf8CodeUnitCount)
-            })
+            let bytes = Swift.Array(
+                string.utf8Start.withMemoryRebound(
+                    to: UInt8.self,
+                    capacity: string.utf8CodeUnitCount
+                ) {
+                    UnsafeBufferPointer(start: $0, count: string.utf8CodeUnitCount)
+                }
+            )
 
             let saved = input
             for expected in bytes {
@@ -385,7 +391,7 @@ extension W3C_XML.Parse {
             let pattern: [Byte] = [
                 ASCII.Code.lessThanSign.byte,
                 ASCII.Code.questionMark.byte,
-                ASCII.Code.x.byte, ASCII.Code.m.byte, ASCII.Code.l.byte
+                ASCII.Code.x.byte, ASCII.Code.m.byte, ASCII.Code.l.byte,
             ]
 
             for expected in pattern {
@@ -479,7 +485,7 @@ extension W3C_XML {
                 // Could be comment (<!--) - skip for now, comments aren't instructions
                 input = saved
                 // Try to parse comment and discard
-                if let _ = try? Parse.Comment<Byte.Input>().parse(&input) {
+                if (try? Parse.Comment<Byte.Input>().parse(&input)) != nil {
                     continue
                 }
                 input = saved
@@ -492,7 +498,8 @@ extension W3C_XML {
         }
 
         // Parse root element using Machine parser
-        let machineParser = Parse.machineElement(maxDepth: maxDepth)
+        let machineParser =
+            Parse.machineElement(maxDepth: maxDepth)
             as Parser_Primitives.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
         let root = try machineParser.parse(&input)
 
@@ -590,7 +597,8 @@ extension W3C_XML {
         Parse.Whitespace<Byte.Input>().parse(&input)
 
         // Parse root element using Machine parser
-        let machineParser = Parse.machineElement(maxDepth: maxDepth)
+        let machineParser =
+            Parse.machineElement(maxDepth: maxDepth)
             as Parser_Primitives.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
         let root = try machineParser.parse(&input)
 
@@ -619,7 +627,8 @@ extension W3C_XML {
         var input = Byte.Input(Swift.Array(string.utf8))
         Parse.Whitespace<Byte.Input>().parse(&input)
 
-        let machineParser = Parse.machineElement(maxDepth: maxDepth)
+        let machineParser =
+            Parse.machineElement(maxDepth: maxDepth)
             as Parser_Primitives.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
         return try machineParser.parse(&input)
     }

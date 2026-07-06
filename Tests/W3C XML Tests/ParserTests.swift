@@ -1,4 +1,5 @@
 import Testing
+
 @testable import W3C_XML
 
 @Suite(
@@ -30,12 +31,14 @@ struct ParserTests {
 
     @Test("Parse nested elements")
     func parseNestedElements() throws {
-        let doc = try W3C_XML.parse("""
+        let doc = try W3C_XML.parse(
+            """
             <root>
                 <child1>First</child1>
                 <child2>Second</child2>
             </root>
-            """)
+            """
+        )
         #expect(doc.root.children.count == 2)
         #expect(doc.root.child("child1")?.textContent == "First")
         #expect(doc.root.child("child2")?.textContent == "Second")
@@ -43,21 +46,25 @@ struct ParserTests {
 
     @Test("Parse with XML declaration")
     func parseWithDeclaration() throws {
-        let doc = try W3C_XML.parse("""
+        let doc = try W3C_XML.parse(
+            """
             <?xml version="1.0" encoding="UTF-8"?>
             <root/>
-            """)
+            """
+        )
         #expect(doc.declaration?.version == .v1_0)
         #expect(doc.declaration?.encoding == "UTF-8")
     }
 
     @Test("Parse with namespace")
     func parseWithNamespace() throws {
-        let doc = try W3C_XML.parse("""
+        let doc = try W3C_XML.parse(
+            """
             <root xmlns="http://example.com" xmlns:ex="http://example.com/ex">
                 <ex:child/>
             </root>
-            """)
+            """
+        )
         #expect(doc.root.namespaces.count == 2)
         #expect(doc.root.namespaces[0].uri == "http://example.com")
         #expect(doc.root.namespaces[1].prefix == "ex")
@@ -85,10 +92,12 @@ struct ParserTests {
 
     @Test("Parse processing instruction")
     func parseProcessingInstruction() throws {
-        let doc = try W3C_XML.parse("""
+        let doc = try W3C_XML.parse(
+            """
             <?xml-stylesheet type="text/xsl" href="style.xsl"?>
             <root/>
-            """)
+            """
+        )
         #expect(doc.prologue.count == 1)
         #expect(doc.prologue[0].target == "xml-stylesheet")
     }
@@ -363,7 +372,7 @@ struct ParserEdgeCases {
     @Test("Parse empty attribute value")
     func parseEmptyAttributeValue() throws {
         let doc = try W3C_XML.parse(#"<root attr=""/>"#)
-        #expect(doc.root.attribute("attr") == "")
+        #expect(doc.root.attribute("attr")?.isEmpty == true)
     }
 
     @Test("Parse multiple attributes")
@@ -398,7 +407,8 @@ struct ParserEdgeCases {
 
     @Test("Parse element with all content types")
     func parseAllContentTypes() throws {
-        let doc = try W3C_XML.parse("""
+        let doc = try W3C_XML.parse(
+            """
             <root>
                 text
                 <child/>
@@ -406,7 +416,8 @@ struct ParserEdgeCases {
                 <!--comment-->
                 <?pi data?>
             </root>
-            """)
+            """
+        )
         #expect(doc.root.content.count >= 5)
     }
 }
@@ -459,7 +470,7 @@ struct TypeTests {
                 .element(W3C_XML.Element(name: "a")),
                 .text("text"),
                 .element(W3C_XML.Element(name: "b")),
-                .comment("comment")
+                .comment("comment"),
             ]
         )
         #expect(element.children.count == 2)
@@ -481,7 +492,7 @@ struct TypeTests {
             name: "root",
             content: [
                 .element(W3C_XML.Element(name: "first")),
-                .element(W3C_XML.Element(name: "second"))
+                .element(W3C_XML.Element(name: "second")),
             ]
         )
         #expect(element[0]?.name.local == "first")
@@ -498,7 +509,7 @@ struct CharacterValidationTests {
         #expect(W3C_XML.isWhitespace(0x09))  // Tab
         #expect(W3C_XML.isWhitespace(0x0A))  // LF
         #expect(W3C_XML.isWhitespace(0x0D))  // CR
-        #expect(!W3C_XML.isWhitespace(0x41)) // 'A'
+        #expect(!W3C_XML.isWhitespace(0x41))  // 'A'
     }
 
     @Test("isNameStartChar ASCII")
@@ -655,13 +666,15 @@ struct RoundtripTests {
 
     @Test("Round-trip document with content")
     func roundtripWithContent() throws {
-        let original = try W3C_XML.parse("""
+        let original = try W3C_XML.parse(
+            """
             <?xml version="1.0"?>
             <root>
                 <child id="1">First</child>
                 <child id="2">Second</child>
             </root>
-            """)
+            """
+        )
 
         let bytes = original.encode()
         let reparsed = try W3C_XML.parse(bytes)

@@ -57,10 +57,10 @@ extension W3C_XML {
     /// Space (0x20), Tab (0x09), Carriage Return (0x0D), Line Feed (0x0A).
     @usableFromInline
     static let whitespace: Set<Byte> = [
-        ASCII.Code.sp.byte,      // Space (0x20)
-        ASCII.Code.htab.byte,    // Horizontal tab (0x09)
-        ASCII.Code.cr.byte,      // Carriage return (0x0D)
-        ASCII.Code.lf.byte,      // Line feed (0x0A)
+        ASCII.Code.sp.byte,  // Space (0x20)
+        ASCII.Code.htab.byte,  // Horizontal tab (0x09)
+        ASCII.Code.cr.byte,  // Carriage return (0x0D)
+        ASCII.Code.lf.byte,  // Line feed (0x0A)
     ]
 
     /// Returns true if the byte is XML whitespace.
@@ -86,22 +86,13 @@ extension W3C_XML {
     @inlinable
     public static func isNameStartChar(_ scalar: Unicode.Scalar) -> Bool {
         let v = scalar.value
-        return v == 0x3A ||                     // ":"
-               (v >= 0x41 && v <= 0x5A) ||      // [A-Z]
-               v == 0x5F ||                     // "_"
-               (v >= 0x61 && v <= 0x7A) ||      // [a-z]
-               (v >= 0xC0 && v <= 0xD6) ||
-               (v >= 0xD8 && v <= 0xF6) ||
-               (v >= 0xF8 && v <= 0x2FF) ||
-               (v >= 0x370 && v <= 0x37D) ||
-               (v >= 0x37F && v <= 0x1FFF) ||
-               (v >= 0x200C && v <= 0x200D) ||
-               (v >= 0x2070 && v <= 0x218F) ||
-               (v >= 0x2C00 && v <= 0x2FEF) ||
-               (v >= 0x3001 && v <= 0xD7FF) ||
-               (v >= 0xF900 && v <= 0xFDCF) ||
-               (v >= 0xFDF0 && v <= 0xFFFD) ||
-               (v >= 0x10000 && v <= 0xEFFFF)
+        return v == 0x3A  // ":"
+            || (v >= 0x41 && v <= 0x5A)  // [A-Z]
+            || v == 0x5F  // "_"
+            || (v >= 0x61 && v <= 0x7A)  // [a-z]
+            || (v >= 0xC0 && v <= 0xD6) || (v >= 0xD8 && v <= 0xF6) || (v >= 0xF8 && v <= 0x2FF) || (v >= 0x370 && v <= 0x37D) || (v >= 0x37F && v <= 0x1FFF) || (v >= 0x200C && v <= 0x200D)
+            || (v >= 0x2070 && v <= 0x218F) || (v >= 0x2C00 && v <= 0x2FEF) || (v >= 0x3001 && v <= 0xD7FF) || (v >= 0xF900 && v <= 0xFDCF) || (v >= 0xFDF0 && v <= 0xFFFD)
+            || (v >= 0x10000 && v <= 0xEFFFF)
     }
 
     /// Returns true if the Unicode scalar is a valid XML NameChar.
@@ -114,30 +105,24 @@ extension W3C_XML {
     public static func isNameChar(_ scalar: Unicode.Scalar) -> Bool {
         if isNameStartChar(scalar) { return true }
         let v = scalar.value
-        return v == 0x2D ||                     // "-"
-               v == 0x2E ||                     // "."
-               (v >= 0x30 && v <= 0x39) ||      // [0-9]
-               v == 0xB7 ||                     // middle dot
-               (v >= 0x0300 && v <= 0x036F) ||  // combining diacritical marks
-               (v >= 0x203F && v <= 0x2040)     // undertie, character tie
+        return v == 0x2D  // "-"
+            || v == 0x2E  // "."
+            || (v >= 0x30 && v <= 0x39)  // [0-9]
+            || v == 0xB7  // middle dot
+            || (v >= 0x0300 && v <= 0x036F)  // combining diacritical marks
+            || (v >= 0x203F && v <= 0x2040)  // undertie, character tie
     }
 
     /// Returns true if the byte is a valid ASCII NameStartChar (fast path).
     @inlinable
     public static func isASCIINameStartChar(_ byte: Byte) -> Bool {
-        byte == ASCII.Code.colon.byte ||
-        (byte >= ASCII.Code.A.byte && byte <= ASCII.Code.Z.byte) ||
-        byte == ASCII.Code.underline.byte ||
-        (byte >= ASCII.Code.a.byte && byte <= ASCII.Code.z.byte)
+        byte == ASCII.Code.colon.byte || (byte >= ASCII.Code.A.byte && byte <= ASCII.Code.Z.byte) || byte == ASCII.Code.underline.byte || (byte >= ASCII.Code.a.byte && byte <= ASCII.Code.z.byte)
     }
 
     /// Returns true if the byte is a valid ASCII NameChar (fast path).
     @inlinable
     public static func isASCIINameChar(_ byte: Byte) -> Bool {
-        isASCIINameStartChar(byte) ||
-        byte == ASCII.Code.hyphen.byte ||
-        byte == ASCII.Code.period.byte ||
-        (byte >= .ascii.`0` && byte <= .ascii.`9`)
+        isASCIINameStartChar(byte) || byte == ASCII.Code.hyphen.byte || byte == ASCII.Code.period.byte || (byte >= .ascii.`0` && byte <= .ascii.`9`)
     }
 }
 
@@ -153,11 +138,6 @@ extension W3C_XML {
     @inlinable
     public static func isChar(_ scalar: Unicode.Scalar) -> Bool {
         let v = scalar.value
-        return v == 0x09 ||
-               v == 0x0A ||
-               v == 0x0D ||
-               (v >= 0x20 && v <= 0xD7FF) ||
-               (v >= 0xE000 && v <= 0xFFFD) ||
-               (v >= 0x10000 && v <= 0x10FFFF)
+        return v == 0x09 || v == 0x0A || v == 0x0D || (v >= 0x20 && v <= 0xD7FF) || (v >= 0xE000 && v <= 0xFFFD) || (v >= 0x10000 && v <= 0x10FFFF)
     }
 }

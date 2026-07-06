@@ -6,3 +6,4 @@ parent_config: https://raw.githubusercontent.com/swift-standards/swift-standards
 # Package-specific overrides
 disabled_rules:
   - function_parameter_count
+  - force_try  # Internal bridging members with documented preconditions use force try
