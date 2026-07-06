@@ -7,7 +7,7 @@ public import Input_Primitives
 public import Byte_Parser_Primitives
 public import Buffer_Linear_Primitive
 public import Buffer_Linear_Primitives
-public import Shared_Primitive
+public import Ownership_Shared_Primitive
 import Parser_Primitives
 
 extension W3C_XML {
