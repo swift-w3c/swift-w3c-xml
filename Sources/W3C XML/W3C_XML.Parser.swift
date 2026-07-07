@@ -196,7 +196,7 @@ extension W3C_XML.Parser {
             lookahead = nil
             return token
         }
-        do {
+        do throws(__W3CXMLLexerError) {
             return try lexer.next()
         } catch {
             throw .lexer(error)

@@ -47,17 +47,21 @@ extension W3C_XML {
             self.local = local
             self.prefix = prefix
         }
+    }
+}
 
-        /// Full qualified name as string.
-        ///
-        /// Returns `prefix:local` if prefix exists, otherwise just `local`.
-        @inlinable
-        public var qualified: String {
-            if let prefix = prefix {
-                return "\(prefix):\(local)"
-            }
-            return local
+// MARK: - Name Qualified
+
+extension W3C_XML.Name {
+    /// Full qualified name as string.
+    ///
+    /// Returns `prefix:local` if prefix exists, otherwise just `local`.
+    @inlinable
+    public var qualified: String {
+        if let prefix = prefix {
+            return "\(prefix):\(local)"
         }
+        return local
     }
 }
 

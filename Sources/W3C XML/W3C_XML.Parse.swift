@@ -62,20 +62,24 @@ extension W3C_XML.Parse {
             self.value = value
             self.limit = limit
         }
+    }
+}
 
-        /// Returns a new Depth with incremented value.
-        ///
-        /// Used when entering a nested element or container.
-        @inlinable
-        public func incremented() -> Depth {
-            Depth(value: value + 1, limit: limit)
-        }
+// MARK: - Depth Operations
 
-        /// Whether the current depth exceeds the limit.
-        @inlinable
-        public var isExceeded: Bool {
-            value > limit
-        }
+extension W3C_XML.Parse.Depth {
+    /// Returns a new Depth with incremented value.
+    ///
+    /// Used when entering a nested element or container.
+    @inlinable
+    public func incremented() -> Self {
+        Self(value: value + 1, limit: limit)
+    }
+
+    /// Whether the current depth exceeds the limit.
+    @inlinable
+    public var isExceeded: Bool {
+        value > limit
     }
 }
 

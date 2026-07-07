@@ -29,31 +29,35 @@ extension W3C_XML {
         internal init(_ document: Document) {
             self.document = document
         }
+    }
+}
 
-        /// Encodes the document to a byte array.
-        ///
-        /// - Parameter options: Encoding options.
-        /// - Returns: UTF-8 encoded XML bytes.
-        @inlinable
-        public func callAsFunction(options: Options = Options()) -> [UInt8] {
-            var buffer: [UInt8] = []
-            callAsFunction(into: &buffer, options: options)
-            return buffer
-        }
+// MARK: - Encode Call
 
-        /// Encodes the document into an existing buffer.
-        ///
-        /// - Parameters:
-        ///   - buffer: The buffer to append to.
-        ///   - options: Encoding options.
-        @inlinable
-        public func callAsFunction<Buffer: RangeReplaceableCollection>(
-            into buffer: inout Buffer,
-            options: Options = Options()
-        ) where Buffer.Element == UInt8 {
-            var encoder = Encoder(options: options)
-            encoder.encode(document, into: &buffer)
-        }
+extension W3C_XML.Encode {
+    /// Encodes the document to a byte array.
+    ///
+    /// - Parameter options: Encoding options.
+    /// - Returns: UTF-8 encoded XML bytes.
+    @inlinable
+    public func callAsFunction(options: W3C_XML.Options = W3C_XML.Options()) -> [UInt8] {
+        var buffer: [UInt8] = []
+        callAsFunction(into: &buffer, options: options)
+        return buffer
+    }
+
+    /// Encodes the document into an existing buffer.
+    ///
+    /// - Parameters:
+    ///   - buffer: The buffer to append to.
+    ///   - options: Encoding options.
+    @inlinable
+    public func callAsFunction<Buffer: RangeReplaceableCollection>(
+        into buffer: inout Buffer,
+        options: W3C_XML.Options = W3C_XML.Options()
+    ) where Buffer.Element == UInt8 {
+        var encoder = W3C_XML.Encoder(options: options)
+        encoder.encode(document, into: &buffer)
     }
 }
 

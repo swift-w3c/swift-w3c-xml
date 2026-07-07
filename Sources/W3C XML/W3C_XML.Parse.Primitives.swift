@@ -100,7 +100,7 @@ extension W3C_XML.Parse {
                     // Multi-byte UTF-8
                     let savedInput = input
                     let savedBytes = bytes
-                    do {
+                    do throws(Failure) {
                         let scalar = try consumeUTF8Scalar(&input, bytes: &bytes, checkStart: false)
                         guard W3C_XML.isNameChar(scalar) else {
                             input = savedInput

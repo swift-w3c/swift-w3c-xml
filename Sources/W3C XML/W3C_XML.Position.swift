@@ -29,10 +29,14 @@ extension W3C_XML {
             self.line = line
             self.column = column
         }
-
-        /// The starting position (offset 0, line 1, column 1).
-        public static let start = Position(offset: 0, line: 1, column: 1)
     }
+}
+
+// MARK: - Position Constants
+
+extension W3C_XML.Position {
+    /// The starting position (offset 0, line 1, column 1).
+    public static let start = Self(offset: 0, line: 1, column: 1)
 }
 
 // MARK: - Position CustomStringConvertible

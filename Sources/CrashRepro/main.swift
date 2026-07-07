@@ -12,7 +12,7 @@ for depth in [100, 200, 500, 1000] {
         xml += "</a>"
     }
 
-    do {
+    do throws(W3C_XML.Parse.Error) {
         _ = try W3C_XML.parse(xml)
         print("  Depth \(depth): OK")
     } catch {
