@@ -89,7 +89,7 @@ extension W3C_XML.Parse {
 
         /// Parses a quoted value (single or double quotes).
         @inlinable
-        func parseQuotedValue(_ input: inout Input) throws(Failure) -> String {
+        package func parseQuotedValue(_ input: inout Input) throws(Failure) -> String {
             guard let quote = input.first,
                 quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte
             else {
@@ -112,7 +112,7 @@ extension W3C_XML.Parse {
 
         /// Tries to match a literal, returning true if successful.
         @inlinable
-        func matchLiteral(_ input: inout Input, _ string: StaticString) -> Bool {
+        package func matchLiteral(_ input: inout Input, _ string: StaticString) -> Bool {
             let bytes = Swift.Array(
                 string.utf8Start.withMemoryRebound(
                     to: UInt8.self,
@@ -223,7 +223,7 @@ extension W3C_XML.Parse {
 
         /// Parses a quoted value.
         @inlinable
-        func parseQuotedValue(_ input: inout Input) throws(Failure) -> String {
+        package func parseQuotedValue(_ input: inout Input) throws(Failure) -> String {
             guard let quote = input.first,
                 quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte
             else {
@@ -246,7 +246,7 @@ extension W3C_XML.Parse {
 
         /// Tries to match a literal.
         @inlinable
-        func matchLiteral(_ input: inout Input, _ string: StaticString) -> Bool {
+        package func matchLiteral(_ input: inout Input, _ string: StaticString) -> Bool {
             let bytes = Swift.Array(
                 string.utf8Start.withMemoryRebound(
                     to: UInt8.self,
@@ -384,7 +384,7 @@ extension W3C_XML.Parse {
 
         /// Checks if input starts with <?xml (for XML declaration detection).
         @inlinable
-        func isXMLDeclaration(_ input: inout Input) -> Bool {
+        package func isXMLDeclaration(_ input: inout Input) -> Bool {
             let saved = input
 
             // Check for <?xml followed by whitespace

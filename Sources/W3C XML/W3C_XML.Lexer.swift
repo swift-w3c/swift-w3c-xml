@@ -106,7 +106,7 @@ extension W3C_XML.Lexer {
 extension W3C_XML.Lexer {
     /// Lexes content (text, elements, etc.).
     @inlinable
-    internal mutating func lexContent() throws(Error) -> W3C_XML.Token? {
+    package mutating func lexContent() throws(Error) -> W3C_XML.Token? {
         guard let byte = input.first else {
             return nil
         }
@@ -122,7 +122,7 @@ extension W3C_XML.Lexer {
 
     /// Lexes markup starting with `<`.
     @inlinable
-    internal mutating func lexMarkup() throws(Error) -> W3C_XML.Token {
+    package mutating func lexMarkup() throws(Error) -> W3C_XML.Token {
         let startPos = position
         advance()  // consume <
 
@@ -158,7 +158,7 @@ extension W3C_XML.Lexer {
 extension W3C_XML.Lexer {
     /// Lexes a start tag after `<`.
     @inlinable
-    internal mutating func lexStartTag() throws(Error) -> W3C_XML.Token {
+    package mutating func lexStartTag() throws(Error) -> W3C_XML.Token {
         let name = try lexName()
         state = .inStartTag
         return .startTagOpen(name)
@@ -166,7 +166,7 @@ extension W3C_XML.Lexer {
 
     /// Lexes content inside a start tag (attributes, close).
     @inlinable
-    internal mutating func lexInStartTag() throws(Error) -> W3C_XML.Token? {
+    package mutating func lexInStartTag() throws(Error) -> W3C_XML.Token? {
         skipWhitespace()
 
         guard let byte = input.first else {
@@ -207,7 +207,7 @@ extension W3C_XML.Lexer {
 
     /// Lexes an attribute value.
     @inlinable
-    internal mutating func lexAttributeValue() throws(Error) -> W3C_XML.Token {
+    package mutating func lexAttributeValue() throws(Error) -> W3C_XML.Token {
         let startPos = position
         let quote = input.removeFirst()
         position = W3C_XML.Position(
@@ -247,7 +247,7 @@ extension W3C_XML.Lexer {
 extension W3C_XML.Lexer {
     /// Lexes an end tag after `</`.
     @inlinable
-    internal mutating func lexEndTag() throws(Error) -> W3C_XML.Token {
+    package mutating func lexEndTag() throws(Error) -> W3C_XML.Token {
         let name = try lexName()
         state = .inEndTag
         return .endTagOpen(name)
@@ -255,7 +255,7 @@ extension W3C_XML.Lexer {
 
     /// Lexes content inside an end tag.
     @inlinable
-    internal mutating func lexInEndTag() throws(Error) -> W3C_XML.Token? {
+    package mutating func lexInEndTag() throws(Error) -> W3C_XML.Token? {
         skipWhitespace()
 
         guard let byte = input.first else {
@@ -277,7 +277,7 @@ extension W3C_XML.Lexer {
 extension W3C_XML.Lexer {
     /// Lexes `<!` markup (comment, CDATA, DOCTYPE).
     @inlinable
-    internal mutating func lexBangMarkup(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
+    package mutating func lexBangMarkup(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
         guard let byte = input.first else {
             throw .unexpectedEndOfInput(expected: "comment, CDATA, or DOCTYPE", at: startPos)
         }
@@ -299,7 +299,7 @@ extension W3C_XML.Lexer {
 
     /// Lexes a comment after `<!-`.
     @inlinable
-    internal mutating func lexComment(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
+    package mutating func lexComment(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
         // Expect second -
         advance()
         guard input.first == ASCII.Code.hyphen.byte else {
@@ -335,7 +335,7 @@ extension W3C_XML.Lexer {
 
     /// Lexes a CDATA section after `<![`.
     @inlinable
-    internal mutating func lexCDATA(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
+    package mutating func lexCDATA(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
         // Expect CDATA[
         advance()  // [
         try expectLiteral([ASCII.Code.C.byte, ASCII.Code.D.byte, ASCII.Code.A.byte, ASCII.Code.T.byte, ASCII.Code.A.byte, ASCII.Code.leftBracket.byte])
@@ -365,7 +365,7 @@ extension W3C_XML.Lexer {
 
     /// Lexes a DOCTYPE declaration after `<!D`.
     @inlinable
-    internal mutating func lexDoctype(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
+    package mutating func lexDoctype(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
         // Expect OCTYPE (D already matched in lexBangMarkup)
         try expectLiteral([ASCII.Code.D.byte, ASCII.Code.O.byte, ASCII.Code.C.byte, ASCII.Code.T.byte, ASCII.Code.Y.byte, ASCII.Code.P.byte, ASCII.Code.E.byte])
 
@@ -419,7 +419,7 @@ extension W3C_XML.Lexer {
 
     /// Lexes the internal subset of a DOCTYPE.
     @inlinable
-    internal mutating func lexInternalSubset() throws(Error) -> String {
+    package mutating func lexInternalSubset() throws(Error) -> String {
         let startPos = position
         var text = ""
         var depth = 1
@@ -456,7 +456,7 @@ extension W3C_XML.Lexer {
 extension W3C_XML.Lexer {
     /// Lexes a processing instruction after `<?`.
     @inlinable
-    internal mutating func lexProcessingInstruction(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
+    package mutating func lexProcessingInstruction(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
         let target = try lexNameString()
 
         // Check for XML declaration
@@ -504,7 +504,7 @@ extension W3C_XML.Lexer {
 
     /// Lexes an XML declaration after `<?xml`.
     @inlinable
-    internal mutating func lexXMLDeclaration(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
+    package mutating func lexXMLDeclaration(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
         skipWhitespace()
 
         var version: W3C_XML.Declaration.Version = .v1_0
@@ -576,7 +576,7 @@ extension W3C_XML.Lexer {
 extension W3C_XML.Lexer {
     /// Lexes text content.
     @inlinable
-    internal mutating func lexText() throws(Error) -> W3C_XML.Token {
+    package mutating func lexText() throws(Error) -> W3C_XML.Token {
         var text = ""
 
         while let byte = input.first {
@@ -603,7 +603,7 @@ extension W3C_XML.Lexer {
 extension W3C_XML.Lexer {
     /// Lexes an entity reference after `&`.
     @inlinable
-    internal mutating func lexEntityReference() throws(Error) -> Unicode.Scalar {
+    package mutating func lexEntityReference() throws(Error) -> Unicode.Scalar {
         let startPos = position
         advance()  // consume &
 
@@ -641,7 +641,7 @@ extension W3C_XML.Lexer {
 
     /// Lexes a numeric character reference after `&#`.
     @inlinable
-    internal mutating func lexNumericReference(startPos: W3C_XML.Position) throws(Error) -> Unicode.Scalar {
+    package mutating func lexNumericReference(startPos: W3C_XML.Position) throws(Error) -> Unicode.Scalar {
         var refString = ""
 
         if input.first == ASCII.Code.x.byte || input.first == ASCII.Code.X.byte {
@@ -678,14 +678,14 @@ extension W3C_XML.Lexer {
 extension W3C_XML.Lexer {
     /// Lexes an XML name and returns it as a Name struct.
     @inlinable
-    internal mutating func lexName() throws(Error) -> W3C_XML.Name {
+    package mutating func lexName() throws(Error) -> W3C_XML.Name {
         let nameStr = try lexNameString()
         return W3C_XML.Name(nameStr)
     }
 
     /// Lexes an XML name and returns it as a String.
     @inlinable
-    internal mutating func lexNameString() throws(Error) -> String {
+    package mutating func lexNameString() throws(Error) -> String {
         guard let firstByte = input.first else {
             throw .invalidName(at: position)
         }
@@ -733,7 +733,7 @@ extension W3C_XML.Lexer {
 extension W3C_XML.Lexer {
     /// Skips whitespace bytes.
     @inlinable
-    internal mutating func skipWhitespace() {
+    package mutating func skipWhitespace() {
         while let byte = input.first, W3C_XML.isWhitespace(byte) {
             advance()
         }
@@ -741,7 +741,7 @@ extension W3C_XML.Lexer {
 
     /// Advances by one byte, updating position.
     @inlinable
-    internal mutating func advance() {
+    package mutating func advance() {
         guard !input.isEmpty else { return }
         let byte = input.removeFirst()
         let isNewline = byte == ASCII.Code.lf.byte
@@ -754,7 +754,7 @@ extension W3C_XML.Lexer {
 
     /// Consumes and returns a UTF-8 scalar.
     @inlinable
-    internal mutating func consumeUTF8Scalar() throws(Error) -> Unicode.Scalar {
+    package mutating func consumeUTF8Scalar() throws(Error) -> Unicode.Scalar {
         guard let firstByte = input.first else {
             throw .unexpectedEndOfInput(expected: "character", at: position)
         }
@@ -807,7 +807,7 @@ extension W3C_XML.Lexer {
 
     /// Expects the given literal bytes.
     @inlinable
-    internal mutating func expectLiteral(_ expected: [Byte]) throws(Error) {
+    package mutating func expectLiteral(_ expected: [Byte]) throws(Error) {
         let startPos = position
         for expectedByte in expected {
             guard let byte = input.first else {
@@ -822,14 +822,14 @@ extension W3C_XML.Lexer {
 
     /// Checks if input starts with the given byte (for branching).
     @inlinable
-    internal func peekByte() -> Byte? {
+    package func peekByte() -> Byte? {
         input.first
     }
 
     /// Tries to match the given literal bytes, consuming them if matched.
     /// Returns false and consumes nothing if first byte doesn't match.
     @inlinable
-    internal mutating func matchLiteral(_ expected: [Byte]) -> Bool {
+    package mutating func matchLiteral(_ expected: [Byte]) -> Bool {
         guard let first = expected.first else { return true }
         guard input.first == first else { return false }
 
@@ -842,7 +842,7 @@ extension W3C_XML.Lexer {
 
     /// Expects a specific byte.
     @inlinable
-    internal mutating func expectByte(_ expected: Byte) throws(Error) {
+    package mutating func expectByte(_ expected: Byte) throws(Error) {
         guard let byte = input.first else {
             throw .unexpectedEndOfInput(expected: "'\(Character(UnicodeScalar(expected)))'", at: position)
         }
@@ -854,21 +854,21 @@ extension W3C_XML.Lexer {
 
     /// Expects an attribute name.
     @inlinable
-    internal mutating func expectAttributeName(_ name: String) throws(Error) {
+    package mutating func expectAttributeName(_ name: String) throws(Error) {
         let nameBytes = name.utf8.map(Byte.init)
         try expectLiteral(nameBytes)
     }
 
     /// Matches an attribute name.
     @inlinable
-    internal mutating func matchAttributeName(_ name: String) -> Bool {
+    package mutating func matchAttributeName(_ name: String) -> Bool {
         let nameBytes = name.utf8.map(Byte.init)
         return matchLiteral(nameBytes)
     }
 
     /// Lexes a quoted string (single or double quotes).
     @inlinable
-    internal mutating func lexQuotedString() throws(Error) -> String {
+    package mutating func lexQuotedString() throws(Error) -> String {
         let startPos = position
 
         guard let quote = input.first,
@@ -897,7 +897,7 @@ extension W3C_XML.Lexer {
 extension Byte {
     /// Returns true if this byte is XML whitespace.
     @inlinable
-    var isXMLWhitespace: Bool {
+    package var isXMLWhitespace: Bool {
         W3C_XML.isWhitespace(self)
     }
 }

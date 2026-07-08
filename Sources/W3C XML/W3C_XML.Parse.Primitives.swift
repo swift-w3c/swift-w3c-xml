@@ -128,7 +128,7 @@ extension W3C_XML.Parse {
 
         /// Consumes a UTF-8 scalar from input, appending bytes to buffer.
         @inlinable
-        func consumeUTF8Scalar(
+        package func consumeUTF8Scalar(
             _ input: inout Input,
             bytes: inout [Byte],
             checkStart: Bool
@@ -286,7 +286,7 @@ extension W3C_XML.Parse {
         }
 
         @inlinable
-        func parseEntityRef(_ input: inout Input) throws(Failure) -> String {
+        package func parseEntityRef(_ input: inout Input) throws(Failure) -> String {
             // Parse entity name
             let name = try Name<Input>().parse(&input)
 

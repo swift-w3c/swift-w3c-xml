@@ -47,7 +47,7 @@ extension W3C_XML.Parse {
 
         /// Parses an attribute value (quoted string with references).
         @inlinable
-        func parseAttValue(_ input: inout Input) throws(Failure) -> String {
+        package func parseAttValue(_ input: inout Input) throws(Failure) -> String {
             guard let quote = input.first,
                 quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte
             else {
@@ -314,7 +314,7 @@ extension W3C_XML.Parse {
 
         /// Parses markup starting with <!
         @inlinable
-        func parseMarkup(_ input: inout Input) throws(Failure) -> W3C_XML.Content? {
+        package func parseMarkup(_ input: inout Input) throws(Failure) -> W3C_XML.Content? {
             // Save position
             let saved = input
 
@@ -353,7 +353,7 @@ extension W3C_XML.Parse {
 
         /// Appends text to content, merging with previous text if present.
         @inlinable
-        func appendText(_ content: inout [W3C_XML.Content], _ text: String) {
+        package func appendText(_ content: inout [W3C_XML.Content], _ text: String) {
             if let last = content.last, case .text(let prevText) = last {
                 content.removeLast()
                 content.append(.text(prevText + text))

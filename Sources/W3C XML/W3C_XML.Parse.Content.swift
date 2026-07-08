@@ -283,7 +283,7 @@ extension W3C_XML.Parse {
 extension W3C_XML.Parse {
     /// Expects and consumes a literal byte sequence.
     @inlinable
-    static func expectLiteral<Input: Input_Primitives.Input.Streaming>(
+    package static func expectLiteral<Input: Input_Primitives.Input.Streaming>(
         _ input: inout Input,
         _ string: StaticString
     ) throws(W3C_XML.Parse.Error)

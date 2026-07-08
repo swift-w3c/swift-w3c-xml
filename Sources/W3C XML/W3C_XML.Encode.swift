@@ -115,7 +115,7 @@ extension W3C_XML {
 extension W3C_XML.Encoder {
     /// Encodes a document into the buffer.
     @inlinable
-    mutating func encode<Buffer: RangeReplaceableCollection>(
+    package mutating func encode<Buffer: RangeReplaceableCollection>(
         _ document: W3C_XML.Document,
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
@@ -157,7 +157,7 @@ extension W3C_XML.Encoder {
 
     /// Encodes an XML declaration.
     @inlinable
-    mutating func encodeDeclaration<Buffer: RangeReplaceableCollection>(
+    package mutating func encodeDeclaration<Buffer: RangeReplaceableCollection>(
         _ decl: W3C_XML.Declaration,
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
@@ -185,7 +185,7 @@ extension W3C_XML.Encoder {
 
     /// Encodes a DOCTYPE declaration.
     @inlinable
-    mutating func encodeDoctype<Buffer: RangeReplaceableCollection>(
+    package mutating func encodeDoctype<Buffer: RangeReplaceableCollection>(
         _ doctype: W3C_XML.Doctype,
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
@@ -215,7 +215,7 @@ extension W3C_XML.Encoder {
 
     /// Encodes a processing instruction.
     @inlinable
-    mutating func encodeInstruction<Buffer: RangeReplaceableCollection>(
+    package mutating func encodeInstruction<Buffer: RangeReplaceableCollection>(
         _ instruction: W3C_XML.Instruction,
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
@@ -232,7 +232,7 @@ extension W3C_XML.Encoder {
 
     /// Encodes an element.
     @inlinable
-    mutating func encodeElement<Buffer: RangeReplaceableCollection>(
+    package mutating func encodeElement<Buffer: RangeReplaceableCollection>(
         _ element: W3C_XML.Element,
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
@@ -298,7 +298,7 @@ extension W3C_XML.Encoder {
 
     /// Encodes content.
     @inlinable
-    mutating func encodeContent<Buffer: RangeReplaceableCollection>(
+    package mutating func encodeContent<Buffer: RangeReplaceableCollection>(
         _ content: W3C_XML.Content,
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
@@ -326,7 +326,7 @@ extension W3C_XML.Encoder {
 
     /// Encodes text content with entity escaping.
     @inlinable
-    mutating func encodeText<Buffer: RangeReplaceableCollection>(
+    package mutating func encodeText<Buffer: RangeReplaceableCollection>(
         _ text: String,
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
@@ -346,7 +346,7 @@ extension W3C_XML.Encoder {
 
     /// Encodes an attribute value with entity escaping.
     @inlinable
-    mutating func encodeAttributeValue<Buffer: RangeReplaceableCollection>(
+    package mutating func encodeAttributeValue<Buffer: RangeReplaceableCollection>(
         _ value: String,
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
@@ -374,7 +374,7 @@ extension W3C_XML.Encoder {
 
     /// Encodes a Unicode scalar directly to UTF-8 bytes.
     @inlinable
-    func encodeScalarUTF8<Buffer: RangeReplaceableCollection>(
+    package func encodeScalarUTF8<Buffer: RangeReplaceableCollection>(
         _ scalar: Unicode.Scalar,
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
@@ -399,7 +399,7 @@ extension W3C_XML.Encoder {
 
     /// Appends indentation for the current depth.
     @inlinable
-    func appendIndent<Buffer: RangeReplaceableCollection>(
+    package func appendIndent<Buffer: RangeReplaceableCollection>(
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
         for _ in 0..<depth {

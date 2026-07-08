@@ -191,7 +191,7 @@ extension W3C_XML.Parser {
 extension W3C_XML.Parser {
     /// Gets the next token, using lookahead if available.
     @inlinable
-    internal mutating func nextToken() throws(Error) -> W3C_XML.Token? {
+    package mutating func nextToken() throws(Error) -> W3C_XML.Token? {
         if let token = lookahead {
             lookahead = nil
             return token
@@ -205,7 +205,7 @@ extension W3C_XML.Parser {
 
     /// Puts a token back into the lookahead.
     @inlinable
-    internal mutating func pushBack(_ token: W3C_XML.Token) {
+    package mutating func pushBack(_ token: W3C_XML.Token) {
         precondition(lookahead == nil, "Cannot push back when lookahead is set")
         lookahead = token
     }
@@ -216,7 +216,7 @@ extension W3C_XML.Parser {
 extension W3C_XML.Parser {
     /// Parses an element.
     @inlinable
-    internal mutating func parseElement() throws(Error) -> W3C_XML.Element {
+    package mutating func parseElement() throws(Error) -> W3C_XML.Element {
         // Check depth
         depth += 1
         if depth > maxDepth {
@@ -339,7 +339,7 @@ extension W3C_XML.Parser {
 
     /// Parses element content until matching end tag.
     @inlinable
-    internal mutating func parseContent(endTag: String) throws(Error) -> [W3C_XML.Content] {
+    package mutating func parseContent(endTag: String) throws(Error) -> [W3C_XML.Content] {
         var content: [W3C_XML.Content] = []
 
         while let token = try nextToken() {

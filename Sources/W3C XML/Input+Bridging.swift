@@ -19,7 +19,7 @@ extension Input_Primitives.Input.Streaming where Self: Copyable, Element: Copyab
     /// of the cursor to peek without modifying the original position.
     @inlinable
     @_disfavoredOverload
-    internal var first: Element? {
+    package var first: Element? {
         guard !isEmpty else { return nil }
         var copy = self
         return try? copy.advance()
@@ -31,7 +31,7 @@ extension Input_Primitives.Input.Streaming where Self: Copyable, Element: Copyab
     @inlinable
     @_disfavoredOverload
     @discardableResult
-    internal mutating func removeFirst() -> Element {
+    package mutating func removeFirst() -> Element {
         try! advance()
     }
 }
