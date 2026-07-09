@@ -7,30 +7,30 @@ import Testing
     .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
 )
 struct ParserTests {
-    @Test("Parse simple element")
-    func parseSimpleElement() throws {
+    @Test
+    func `Parse simple element`() throws {
         let doc = try W3C_XML.parse("<root/>")
         #expect(doc.root.name.local == "root")
         #expect(doc.root.content.isEmpty)
     }
 
-    @Test("Parse element with text")
-    func parseElementWithText() throws {
+    @Test
+    func `Parse element with text`() throws {
         let doc = try W3C_XML.parse("<root>Hello</root>")
         #expect(doc.root.name.local == "root")
         #expect(doc.root.textContent == "Hello")
     }
 
-    @Test("Parse element with attributes")
-    func parseElementWithAttributes() throws {
+    @Test
+    func `Parse element with attributes`() throws {
         let doc = try W3C_XML.parse(#"<root id="123" class="test"/>"#)
         #expect(doc.root.name.local == "root")
         #expect(doc.root.attribute("id") == "123")
         #expect(doc.root.attribute("class") == "test")
     }
 
-    @Test("Parse nested elements")
-    func parseNestedElements() throws {
+    @Test
+    func `Parse nested elements`() throws {
         let doc = try W3C_XML.parse(
             """
             <root>
@@ -44,8 +44,8 @@ struct ParserTests {
         #expect(doc.root.child("child2")?.textContent == "Second")
     }
 
-    @Test("Parse with XML declaration")
-    func parseWithDeclaration() throws {
+    @Test
+    func `Parse with XML declaration`() throws {
         let doc = try W3C_XML.parse(
             """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -56,8 +56,8 @@ struct ParserTests {
         #expect(doc.declaration?.encoding == "UTF-8")
     }
 
-    @Test("Parse with namespace")
-    func parseWithNamespace() throws {
+    @Test
+    func `Parse with namespace`() throws {
         let doc = try W3C_XML.parse(
             """
             <root xmlns="http://example.com" xmlns:ex="http://example.com/ex">
@@ -70,8 +70,8 @@ struct ParserTests {
         #expect(doc.root.namespaces[1].prefix == "ex")
     }
 
-    @Test("Parse CDATA section")
-    func parseCDATA() throws {
+    @Test
+    func `Parse CDATA section`() throws {
         let doc = try W3C_XML.parse("<root><![CDATA[<script>alert('hi')</script>]]></root>")
         if case .cdata(let text) = doc.root.content.first {
             #expect(text == "<script>alert('hi')</script>")
@@ -80,8 +80,8 @@ struct ParserTests {
         }
     }
 
-    @Test("Parse comment")
-    func parseComment() throws {
+    @Test
+    func `Parse comment`() throws {
         let doc = try W3C_XML.parse("<root><!--This is a comment--></root>")
         if case .comment(let text) = doc.root.content.first {
             #expect(text == "This is a comment")
@@ -90,8 +90,8 @@ struct ParserTests {
         }
     }
 
-    @Test("Parse processing instruction")
-    func parseProcessingInstruction() throws {
+    @Test
+    func `Parse processing instruction`() throws {
         let doc = try W3C_XML.parse(
             """
             <?xml-stylesheet type="text/xsl" href="style.xsl"?>
@@ -102,14 +102,14 @@ struct ParserTests {
         #expect(doc.prologue[0].target == "xml-stylesheet")
     }
 
-    @Test("Parse entity references")
-    func parseEntityReferences() throws {
+    @Test
+    func `Parse entity references`() throws {
         let doc = try W3C_XML.parse("<root>&lt;&gt;&amp;&apos;&quot;</root>")
         #expect(doc.root.textContent == "<>&'\"")
     }
 
-    @Test("Parse numeric character references")
-    func parseNumericReferences() throws {
+    @Test
+    func `Parse numeric character references`() throws {
         let doc = try W3C_XML.parse("<root>&#60;&#x3E;</root>")
         #expect(doc.root.textContent == "<>")
     }
@@ -120,120 +120,120 @@ struct ParserTests {
     .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
 )
 struct ErrorHandlingTests {
-    @Test("Reject unclosed element")
-    func rejectUnclosedElement() {
+    @Test
+    func `Reject unclosed element`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("<root>")
         }
     }
 
-    @Test("Reject mismatched tags")
-    func rejectMismatchedTags() {
+    @Test
+    func `Reject mismatched tags`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("<root></other>")
         }
     }
 
-    @Test("Reject missing root element")
-    func rejectMissingRoot() {
+    @Test
+    func `Reject missing root element`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("")
         }
     }
 
-    @Test("Reject multiple root elements")
-    func rejectMultipleRoots() {
+    @Test
+    func `Reject multiple root elements`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("<a/><b/>")
         }
     }
 
-    @Test("Reject unterminated comment")
-    func rejectUnterminatedComment() {
+    @Test
+    func `Reject unterminated comment`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("<root><!-- unterminated</root>")
         }
     }
 
-    @Test("Reject unterminated CDATA")
-    func rejectUnterminatedCDATA() {
+    @Test
+    func `Reject unterminated CDATA`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("<root><![CDATA[unterminated</root>")
         }
     }
 
-    @Test("Reject unterminated attribute value")
-    func rejectUnterminatedAttribute() {
+    @Test
+    func `Reject unterminated attribute value`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse(#"<root attr="unterminated>"#)
         }
     }
 
-    @Test("Reject invalid entity reference")
-    func rejectInvalidEntity() {
+    @Test
+    func `Reject invalid entity reference`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("<root>&invalid;</root>")
         }
     }
 
-    @Test("Reject unterminated entity reference")
-    func rejectUnterminatedEntity() {
+    @Test
+    func `Reject unterminated entity reference`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("<root>&amp</root>")
         }
     }
 
-    @Test("Reject invalid numeric character reference")
-    func rejectInvalidNumericRef() {
+    @Test
+    func `Reject invalid numeric character reference`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("<root>&#xZZZ;</root>")
         }
     }
 
-    @Test("Reject less-than in attribute value")
-    func rejectLessThanInAttribute() {
+    @Test
+    func `Reject less-than in attribute value`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse(#"<root attr="a<b"/>"#)
         }
     }
 
-    @Test("Reject duplicate attributes")
-    func rejectDuplicateAttributes() {
+    @Test
+    func `Reject duplicate attributes`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse(#"<root id="1" id="2"/>"#)
         }
     }
 
-    @Test("Reject invalid element name starting with number")
-    func rejectInvalidElementName() {
+    @Test
+    func `Reject invalid element name starting with number`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("<123/>")
         }
     }
 
-    @Test("Reject unterminated processing instruction")
-    func rejectUnterminatedPI() {
+    @Test
+    func `Reject unterminated processing instruction`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("<?xml version=\"1.0\"")
         }
     }
 
-    @Test("Reject invalid XML declaration")
-    func rejectInvalidDeclaration() {
+    @Test
+    func `Reject invalid XML declaration`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("<?xml version=\"2.0\"?><root/>")
         }
     }
 
-    @Test("Reject double hyphen in comment")
-    func rejectDoubleHyphenInComment() {
+    @Test
+    func `Reject double hyphen in comment`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("<root><!-- -- --></root>")
         }
     }
 
-    @Test("Reject text before root element")
-    func rejectTextBeforeRoot() {
+    @Test
+    func `Reject text before root element`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("text<root/>")
         }
@@ -242,29 +242,29 @@ struct ErrorHandlingTests {
 
 @Suite("W3C_XML Encoder Tests")
 struct EncoderTests {
-    @Test("Encode empty element")
-    func encodeEmptyElement() {
+    @Test
+    func `Encode empty element`() {
         let element = W3C_XML.Element(name: "root")
         let output = String(decoding: element.encode(), as: UTF8.self)
         #expect(output == "<root/>")
     }
 
-    @Test("Encode element with text")
-    func encodeElementWithText() {
+    @Test
+    func `Encode element with text`() {
         let element = W3C_XML.Element(name: "root", content: [.text("Hello")])
         let output = String(decoding: element.encode(), as: UTF8.self)
         #expect(output == "<root>Hello</root>")
     }
 
-    @Test("Encode escapes text entities")
-    func encodeEscapesTextEntities() {
+    @Test
+    func `Encode escapes text entities`() {
         let element = W3C_XML.Element(name: "root", content: [.text("<>&")])
         let output = String(decoding: element.encode(), as: UTF8.self)
         #expect(output == "<root>&lt;&gt;&amp;</root>")
     }
 
-    @Test("Encode escapes attribute entities")
-    func encodeEscapesAttributeEntities() throws {
+    @Test
+    func `Encode escapes attribute entities`() throws {
         let element = W3C_XML.Element(
             name: "root",
             attributes: [W3C_XML.Attribute(name: "a", value: "<&\"")]
@@ -275,22 +275,22 @@ struct EncoderTests {
         #expect(output.contains("&quot;"))
     }
 
-    @Test("Encode CDATA section")
-    func encodeCDATA() {
+    @Test
+    func `Encode CDATA section`() {
         let element = W3C_XML.Element(name: "root", content: [.cdata("<script>")])
         let output = String(decoding: element.encode(), as: UTF8.self)
         #expect(output == "<root><![CDATA[<script>]]></root>")
     }
 
-    @Test("Encode comment")
-    func encodeComment() {
+    @Test
+    func `Encode comment`() {
         let element = W3C_XML.Element(name: "root", content: [.comment("note")])
         let output = String(decoding: element.encode(), as: UTF8.self)
         #expect(output == "<root><!--note--></root>")
     }
 
-    @Test("Encode namespace declaration")
-    func encodeNamespace() {
+    @Test
+    func `Encode namespace declaration`() {
         let element = W3C_XML.Element(
             name: "root",
             namespaces: [W3C_XML.Namespace(prefix: nil, uri: "http://example.com")]
@@ -299,8 +299,8 @@ struct EncoderTests {
         #expect(output.contains("xmlns=\"http://example.com\""))
     }
 
-    @Test("Encode prefixed namespace")
-    func encodePrefixedNamespace() {
+    @Test
+    func `Encode prefixed namespace`() {
         let element = W3C_XML.Element(
             name: "root",
             namespaces: [W3C_XML.Namespace(prefix: "ex", uri: "http://example.com")]
@@ -309,8 +309,8 @@ struct EncoderTests {
         #expect(output.contains("xmlns:ex=\"http://example.com\""))
     }
 
-    @Test("Encode pretty print")
-    func encodePrettyPrint() {
+    @Test
+    func `Encode pretty print`() {
         let element = W3C_XML.Element(
             name: "root",
             content: [.element(W3C_XML.Element(name: "child"))]
@@ -320,8 +320,8 @@ struct EncoderTests {
         #expect(output.contains("  "))  // Default indent
     }
 
-    @Test("Encode processing instruction")
-    func encodeProcessingInstruction() {
+    @Test
+    func `Encode processing instruction`() {
         let element = W3C_XML.Element(
             name: "root",
             content: [.instruction(W3C_XML.Instruction(target: "php", data: "echo 1"))]
@@ -330,8 +330,8 @@ struct EncoderTests {
         #expect(output.contains("<?php echo 1?>"))
     }
 
-    @Test("Encode Unicode content")
-    func encodeUnicodeContent() {
+    @Test
+    func `Encode Unicode content`() {
         let element = W3C_XML.Element(name: "root", content: [.text("日本語 🎉")])
         let output = String(decoding: element.encode(), as: UTF8.self)
         #expect(output.contains("日本語 🎉"))
@@ -343,40 +343,40 @@ struct EncoderTests {
     .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
 )
 struct ParserEdgeCases {
-    @Test("Parse empty element with explicit close tag")
-    func parseEmptyElementExplicitClose() throws {
+    @Test
+    func `Parse empty element with explicit close tag`() throws {
         let doc = try W3C_XML.parse("<root></root>")
         #expect(doc.root.content.isEmpty)
     }
 
-    @Test("Parse whitespace-only content")
-    func parseWhitespaceContent() throws {
+    @Test
+    func `Parse whitespace-only content`() throws {
         let doc = try W3C_XML.parse("<root>   \n\t  </root>")
         #expect(doc.root.textContent == "   \n\t  ")
     }
 
-    @Test("Parse mixed content")
-    func parseMixedContent() throws {
+    @Test
+    func `Parse mixed content`() throws {
         let doc = try W3C_XML.parse("<root>text<b>bold</b>more</root>")
         #expect(doc.root.content.count == 3)
         #expect(doc.root.textContent == "textmore")
         #expect(doc.root.child("b")?.textContent == "bold")
     }
 
-    @Test("Parse attribute with single quotes")
-    func parseAttributeSingleQuotes() throws {
+    @Test
+    func `Parse attribute with single quotes`() throws {
         let doc = try W3C_XML.parse("<root attr='value'/>")
         #expect(doc.root.attribute("attr") == "value")
     }
 
-    @Test("Parse empty attribute value")
-    func parseEmptyAttributeValue() throws {
+    @Test
+    func `Parse empty attribute value`() throws {
         let doc = try W3C_XML.parse(#"<root attr=""/>"#)
         #expect(doc.root.attribute("attr")?.isEmpty == true)
     }
 
-    @Test("Parse multiple attributes")
-    func parseMultipleAttributes() throws {
+    @Test
+    func `Parse multiple attributes`() throws {
         let doc = try W3C_XML.parse(#"<root a="1" b="2" c="3"/>"#)
         #expect(doc.root.attributes.count == 3)
         #expect(doc.root.attribute("a") == "1")
@@ -384,8 +384,8 @@ struct ParserEdgeCases {
         #expect(doc.root.attribute("c") == "3")
     }
 
-    @Test("Parse nested elements 10 deep")
-    func parseDeeplyNested() throws {
+    @Test
+    func `Parse nested elements 10 deep`() throws {
         var xml = ""
         for _ in 0..<10 {
             xml += "<a>"
@@ -398,15 +398,15 @@ struct ParserEdgeCases {
         #expect(doc.root.name.local == "a")
     }
 
-    @Test("Parse adjacent text nodes")
-    func parseAdjacentText() throws {
+    @Test
+    func `Parse adjacent text nodes`() throws {
         // Entity references can create adjacent text - parser should handle
         let doc = try W3C_XML.parse("<root>a&amp;b</root>")
         #expect(doc.root.textContent == "a&b")
     }
 
-    @Test("Parse element with all content types")
-    func parseAllContentTypes() throws {
+    @Test
+    func `Parse element with all content types`() throws {
         let doc = try W3C_XML.parse(
             """
             <root>
@@ -424,46 +424,46 @@ struct ParserEdgeCases {
 
 @Suite("W3C_XML Type Tests")
 struct TypeTests {
-    @Test("Name parses prefix and local")
-    func nameParsesPrefixLocal() {
+    @Test
+    func `Name parses prefix and local`() {
         let name = W3C_XML.Name("prefix:local")
         #expect(name.prefix == "prefix")
         #expect(name.local == "local")
         #expect(name.qualified == "prefix:local")
     }
 
-    @Test("Name without prefix")
-    func nameWithoutPrefix() {
+    @Test
+    func `Name without prefix`() {
         let name = W3C_XML.Name("local")
         #expect(name.prefix == nil)
         #expect(name.local == "local")
         #expect(name.qualified == "local")
     }
 
-    @Test("Namespace equality")
-    func namespaceEquality() {
+    @Test
+    func `Namespace equality`() {
         let ns1 = W3C_XML.Namespace(prefix: "ex", uri: "http://example.com")
         let ns2 = W3C_XML.Namespace(prefix: "ex", uri: "http://example.com")
         #expect(ns1 == ns2)
     }
 
-    @Test("Attribute equality")
-    func attributeEquality() {
+    @Test
+    func `Attribute equality`() {
         let attr1 = W3C_XML.Attribute(name: "id", value: "123")
         let attr2 = W3C_XML.Attribute(name: "id", value: "123")
         #expect(attr1 == attr2)
     }
 
-    @Test("Content element accessor")
-    func contentElementAccessor() {
+    @Test
+    func `Content element accessor`() {
         let element = W3C_XML.Element(name: "child")
         let content = W3C_XML.Content.element(element)
         #expect(content.element?.name.local == "child")
         #expect(content.isElement)
     }
 
-    @Test("Element children filter")
-    func elementChildrenFilter() {
+    @Test
+    func `Element children filter`() {
         let element = W3C_XML.Element(
             name: "root",
             content: [
@@ -476,8 +476,8 @@ struct TypeTests {
         #expect(element.children.count == 2)
     }
 
-    @Test("Element subscript by name")
-    func elementSubscriptByName() {
+    @Test
+    func `Element subscript by name`() {
         let element = W3C_XML.Element(
             name: "root",
             content: [.element(W3C_XML.Element(name: "child", content: [.text("value")]))]
@@ -486,8 +486,8 @@ struct TypeTests {
         #expect(element["nonexistent"] == nil)
     }
 
-    @Test("Element subscript by index")
-    func elementSubscriptByIndex() {
+    @Test
+    func `Element subscript by index`() {
         let element = W3C_XML.Element(
             name: "root",
             content: [
@@ -503,8 +503,8 @@ struct TypeTests {
 
 @Suite("W3C_XML Character Validation Tests")
 struct CharacterValidationTests {
-    @Test("isWhitespace")
-    func isWhitespace() {
+    @Test
+    func `isWhitespace`() {
         #expect(W3C_XML.isWhitespace(0x20))  // Space
         #expect(W3C_XML.isWhitespace(0x09))  // Tab
         #expect(W3C_XML.isWhitespace(0x0A))  // LF
@@ -512,8 +512,8 @@ struct CharacterValidationTests {
         #expect(!W3C_XML.isWhitespace(0x41))  // 'A'
     }
 
-    @Test("isNameStartChar ASCII")
-    func isNameStartCharASCII() {
+    @Test
+    func `isNameStartChar ASCII`() {
         #expect(W3C_XML.isNameStartChar(Unicode.Scalar("A")))
         #expect(W3C_XML.isNameStartChar(Unicode.Scalar("Z")))
         #expect(W3C_XML.isNameStartChar(Unicode.Scalar("a")))
@@ -525,8 +525,8 @@ struct CharacterValidationTests {
         #expect(!W3C_XML.isNameStartChar(Unicode.Scalar(".")))
     }
 
-    @Test("isNameChar includes digits and hyphen")
-    func isNameCharExtended() {
+    @Test
+    func `isNameChar includes digits and hyphen`() {
         #expect(W3C_XML.isNameChar(Unicode.Scalar("0")))
         #expect(W3C_XML.isNameChar(Unicode.Scalar("9")))
         #expect(W3C_XML.isNameChar(Unicode.Scalar("-")))
@@ -534,8 +534,8 @@ struct CharacterValidationTests {
         #expect(W3C_XML.isNameChar(Unicode.Scalar("A")))
     }
 
-    @Test("isChar valid characters")
-    func isCharValid() {
+    @Test
+    func `isChar valid characters`() {
         #expect(W3C_XML.isChar(Unicode.Scalar(0x09)!))  // Tab
         #expect(W3C_XML.isChar(Unicode.Scalar(0x0A)!))  // LF
         #expect(W3C_XML.isChar(Unicode.Scalar(0x0D)!))  // CR
@@ -543,27 +543,21 @@ struct CharacterValidationTests {
         #expect(W3C_XML.isChar(Unicode.Scalar("A")))
     }
 
-    @Test("isChar invalid characters")
-    func isCharInvalid() {
+    @Test
+    func `isChar invalid characters`() {
         #expect(!W3C_XML.isChar(Unicode.Scalar(0x00)!))  // NUL
         #expect(!W3C_XML.isChar(Unicode.Scalar(0x01)!))  // Control
         #expect(!W3C_XML.isChar(Unicode.Scalar(0x1F)!))  // Control
     }
 
-    @Test(
-        "Parse Unicode element name",
-        .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
-    )
-    func parseUnicodeElementName() throws {
+    @Test(.disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"))
+    func `Parse Unicode element name`() throws {
         let doc = try W3C_XML.parse("<日本語/>")
         #expect(doc.root.name.local == "日本語")
     }
 
-    @Test(
-        "Parse Unicode text content",
-        .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
-    )
-    func parseUnicodeTextContent() throws {
+    @Test(.disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"))
+    func `Parse Unicode text content`() throws {
         let doc = try W3C_XML.parse("<root>日本語 🎉 émojis</root>")
         #expect(doc.root.textContent == "日本語 🎉 émojis")
     }
@@ -574,8 +568,8 @@ struct CharacterValidationTests {
     .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
 )
 struct DeepNestingTests {
-    @Test("Parse 1000-level deep nesting without stack overflow")
-    func parseDeepNesting1000() throws {
+    @Test
+    func `Parse 1000-level deep nesting without stack overflow`() throws {
         var xml = ""
         for i in 0..<1000 {
             xml += "<level\(i)>"
@@ -596,8 +590,8 @@ struct DeepNestingTests {
         #expect(current?.textContent == "deep")
     }
 
-    @Test("Parse 500-level deep nesting with attributes")
-    func parseDeepNestingWithAttributes() throws {
+    @Test
+    func `Parse 500-level deep nesting with attributes`() throws {
         var xml = ""
         for i in 0..<500 {
             xml += #"<level\#(i) id="\#(i)">"#
@@ -617,8 +611,8 @@ struct DeepNestingTests {
         }
     }
 
-    @Test("Depth limit is enforced")
-    func depthLimitEnforced() {
+    @Test
+    func `Depth limit is enforced`() {
         var xml = ""
         for i in 0..<600 {
             xml += "<a\(i)>"
@@ -633,8 +627,8 @@ struct DeepNestingTests {
         }
     }
 
-    @Test("Custom depth limit via W3C_XML.parse() directly")
-    func customDepthLimitDirect() throws {
+    @Test
+    func `Custom depth limit via W3C_XML.parse() directly`() throws {
         let depth = 37
         var xml = ""
         for _ in 0..<depth {
@@ -655,8 +649,8 @@ struct DeepNestingTests {
     .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
 )
 struct RoundtripTests {
-    @Test("Round-trip simple document")
-    func roundtripSimple() throws {
+    @Test
+    func `Round-trip simple document`() throws {
         let original = "<root/>"
         let doc = try W3C_XML.parse(original)
         let bytes = doc.root.encode()
@@ -664,8 +658,8 @@ struct RoundtripTests {
         #expect(output == original)
     }
 
-    @Test("Round-trip document with content")
-    func roundtripWithContent() throws {
+    @Test
+    func `Round-trip document with content`() throws {
         let original = try W3C_XML.parse(
             """
             <?xml version="1.0"?>
@@ -684,24 +678,24 @@ struct RoundtripTests {
         #expect(reparsed.root.children.count == 2)
     }
 
-    @Test("Round-trip preserves entities")
-    func roundtripEntities() throws {
+    @Test
+    func `Round-trip preserves entities`() throws {
         let doc = try W3C_XML.parse("<root>&lt;&gt;&amp;</root>")
         let bytes = doc.root.encode()
         let reparsed = try W3C_XML.parse(bytes)
         #expect(reparsed.root.textContent == "<>&")
     }
 
-    @Test("Round-trip preserves CDATA")
-    func roundtripCDATA() throws {
+    @Test
+    func `Round-trip preserves CDATA`() throws {
         let doc = try W3C_XML.parse("<root><![CDATA[<script>]]></root>")
         let bytes = doc.root.encode()
         let output = String(decoding: bytes, as: UTF8.self)
         #expect(output.contains("<![CDATA["))
     }
 
-    @Test("Round-trip preserves namespaces")
-    func roundtripNamespaces() throws {
+    @Test
+    func `Round-trip preserves namespaces`() throws {
         let doc = try W3C_XML.parse(#"<root xmlns="http://example.com" xmlns:ex="http://ex.com"/>"#)
         let bytes = doc.root.encode()
         let output = String(decoding: bytes, as: UTF8.self)
