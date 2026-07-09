@@ -3,10 +3,9 @@ import Testing
 @testable import W3C_XML
 
 @Suite(
-    "W3C_XML Parser Tests",
     .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
 )
-struct ParserTests {
+struct `Parser Tests` {
     @Test
     func `Parse simple element`() throws {
         let doc = try W3C_XML.parse("<root/>")
@@ -240,101 +239,103 @@ struct ErrorHandlingTests {
     }
 }
 
-@Suite("W3C_XML Encoder Tests")
-struct EncoderTests {
-    @Test
-    func `Encode empty element`() {
-        let element = W3C_XML.Element(name: "root")
-        let output = String(decoding: element.encode(), as: UTF8.self)
-        #expect(output == "<root/>")
-    }
+extension W3C_XML.Encoder {
+    @Suite("W3C_XML Encoder Tests")
+    struct Test {
+        @Test
+        func `Encode empty element`() {
+            let element = W3C_XML.Element(name: "root")
+            let output = String(decoding: element.encode(), as: UTF8.self)
+            #expect(output == "<root/>")
+        }
 
-    @Test
-    func `Encode element with text`() {
-        let element = W3C_XML.Element(name: "root", content: [.text("Hello")])
-        let output = String(decoding: element.encode(), as: UTF8.self)
-        #expect(output == "<root>Hello</root>")
-    }
+        @Test
+        func `Encode element with text`() {
+            let element = W3C_XML.Element(name: "root", content: [.text("Hello")])
+            let output = String(decoding: element.encode(), as: UTF8.self)
+            #expect(output == "<root>Hello</root>")
+        }
 
-    @Test
-    func `Encode escapes text entities`() {
-        let element = W3C_XML.Element(name: "root", content: [.text("<>&")])
-        let output = String(decoding: element.encode(), as: UTF8.self)
-        #expect(output == "<root>&lt;&gt;&amp;</root>")
-    }
+        @Test
+        func `Encode escapes text entities`() {
+            let element = W3C_XML.Element(name: "root", content: [.text("<>&")])
+            let output = String(decoding: element.encode(), as: UTF8.self)
+            #expect(output == "<root>&lt;&gt;&amp;</root>")
+        }
 
-    @Test
-    func `Encode escapes attribute entities`() throws {
-        let element = W3C_XML.Element(
-            name: "root",
-            attributes: [W3C_XML.Attribute(name: "a", value: "<&\"")]
-        )
-        let output = String(decoding: element.encode(), as: UTF8.self)
-        #expect(output.contains("&lt;"))
-        #expect(output.contains("&amp;"))
-        #expect(output.contains("&quot;"))
-    }
+        @Test
+        func `Encode escapes attribute entities`() throws {
+            let element = W3C_XML.Element(
+                name: "root",
+                attributes: [W3C_XML.Attribute(name: "a", value: "<&\"")]
+            )
+            let output = String(decoding: element.encode(), as: UTF8.self)
+            #expect(output.contains("&lt;"))
+            #expect(output.contains("&amp;"))
+            #expect(output.contains("&quot;"))
+        }
 
-    @Test
-    func `Encode CDATA section`() {
-        let element = W3C_XML.Element(name: "root", content: [.cdata("<script>")])
-        let output = String(decoding: element.encode(), as: UTF8.self)
-        #expect(output == "<root><![CDATA[<script>]]></root>")
-    }
+        @Test
+        func `Encode CDATA section`() {
+            let element = W3C_XML.Element(name: "root", content: [.cdata("<script>")])
+            let output = String(decoding: element.encode(), as: UTF8.self)
+            #expect(output == "<root><![CDATA[<script>]]></root>")
+        }
 
-    @Test
-    func `Encode comment`() {
-        let element = W3C_XML.Element(name: "root", content: [.comment("note")])
-        let output = String(decoding: element.encode(), as: UTF8.self)
-        #expect(output == "<root><!--note--></root>")
-    }
+        @Test
+        func `Encode comment`() {
+            let element = W3C_XML.Element(name: "root", content: [.comment("note")])
+            let output = String(decoding: element.encode(), as: UTF8.self)
+            #expect(output == "<root><!--note--></root>")
+        }
 
-    @Test
-    func `Encode namespace declaration`() {
-        let element = W3C_XML.Element(
-            name: "root",
-            namespaces: [W3C_XML.Namespace(prefix: nil, uri: "http://example.com")]
-        )
-        let output = String(decoding: element.encode(), as: UTF8.self)
-        #expect(output.contains("xmlns=\"http://example.com\""))
-    }
+        @Test
+        func `Encode namespace declaration`() {
+            let element = W3C_XML.Element(
+                name: "root",
+                namespaces: [W3C_XML.Namespace(prefix: nil, uri: "http://example.com")]
+            )
+            let output = String(decoding: element.encode(), as: UTF8.self)
+            #expect(output.contains("xmlns=\"http://example.com\""))
+        }
 
-    @Test
-    func `Encode prefixed namespace`() {
-        let element = W3C_XML.Element(
-            name: "root",
-            namespaces: [W3C_XML.Namespace(prefix: "ex", uri: "http://example.com")]
-        )
-        let output = String(decoding: element.encode(), as: UTF8.self)
-        #expect(output.contains("xmlns:ex=\"http://example.com\""))
-    }
+        @Test
+        func `Encode prefixed namespace`() {
+            let element = W3C_XML.Element(
+                name: "root",
+                namespaces: [W3C_XML.Namespace(prefix: "ex", uri: "http://example.com")]
+            )
+            let output = String(decoding: element.encode(), as: UTF8.self)
+            #expect(output.contains("xmlns:ex=\"http://example.com\""))
+        }
 
-    @Test
-    func `Encode pretty print`() {
-        let element = W3C_XML.Element(
-            name: "root",
-            content: [.element(W3C_XML.Element(name: "child"))]
-        )
-        let output = String(decoding: element.encode(options: .init(prettyPrint: true)), as: UTF8.self)
-        #expect(output.contains("\n"))
-        #expect(output.contains("  "))  // Default indent
-    }
+        @Test
+        func `Encode pretty print`() {
+            let element = W3C_XML.Element(
+                name: "root",
+                content: [.element(W3C_XML.Element(name: "child"))]
+            )
+            let output = String(decoding: element.encode(options: .init(prettyPrint: true)), as: UTF8.self)
+            #expect(output.contains("\n"))
+            #expect(output.contains("  "))  // Default indent
+        }
 
-    @Test
-    func `Encode processing instruction`() {
-        let element = W3C_XML.Element(
-            name: "root",
-            content: [.instruction(W3C_XML.Instruction(target: "php", data: "echo 1"))]
-        )
-        let output = String(decoding: element.encode(), as: UTF8.self)
-        #expect(output.contains("<?php echo 1?>"))
-    }
+        @Test
+        func `Encode processing instruction`() {
+            let element = W3C_XML.Element(
+                name: "root",
+                content: [.instruction(W3C_XML.Instruction(target: "php", data: "echo 1"))]
+            )
+            let output = String(decoding: element.encode(), as: UTF8.self)
+            #expect(output.contains("<?php echo 1?>"))
+        }
 
-    @Test
-    func `Encode Unicode content`() {
-        let element = W3C_XML.Element(name: "root", content: [.text("日本語 🎉")])
-        let output = String(decoding: element.encode(), as: UTF8.self)
-        #expect(output.contains("日本語 🎉"))
+        @Test
+        func `Encode Unicode content`() {
+            let element = W3C_XML.Element(name: "root", content: [.text("日本語 🎉")])
+            let output = String(decoding: element.encode(), as: UTF8.self)
+            #expect(output.contains("日本語 🎉"))
+        }
     }
 }
 
