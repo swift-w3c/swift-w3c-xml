@@ -502,65 +502,67 @@ struct TypeTests {
     }
 }
 
-@Suite("W3C_XML Character Validation Tests")
-struct CharacterValidationTests {
-    @Test
-    func `isWhitespace`() {
-        #expect(W3C_XML.isWhitespace(0x20))  // Space
-        #expect(W3C_XML.isWhitespace(0x09))  // Tab
-        #expect(W3C_XML.isWhitespace(0x0A))  // LF
-        #expect(W3C_XML.isWhitespace(0x0D))  // CR
-        #expect(!W3C_XML.isWhitespace(0x41))  // 'A'
-    }
+extension W3C_XML {
+    @Suite("W3C_XML Character Validation Tests")
+    struct Test {
+        @Test
+        func `isWhitespace`() {
+            #expect(W3C_XML.isWhitespace(0x20))  // Space
+            #expect(W3C_XML.isWhitespace(0x09))  // Tab
+            #expect(W3C_XML.isWhitespace(0x0A))  // LF
+            #expect(W3C_XML.isWhitespace(0x0D))  // CR
+            #expect(!W3C_XML.isWhitespace(0x41))  // 'A'
+        }
 
-    @Test
-    func `isNameStartChar ASCII`() {
-        #expect(W3C_XML.isNameStartChar(Unicode.Scalar("A")))
-        #expect(W3C_XML.isNameStartChar(Unicode.Scalar("Z")))
-        #expect(W3C_XML.isNameStartChar(Unicode.Scalar("a")))
-        #expect(W3C_XML.isNameStartChar(Unicode.Scalar("z")))
-        #expect(W3C_XML.isNameStartChar(Unicode.Scalar("_")))
-        #expect(W3C_XML.isNameStartChar(Unicode.Scalar(":")))
-        #expect(!W3C_XML.isNameStartChar(Unicode.Scalar("0")))
-        #expect(!W3C_XML.isNameStartChar(Unicode.Scalar("-")))
-        #expect(!W3C_XML.isNameStartChar(Unicode.Scalar(".")))
-    }
+        @Test
+        func `isNameStartChar ASCII`() {
+            #expect(W3C_XML.isNameStartChar(Unicode.Scalar("A")))
+            #expect(W3C_XML.isNameStartChar(Unicode.Scalar("Z")))
+            #expect(W3C_XML.isNameStartChar(Unicode.Scalar("a")))
+            #expect(W3C_XML.isNameStartChar(Unicode.Scalar("z")))
+            #expect(W3C_XML.isNameStartChar(Unicode.Scalar("_")))
+            #expect(W3C_XML.isNameStartChar(Unicode.Scalar(":")))
+            #expect(!W3C_XML.isNameStartChar(Unicode.Scalar("0")))
+            #expect(!W3C_XML.isNameStartChar(Unicode.Scalar("-")))
+            #expect(!W3C_XML.isNameStartChar(Unicode.Scalar(".")))
+        }
 
-    @Test
-    func `isNameChar includes digits and hyphen`() {
-        #expect(W3C_XML.isNameChar(Unicode.Scalar("0")))
-        #expect(W3C_XML.isNameChar(Unicode.Scalar("9")))
-        #expect(W3C_XML.isNameChar(Unicode.Scalar("-")))
-        #expect(W3C_XML.isNameChar(Unicode.Scalar(".")))
-        #expect(W3C_XML.isNameChar(Unicode.Scalar("A")))
-    }
+        @Test
+        func `isNameChar includes digits and hyphen`() {
+            #expect(W3C_XML.isNameChar(Unicode.Scalar("0")))
+            #expect(W3C_XML.isNameChar(Unicode.Scalar("9")))
+            #expect(W3C_XML.isNameChar(Unicode.Scalar("-")))
+            #expect(W3C_XML.isNameChar(Unicode.Scalar(".")))
+            #expect(W3C_XML.isNameChar(Unicode.Scalar("A")))
+        }
 
-    @Test
-    func `isChar valid characters`() {
-        #expect(W3C_XML.isChar(Unicode.Scalar(0x09)!))  // Tab
-        #expect(W3C_XML.isChar(Unicode.Scalar(0x0A)!))  // LF
-        #expect(W3C_XML.isChar(Unicode.Scalar(0x0D)!))  // CR
-        #expect(W3C_XML.isChar(Unicode.Scalar(0x20)!))  // Space
-        #expect(W3C_XML.isChar(Unicode.Scalar("A")))
-    }
+        @Test
+        func `isChar valid characters`() {
+            #expect(W3C_XML.isChar(Unicode.Scalar(0x09)!))  // Tab
+            #expect(W3C_XML.isChar(Unicode.Scalar(0x0A)!))  // LF
+            #expect(W3C_XML.isChar(Unicode.Scalar(0x0D)!))  // CR
+            #expect(W3C_XML.isChar(Unicode.Scalar(0x20)!))  // Space
+            #expect(W3C_XML.isChar(Unicode.Scalar("A")))
+        }
 
-    @Test
-    func `isChar invalid characters`() {
-        #expect(!W3C_XML.isChar(Unicode.Scalar(0x00)!))  // NUL
-        #expect(!W3C_XML.isChar(Unicode.Scalar(0x01)!))  // Control
-        #expect(!W3C_XML.isChar(Unicode.Scalar(0x1F)!))  // Control
-    }
+        @Test
+        func `isChar invalid characters`() {
+            #expect(!W3C_XML.isChar(Unicode.Scalar(0x00)!))  // NUL
+            #expect(!W3C_XML.isChar(Unicode.Scalar(0x01)!))  // Control
+            #expect(!W3C_XML.isChar(Unicode.Scalar(0x1F)!))  // Control
+        }
 
-    @Test(.disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"))
-    func `Parse Unicode element name`() throws {
-        let doc = try W3C_XML.parse("<日本語/>")
-        #expect(doc.root.name.local == "日本語")
-    }
+        @Test(.disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"))
+        func `Parse Unicode element name`() throws {
+            let doc = try W3C_XML.parse("<日本語/>")
+            #expect(doc.root.name.local == "日本語")
+        }
 
-    @Test(.disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"))
-    func `Parse Unicode text content`() throws {
-        let doc = try W3C_XML.parse("<root>日本語 🎉 émojis</root>")
-        #expect(doc.root.textContent == "日本語 🎉 émojis")
+        @Test(.disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"))
+        func `Parse Unicode text content`() throws {
+            let doc = try W3C_XML.parse("<root>日本語 🎉 émojis</root>")
+            #expect(doc.root.textContent == "日本語 🎉 émojis")
+        }
     }
 }
 
