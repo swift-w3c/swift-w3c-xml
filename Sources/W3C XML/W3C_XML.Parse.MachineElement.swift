@@ -186,134 +186,135 @@ extension W3C_XML.Parse {
 
         return Parser_Primitives.Parser.Machine.recursive(
             maxDepth: maxDepth,
-            onDepthExceeded: { W3C_XML.Parse.Error.depthExceeded(limit: $0) }
-        ) { (builder: inout Builder, elementRef: Ref<W3C_XML.Element>) -> Expr<W3C_XML.Element> in
+            onDepthExceeded: { W3C_XML.Parse.Error.depthExceeded(limit: $0) },
+            { (builder: inout Builder, elementRef: Ref<W3C_XML.Element>) -> Expr<W3C_XML.Element> in
 
-            // Leaf: StartTag
-            let startTag: Expr<StartTagOutput> = Parser_Primitives.Parser.Machine.leaf(
-                StartTag<Input>(),
-                in: &builder
-            )
+                // Leaf: StartTag
+                let startTag: Expr<StartTagOutput> = Parser_Primitives.Parser.Machine.leaf(
+                    StartTag<Input>(),
+                    in: &builder
+                )
 
-            // Leaf: Comment -> Content
-            let comment: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
-                Comment<Input>(),
-                in: &builder
-            ).map({ W3C_XML.Content.comment($0) }, in: &builder)
+                // Leaf: Comment -> Content
+                let comment: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
+                    Comment<Input>(),
+                    in: &builder
+                ).map({ W3C_XML.Content.comment($0) }, in: &builder)
 
-            // Leaf: CDATA -> Content
-            let cdata: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
-                CDATASection<Input>(),
-                in: &builder
-            ).map({ W3C_XML.Content.cdata($0) }, in: &builder)
+                // Leaf: CDATA -> Content
+                let cdata: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
+                    CDATASection<Input>(),
+                    in: &builder
+                ).map({ W3C_XML.Content.cdata($0) }, in: &builder)
 
-            // Leaf: ProcessingInstruction -> Content
-            let pi: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
-                ProcessingInstruction<Input>(),
-                in: &builder
-            ).map({ W3C_XML.Content.instruction($0) }, in: &builder)
+                // Leaf: ProcessingInstruction -> Content
+                let pi: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
+                    ProcessingInstruction<Input>(),
+                    in: &builder
+                ).map({ W3C_XML.Content.instruction($0) }, in: &builder)
 
-            // Leaf: TextContent -> Content (fails if empty)
-            let text: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
-                NonEmptyTextContent<Input>(),
-                in: &builder
-            ).map({ W3C_XML.Content.text($0) }, in: &builder)
+                // Leaf: TextContent -> Content (fails if empty)
+                let text: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
+                    NonEmptyTextContent<Input>(),
+                    in: &builder
+                ).map({ W3C_XML.Content.text($0) }, in: &builder)
 
-            // Recursive: Element -> Content
-            let elementContent: Expr<W3C_XML.Content> = elementRef.expression(in: &builder)
-                .map({ W3C_XML.Content.element($0) }, in: &builder)
+                // Recursive: Element -> Content
+                let elementContent: Expr<W3C_XML.Content> = elementRef.expression(in: &builder)
+                    .map({ W3C_XML.Content.element($0) }, in: &builder)
 
-            // ContentItem: one of the above (element first for proper recursion)
-            let contentItem: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.oneOf(
-                [elementContent, comment, cdata, pi, text],
-                in: &builder
-            )
+                // ContentItem: one of the above (element first for proper recursion)
+                let contentItem: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.oneOf(
+                    [elementContent, comment, cdata, pi, text],
+                    in: &builder
+                )
 
-            // Content: many content items
-            let content: Expr<[W3C_XML.Content]> = Parser_Primitives.Parser.Machine.many(contentItem, in: &builder)
+                // Content: many content items
+                let content: Expr<[W3C_XML.Content]> = Parser_Primitives.Parser.Machine.many(contentItem, in: &builder)
 
-            // EndTagAny: parse end tag, return name
-            let endTagAny: Expr<W3C_XML.Name> = Parser_Primitives.Parser.Machine.leaf(
-                EndTagAny<Input>(),
-                in: &builder
-            )
+                // EndTagAny: parse end tag, return name
+                let endTagAny: Expr<W3C_XML.Name> = Parser_Primitives.Parser.Machine.leaf(
+                    EndTagAny<Input>(),
+                    in: &builder
+                )
 
-            // === Build element parsing branches ===
+                // === Build element parsing branches ===
 
-            // Build: sequence(content, endTagAny) -> ([Content], Name)
-            let contentAndEndTag: Expr<([W3C_XML.Content], W3C_XML.Name)> = Parser_Primitives.Parser.Machine.sequence(
-                content,
-                endTagAny,
-                combine: { ($0, $1) },
-                in: &builder
-            )
+                // Build: sequence(content, endTagAny) -> ([Content], Name)
+                let contentAndEndTag: Expr<([W3C_XML.Content], W3C_XML.Name)> = Parser_Primitives.Parser.Machine.sequence(
+                    content,
+                    endTagAny,
+                    combine: { ($0, $1) },
+                    in: &builder
+                )
 
-            // Strategy: Use oneOf with two branches that share the StartTag parser
-            // but filter based on isEmpty via tryMap:
-            // - emptyElement: startTag -> tryMap (require isEmpty) -> Element
-            // - nonEmptyElement: startTag -> tryMap (require !isEmpty) -> sequence(content, endTag) -> tryMap(validate)
+                // Strategy: Use oneOf with two branches that share the StartTag parser
+                // but filter based on isEmpty via tryMap:
+                // - emptyElement: startTag -> tryMap (require isEmpty) -> Element
+                // - nonEmptyElement: startTag -> tryMap (require !isEmpty) -> sequence(content, endTag) -> tryMap(validate)
 
-            // Empty element: startTag -> tryMap (require isEmpty) -> Element
-            let emptyElement: Expr<W3C_XML.Element> = startTag.tryMap(
-                { start throws(W3C_XML.Parse.Error) -> W3C_XML.Element in
-                    guard start.isEmpty else {
-                        throw .expected("/>")  // Not an empty element, fail to try next oneOf
-                    }
-                    return W3C_XML.Element(
-                        name: start.name,
-                        attributes: start.attributes,
-                        content: [],
-                        namespaces: start.namespaces
-                    )
-                },
-                in: &builder
-            )
+                // Empty element: startTag -> tryMap (require isEmpty) -> Element
+                let emptyElement: Expr<W3C_XML.Element> = startTag.tryMap(
+                    { start throws(W3C_XML.Parse.Error) -> W3C_XML.Element in
+                        guard start.isEmpty else {
+                            throw .expected("/>")  // Not an empty element, fail to try next oneOf
+                        }
+                        return W3C_XML.Element(
+                            name: start.name,
+                            attributes: start.attributes,
+                            content: [],
+                            namespaces: start.namespaces
+                        )
+                    },
+                    in: &builder
+                )
 
-            // Non-empty element: startTag -> tryMap (require !isEmpty) -> StartTagOutput
-            let openTag: Expr<StartTagOutput> = startTag.tryMap(
-                { start throws(W3C_XML.Parse.Error) -> StartTagOutput in
-                    guard !start.isEmpty else {
-                        throw .expected(">")  // Is empty element, fail to try next oneOf
-                    }
-                    return start
-                },
-                in: &builder
-            )
+                // Non-empty element: startTag -> tryMap (require !isEmpty) -> StartTagOutput
+                let openTag: Expr<StartTagOutput> = startTag.tryMap(
+                    { start throws(W3C_XML.Parse.Error) -> StartTagOutput in
+                        guard !start.isEmpty else {
+                            throw .expected(">")  // Is empty element, fail to try next oneOf
+                        }
+                        return start
+                    },
+                    in: &builder
+                )
 
-            // Non-empty: openTag -> sequence(content, endTag) -> tryMap(validate)
-            let openWithContentEnd: Expr<(StartTagOutput, ([W3C_XML.Content], W3C_XML.Name))> = Parser_Primitives.Parser.Machine.sequence(
-                openTag,
-                contentAndEndTag,
-                combine: { ($0, $1) },
-                in: &builder
-            )
+                // Non-empty: openTag -> sequence(content, endTag) -> tryMap(validate)
+                let openWithContentEnd: Expr<(StartTagOutput, ([W3C_XML.Content], W3C_XML.Name))> = Parser_Primitives.Parser.Machine.sequence(
+                    openTag,
+                    contentAndEndTag,
+                    combine: { ($0, $1) },
+                    in: &builder
+                )
 
-            let nonEmptyElement: Expr<W3C_XML.Element> = openWithContentEnd.tryMap(
-                { parts throws(W3C_XML.Parse.Error) -> W3C_XML.Element in
-                    let (start, contentAndEnd) = parts
-                    let (contents, endName) = contentAndEnd
+                let nonEmptyElement: Expr<W3C_XML.Element> = openWithContentEnd.tryMap(
+                    { parts throws(W3C_XML.Parse.Error) -> W3C_XML.Element in
+                        let (start, contentAndEnd) = parts
+                        let (contents, endName) = contentAndEnd
 
-                    // Validate tag names match
-                    guard start.name.qualified == endName.qualified else {
-                        throw .mismatchedTags(open: start.name.qualified, close: endName.qualified)
-                    }
+                        // Validate tag names match
+                        guard start.name.qualified == endName.qualified else {
+                            throw .mismatchedTags(open: start.name.qualified, close: endName.qualified)
+                        }
 
-                    // Merge adjacent text nodes
-                    let merged = mergeTextNodes(contents)
+                        // Merge adjacent text nodes
+                        let merged = mergeTextNodes(contents)
 
-                    return W3C_XML.Element(
-                        name: start.name,
-                        attributes: start.attributes,
-                        content: merged,
-                        namespaces: start.namespaces
-                    )
-                },
-                in: &builder
-            )
+                        return W3C_XML.Element(
+                            name: start.name,
+                            attributes: start.attributes,
+                            content: merged,
+                            namespaces: start.namespaces
+                        )
+                    },
+                    in: &builder
+                )
 
-            // Final element: try empty first (because /> is more specific), then non-empty
-            return Parser_Primitives.Parser.Machine.oneOf([emptyElement, nonEmptyElement], in: &builder)
-        }
+                // Final element: try empty first (because /> is more specific), then non-empty
+                return Parser_Primitives.Parser.Machine.oneOf([emptyElement, nonEmptyElement], in: &builder)
+            }
+        )
     }
 
     /// Merges adjacent text nodes in content.
