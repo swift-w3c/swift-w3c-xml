@@ -134,6 +134,30 @@ struct ErrorHandlingTests {
     }
 
     @Test
+    func `Truncated inputs report a typed parse error without terminating`() {
+        // Regression battery: every truncation point of a well-formed
+        // document must surface as a typed parse failure — never a trap in
+        // the input-consuming bridging layer.
+        let document = #"<root id="value"><child>text</child></root>"#
+        for length in 0..<document.count {
+            let truncated = String(document.prefix(length))
+            #expect(throws: W3C_XML.Parse.Error.self, "input: \(truncated)") {
+                _ = try W3C_XML.parse(truncated)
+            }
+        }
+    }
+
+    @Test
+    func `Input truncated before an attribute value reports a typed parse error`() {
+        #expect(throws: W3C_XML.Parse.Error.self) {
+            _ = try W3C_XML.parse("<root attr=")
+        }
+        #expect(throws: W3C_XML.Parse.Error.self) {
+            _ = try W3C_XML.parse(#"<root attr=""#)
+        }
+    }
+
+    @Test
     func `Reject missing root element`() {
         #expect(throws: (any Error).self) {
             _ = try W3C_XML.parse("")

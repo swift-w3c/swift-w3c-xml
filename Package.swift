@@ -38,10 +38,6 @@ let package = Package(
                 .product(name: "Byte Parser Primitives", package: "swift-byte-parser-primitives")
             ]
         ),
-        .executableTarget(
-            name: "CrashRepro",
-            dependencies: ["W3C XML"]
-        ),
         .testTarget(
             name: "W3C XML Tests",
             dependencies: [

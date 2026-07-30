@@ -27,11 +27,18 @@ extension Input_Primitives.Input.Streaming where Self: Copyable, Element: Copyab
 
     /// Consumes and returns the next element.
     ///
-    /// - Precondition: The input must not be empty.
+    /// - Precondition: The input must not be empty. Every consuming call site
+    ///   peeks ``first`` (or checks `isEmpty`) before consuming, so truncated
+    ///   input surfaces as a typed `unexpectedEndOfInput` parse error at the
+    ///   guard, never as a trap here; `advance()` throws only on empty input.
     @inlinable
     @_disfavoredOverload
     @discardableResult
     package mutating func removeFirst() -> Element {
-        try! advance()
+        do {
+            return try advance()
+        } catch {
+            preconditionFailure("removeFirst() on empty input — peek `first` before consuming")
+        }
     }
 }

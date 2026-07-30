@@ -184,7 +184,10 @@ extension W3C_XML.Parse {
         typealias Expr<T> = Parser_Primitives.Parser.Machine.Expression<Input, W3C_XML.Parse.Error, T>
         typealias Ref<T> = Parser_Primitives.Parser.Machine.Reference<Input, W3C_XML.Parse.Error, T>
 
-        return Parser_Primitives.Parser.Machine.recursive(maxDepth: maxDepth) { (builder: inout Builder, elementRef: Ref<W3C_XML.Element>) -> Expr<W3C_XML.Element> in
+        return Parser_Primitives.Parser.Machine.recursive(
+            maxDepth: maxDepth,
+            onDepthExceeded: { W3C_XML.Parse.Error.depthExceeded(limit: $0) }
+        ) { (builder: inout Builder, elementRef: Ref<W3C_XML.Element>) -> Expr<W3C_XML.Element> in
 
             // Leaf: StartTag
             let startTag: Expr<StartTagOutput> = Parser_Primitives.Parser.Machine.leaf(

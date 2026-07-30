@@ -209,7 +209,10 @@ extension W3C_XML.Lexer {
     @inlinable
     package mutating func lexAttributeValue() throws(Error) -> W3C_XML.Token {
         let startPos = position
-        let quote = input.removeFirst()
+        guard let quote = input.first else {
+            throw .unexpectedEndOfInput(expected: "attribute value", at: position)
+        }
+        input.removeFirst()
         position = W3C_XML.Position(
             offset: position.offset + 1,
             line: position.line,
