@@ -1,9 +1,0 @@
-# SwiftLint configuration
-# Inherits from the shared parent configuration in swift-standards
-
-parent_config: https://raw.githubusercontent.com/swift-standards/.github/main/.swiftlint.yml
-
-# Package-specific overrides
-disabled_rules:
-  - function_parameter_count
-  - force_try  # Internal bridging members with documented preconditions use force try
