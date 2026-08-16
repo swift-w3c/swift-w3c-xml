@@ -135,28 +135,40 @@ extension W3C_XML.Token: CustomStringConvertible {
         switch self {
         case .startTagOpen(let name):
             return "<\(name.qualified)"
+
         case .endTagOpen(let name):
             return "</\(name.qualified)"
+
         case .tagClose:
             return ">"
+
         case .emptyTagClose:
             return "/>"
+
         case .attributeName(let name):
             return name.qualified
+
         case .attributeValue(let value):
             return "\"\(value)\""
+
         case .equals:
             return "="
+
         case .text(let text):
             return text
+
         case .cdata(let text):
             return "<![CDATA[\(text)]]>"
+
         case .comment(let text):
             return "<!--\(text)-->"
+
         case .instruction(let pi):
             return pi.description
+
         case .xmlDeclaration(let decl):
             return decl.description
+
         case .doctype(let dt):
             return dt.description
         }

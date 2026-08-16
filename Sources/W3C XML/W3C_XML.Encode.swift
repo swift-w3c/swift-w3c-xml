@@ -161,7 +161,9 @@ extension W3C_XML.Encoder {
         _ decl: W3C_XML.Declaration,
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
-        buffer.append(contentsOf: [ASCII.Code.lessThanSign.byte.underlying, ASCII.Code.questionMark.byte.underlying])  // <?
+        buffer.append(contentsOf: [
+            ASCII.Code.lessThanSign.byte.underlying, ASCII.Code.questionMark.byte.underlying,
+        ])  // <?
         buffer.append(contentsOf: Swift.Array("xml".utf8))
 
         buffer.append(contentsOf: Swift.Array(" version=\"".utf8))
@@ -180,7 +182,9 @@ extension W3C_XML.Encoder {
             buffer.append(ASCII.Code.quotationMark.byte.underlying)
         }
 
-        buffer.append(contentsOf: [ASCII.Code.questionMark.byte.underlying, ASCII.Code.greaterThanSign.byte.underlying])  // ?>
+        buffer.append(contentsOf: [
+            ASCII.Code.questionMark.byte.underlying, ASCII.Code.greaterThanSign.byte.underlying,
+        ])  // ?>
     }
 
     /// Encodes a DOCTYPE declaration.
@@ -219,7 +223,9 @@ extension W3C_XML.Encoder {
         _ instruction: W3C_XML.Instruction,
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
-        buffer.append(contentsOf: [ASCII.Code.lessThanSign.byte.underlying, ASCII.Code.questionMark.byte.underlying])  // <?
+        buffer.append(contentsOf: [
+            ASCII.Code.lessThanSign.byte.underlying, ASCII.Code.questionMark.byte.underlying,
+        ])  // <?
         buffer.append(contentsOf: Swift.Array(instruction.target.utf8))
 
         if let data = instruction.data {
@@ -227,7 +233,9 @@ extension W3C_XML.Encoder {
             buffer.append(contentsOf: Swift.Array(data.utf8))
         }
 
-        buffer.append(contentsOf: [ASCII.Code.questionMark.byte.underlying, ASCII.Code.greaterThanSign.byte.underlying])  // ?>
+        buffer.append(contentsOf: [
+            ASCII.Code.questionMark.byte.underlying, ASCII.Code.greaterThanSign.byte.underlying,
+        ])  // ?>
     }
 
     /// Encodes an element.
@@ -249,7 +257,9 @@ extension W3C_XML.Encoder {
             } else {
                 buffer.append(contentsOf: Swift.Array("xmlns".utf8))
             }
-            buffer.append(contentsOf: [ASCII.Code.equalsSign.byte.underlying, ASCII.Code.quotationMark.byte.underlying])
+            buffer.append(contentsOf: [
+                ASCII.Code.equalsSign.byte.underlying, ASCII.Code.quotationMark.byte.underlying,
+            ])
             encodeAttributeValue(ns.uri, into: &buffer)
             buffer.append(ASCII.Code.quotationMark.byte.underlying)
         }
@@ -258,14 +268,18 @@ extension W3C_XML.Encoder {
         for attr in element.attributes {
             buffer.append(ASCII.Code.sp.byte.underlying)
             buffer.append(contentsOf: Swift.Array(attr.name.qualified.utf8))
-            buffer.append(contentsOf: [ASCII.Code.equalsSign.byte.underlying, ASCII.Code.quotationMark.byte.underlying])
+            buffer.append(contentsOf: [
+                ASCII.Code.equalsSign.byte.underlying, ASCII.Code.quotationMark.byte.underlying,
+            ])
             encodeAttributeValue(attr.value, into: &buffer)
             buffer.append(ASCII.Code.quotationMark.byte.underlying)
         }
 
         if element.content.isEmpty {
             // Empty element
-            buffer.append(contentsOf: [ASCII.Code.solidus.byte.underlying, ASCII.Code.greaterThanSign.byte.underlying])  // />
+            buffer.append(contentsOf: [
+                ASCII.Code.solidus.byte.underlying, ASCII.Code.greaterThanSign.byte.underlying,
+            ])  // />
         } else {
             buffer.append(ASCII.Code.greaterThanSign.byte.underlying)
 
@@ -290,7 +304,9 @@ extension W3C_XML.Encoder {
             }
 
             // Closing tag
-            buffer.append(contentsOf: [ASCII.Code.lessThanSign.byte.underlying, ASCII.Code.solidus.byte.underlying])  // </
+            buffer.append(contentsOf: [
+                ASCII.Code.lessThanSign.byte.underlying, ASCII.Code.solidus.byte.underlying,
+            ])  // </
             buffer.append(contentsOf: Swift.Array(element.name.qualified.utf8))
             buffer.append(ASCII.Code.greaterThanSign.byte.underlying)
         }
@@ -334,10 +350,13 @@ extension W3C_XML.Encoder {
             switch scalar.value {
             case UInt32(UInt8.ascii.lessThanSign):
                 buffer.append(contentsOf: Swift.Array("&lt;".utf8))
+
             case UInt32(UInt8.ascii.ampersand):
                 buffer.append(contentsOf: Swift.Array("&amp;".utf8))
+
             case UInt32(UInt8.ascii.greaterThanSign):
                 buffer.append(contentsOf: Swift.Array("&gt;".utf8))
+
             default:
                 encodeScalarUTF8(scalar, into: &buffer)
             }
@@ -354,18 +373,25 @@ extension W3C_XML.Encoder {
             switch scalar.value {
             case UInt32(UInt8.ascii.lessThanSign):
                 buffer.append(contentsOf: Swift.Array("&lt;".utf8))
+
             case UInt32(UInt8.ascii.ampersand):
                 buffer.append(contentsOf: Swift.Array("&amp;".utf8))
+
             case UInt32(UInt8.ascii.quotationMark):
                 buffer.append(contentsOf: Swift.Array("&quot;".utf8))
+
             case UInt32(UInt8.ascii.apostrophe) where options.escapeApostrophe:
                 buffer.append(contentsOf: Swift.Array("&apos;".utf8))
+
             case 0x09:  // Tab
                 buffer.append(contentsOf: Swift.Array("&#9;".utf8))
+
             case 0x0A:  // LF
                 buffer.append(contentsOf: Swift.Array("&#10;".utf8))
+
             case 0x0D:  // CR
                 buffer.append(contentsOf: Swift.Array("&#13;".utf8))
+
             default:
                 encodeScalarUTF8(scalar, into: &buffer)
             }
@@ -382,13 +408,16 @@ extension W3C_XML.Encoder {
         switch v {
         case 0x00...0x7F:
             buffer.append(UInt8(v))
+
         case 0x80...0x7FF:
             buffer.append(UInt8(0xC0 | (v >> 6)))
             buffer.append(UInt8(0x80 | (v & 0x3F)))
+
         case 0x800...0xFFFF:
             buffer.append(UInt8(0xE0 | (v >> 12)))
             buffer.append(UInt8(0x80 | ((v >> 6) & 0x3F)))
             buffer.append(UInt8(0x80 | (v & 0x3F)))
+
         default:
             buffer.append(UInt8(0xF0 | (v >> 18)))
             buffer.append(UInt8(0x80 | ((v >> 12) & 0x3F)))

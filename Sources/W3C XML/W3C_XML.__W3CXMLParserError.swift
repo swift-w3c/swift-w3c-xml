@@ -44,18 +44,25 @@ extension __W3CXMLParserError: CustomStringConvertible {
         switch self {
         case .lexer(let error):
             return "Lexer error: \(error)"
+
         case .unexpectedToken(let found, let expected, let pos):
             return "Unexpected \(found) at \(pos), expected \(expected)"
+
         case .unexpectedEndOfInput(let expected, let pos):
             return "Unexpected end of input at \(pos), expected \(expected)"
+
         case .mismatchedTags(let open, let close, let pos):
             return "Mismatched tags at \(pos): opened '\(open)' but closed '\(close)'"
+
         case .depthExceeded(let limit, let pos):
             return "Maximum nesting depth (\(limit)) exceeded at \(pos)"
+
         case .duplicateAttribute(let name, let pos):
             return "Duplicate attribute '\(name)' at \(pos)"
+
         case .missingRootElement(let pos):
             return "Missing root element at \(pos)"
+
         case .multipleRootElements(let pos):
             return "Multiple root elements at \(pos)"
         }

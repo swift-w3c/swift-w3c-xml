@@ -1,7 +1,10 @@
-/// W3C_XML.Declaration.swift
-/// swift-w3c-xml
-///
-/// XML Declaration type
+// W3C_XML.Declaration.swift
+// swift-w3c-xml
+//
+// XML Declaration type
+
+// These public spellings mirror the XML 1.0 and 1.1 version identifiers.
+// swift-format-ignore-file: AlwaysUseLowerCamelCase
 
 extension W3C_XML {
     /// XML declaration.
@@ -84,11 +87,11 @@ extension W3C_XML.Declaration: CustomStringConvertible {
     public var description: String {
         var result = "<?xml version=\"\(version.rawValue)\""
 
-        if let encoding = encoding {
+        if let encoding {
             result += " encoding=\"\(encoding)\""
         }
 
-        if let standalone = standalone {
+        if let standalone {
             result += " standalone=\"\(standalone ? "yes" : "no")\""
         }
 

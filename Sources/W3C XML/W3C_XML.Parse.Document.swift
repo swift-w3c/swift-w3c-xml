@@ -19,7 +19,8 @@ extension W3C_XML.Parse {
     /// XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>'
     /// VersionInfo ::= S 'version' Eq ("'" VersionNum "'" | '"' VersionNum '"')
     /// ```
-    public struct XMLDeclaration<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct XMLDeclaration<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+            .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Declaration
         public typealias Failure = W3C_XML.Parse.Error
@@ -144,7 +145,8 @@ extension W3C_XML.Parse {
     /// ```
     /// doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>'
     /// ```
-    public struct Doctype<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct Doctype<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+            .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Doctype
         public typealias Failure = W3C_XML.Parse.Error
@@ -279,7 +281,8 @@ extension W3C_XML.Parse {
     /// document ::= prolog element Misc*
     /// prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
     /// ```
-    public struct Document<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct Document<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+            .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Document
         public typealias Failure = W3C_XML.Parse.Error
@@ -448,9 +451,9 @@ extension W3C_XML {
             _ = input.removeFirst()
             if let next = input.first, next == ASCII.Code.questionMark.byte {
                 input = saved
-                if let decl = try? Parse.XMLDeclaration<Byte.Input>().parse(&input) {
-                    declaration = decl
-                } else {
+                do {
+                    declaration = try Parse.XMLDeclaration<Byte.Input>().parse(&input)
+                } catch {
                     // XMLDeclaration parsing failed - restore input for prologue parsing
                     input = saved
                 }
@@ -475,21 +478,25 @@ extension W3C_XML {
             if next == ASCII.Code.questionMark.byte {
                 // Processing instruction
                 input = saved
-                if let pi = try? Parse.ProcessingInstruction<Byte.Input>().parse(&input) {
+                do {
+                    let pi = try Parse.ProcessingInstruction<Byte.Input>().parse(&input)
                     prologue.append(pi)
                     continue
+                } catch {
+                    input = saved
+                    break
                 }
-                input = saved
-                break
             } else if next == ASCII.Code.exclamationPoint.byte {
                 // Could be comment (<!--) - skip for now, comments aren't instructions
                 input = saved
                 // Try to parse comment and discard
-                if (try? Parse.Comment<Byte.Input>().parse(&input)) != nil {
+                do {
+                    _ = try Parse.Comment<Byte.Input>().parse(&input)
                     continue
+                } catch {
+                    input = saved
+                    break
                 }
-                input = saved
-                break
             } else {
                 // Start of root element
                 input = saved
@@ -519,21 +526,25 @@ extension W3C_XML {
             if next == ASCII.Code.questionMark.byte {
                 // Processing instruction
                 input = saved
-                if let pi = try? Parse.ProcessingInstruction<Byte.Input>().parse(&input) {
+                do {
+                    let pi = try Parse.ProcessingInstruction<Byte.Input>().parse(&input)
                     epilogue.append(.instruction(pi))
                     continue
+                } catch {
+                    input = saved
+                    break
                 }
-                input = saved
-                break
             } else if next == ASCII.Code.exclamationPoint.byte {
                 // Could be comment (<!--)
                 input = saved
-                if let comment = try? Parse.Comment<Byte.Input>().parse(&input) {
+                do {
+                    let comment = try Parse.Comment<Byte.Input>().parse(&input)
                     epilogue.append(.comment(comment))
                     continue
+                } catch {
+                    input = saved
+                    break
                 }
-                input = saved
-                break
             } else {
                 // Found another element - multiple root elements not allowed
                 input = saved
@@ -582,9 +593,9 @@ extension W3C_XML {
             _ = input.removeFirst()
             if let next = input.first, next == ASCII.Code.questionMark.byte {
                 input = saved
-                if let decl = try? Parse.XMLDeclaration<Byte.Input>().parse(&input) {
-                    declaration = decl
-                } else {
+                do {
+                    declaration = try Parse.XMLDeclaration<Byte.Input>().parse(&input)
+                } catch {
                     // XMLDeclaration parsing failed - restore input for prologue parsing
                     input = saved
                 }

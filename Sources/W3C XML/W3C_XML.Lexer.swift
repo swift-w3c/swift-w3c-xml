@@ -93,8 +93,10 @@ extension W3C_XML.Lexer {
         switch state {
         case .content:
             return try lexContent()
+
         case .inStartTag:
             return try lexInStartTag()
+
         case .inEndTag:
             return try lexInEndTag()
         }
@@ -341,7 +343,10 @@ extension W3C_XML.Lexer {
     package mutating func lexCDATA(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
         // Expect CDATA[
         advance()  // [
-        try expectLiteral([ASCII.Code.C.byte, ASCII.Code.D.byte, ASCII.Code.A.byte, ASCII.Code.T.byte, ASCII.Code.A.byte, ASCII.Code.leftBracket.byte])
+        try expectLiteral([
+            ASCII.Code.C.byte, ASCII.Code.D.byte, ASCII.Code.A.byte, ASCII.Code.T.byte,
+            ASCII.Code.A.byte, ASCII.Code.leftBracket.byte,
+        ])
 
         var text = ""
 
@@ -370,7 +375,10 @@ extension W3C_XML.Lexer {
     @inlinable
     package mutating func lexDoctype(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
         // Expect OCTYPE (D already matched in lexBangMarkup)
-        try expectLiteral([ASCII.Code.D.byte, ASCII.Code.O.byte, ASCII.Code.C.byte, ASCII.Code.T.byte, ASCII.Code.Y.byte, ASCII.Code.P.byte, ASCII.Code.E.byte])
+        try expectLiteral([
+            ASCII.Code.D.byte, ASCII.Code.O.byte, ASCII.Code.C.byte, ASCII.Code.T.byte,
+            ASCII.Code.Y.byte, ASCII.Code.P.byte, ASCII.Code.E.byte,
+        ])
 
         skipWhitespace()
         let name = try lexNameString()
@@ -384,14 +392,20 @@ extension W3C_XML.Lexer {
         // Check for external ID - branch on first character
         if input.first == ASCII.Code.P.byte {
             // PUBLIC
-            try expectLiteral([ASCII.Code.P.byte, ASCII.Code.U.byte, ASCII.Code.B.byte, ASCII.Code.L.byte, ASCII.Code.I.byte, ASCII.Code.C.byte])
+            try expectLiteral([
+                ASCII.Code.P.byte, ASCII.Code.U.byte, ASCII.Code.B.byte, ASCII.Code.L.byte,
+                ASCII.Code.I.byte, ASCII.Code.C.byte,
+            ])
             skipWhitespace()
             publicID = try lexQuotedString()
             skipWhitespace()
             systemID = try lexQuotedString()
         } else if input.first == ASCII.Code.S.byte {
             // SYSTEM
-            try expectLiteral([ASCII.Code.S.byte, ASCII.Code.Y.byte, ASCII.Code.S.byte, ASCII.Code.T.byte, ASCII.Code.E.byte, ASCII.Code.M.byte])
+            try expectLiteral([
+                ASCII.Code.S.byte, ASCII.Code.Y.byte, ASCII.Code.S.byte, ASCII.Code.T.byte,
+                ASCII.Code.E.byte, ASCII.Code.M.byte,
+            ])
             skipWhitespace()
             systemID = try lexQuotedString()
         }
@@ -459,7 +473,9 @@ extension W3C_XML.Lexer {
 extension W3C_XML.Lexer {
     /// Lexes a processing instruction after `<?`.
     @inlinable
-    package mutating func lexProcessingInstruction(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
+    package mutating func lexProcessingInstruction(
+        startPos: W3C_XML.Position
+    ) throws(Error) -> W3C_XML.Token {
         let target = try lexNameString()
 
         // Check for XML declaration
@@ -507,7 +523,9 @@ extension W3C_XML.Lexer {
 
     /// Lexes an XML declaration after `<?xml`.
     @inlinable
-    package mutating func lexXMLDeclaration(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
+    package mutating func lexXMLDeclaration(
+        startPos: W3C_XML.Position
+    ) throws(Error) -> W3C_XML.Token {
         skipWhitespace()
 
         var version: W3C_XML.Declaration.Version = .v1_0
@@ -524,6 +542,7 @@ extension W3C_XML.Lexer {
         switch versionStr {
         case "1.0": version = .v1_0
         case "1.1": version = .v1_1
+
         default:
             throw .invalidDeclaration(reason: "invalid version '\(versionStr)'", at: startPos)
         }
@@ -548,8 +567,12 @@ extension W3C_XML.Lexer {
             switch standaloneStr {
             case "yes": standalone = true
             case "no": standalone = false
+
             default:
-                throw .invalidDeclaration(reason: "invalid standalone '\(standaloneStr)'", at: startPos)
+                throw .invalidDeclaration(
+                    reason: "invalid standalone '\(standaloneStr)'",
+                    at: startPos
+                )
             }
             skipWhitespace()
         }
@@ -644,7 +667,9 @@ extension W3C_XML.Lexer {
 
     /// Lexes a numeric character reference after `&#`.
     @inlinable
-    package mutating func lexNumericReference(startPos: W3C_XML.Position) throws(Error) -> Unicode.Scalar {
+    package mutating func lexNumericReference(
+        startPos: W3C_XML.Position
+    ) throws(Error) -> Unicode.Scalar {
         var refString = ""
 
         if input.first == ASCII.Code.x.byte || input.first == ASCII.Code.X.byte {
@@ -847,7 +872,10 @@ extension W3C_XML.Lexer {
     @inlinable
     package mutating func expectByte(_ expected: Byte) throws(Error) {
         guard let byte = input.first else {
-            throw .unexpectedEndOfInput(expected: "'\(Character(UnicodeScalar(expected)))'", at: position)
+            throw .unexpectedEndOfInput(
+                expected: "'\(Character(UnicodeScalar(expected)))'",
+                at: position
+            )
         }
         guard byte == expected else {
             throw .invalidCharacter(Unicode.Scalar(byte), at: position)

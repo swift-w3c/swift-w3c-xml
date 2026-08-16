@@ -19,7 +19,12 @@ extension W3C_XML.Parse {
         @usableFromInline let isEmpty: Bool
 
         @usableFromInline
-        init(name: W3C_XML.Name, attributes: [W3C_XML.Attribute], namespaces: [W3C_XML.Namespace], isEmpty: Bool) {
+        init(
+            name: W3C_XML.Name,
+            attributes: [W3C_XML.Attribute],
+            namespaces: [W3C_XML.Namespace],
+            isEmpty: Bool
+        ) {
             self.name = name
             self.attributes = attributes
             self.namespaces = namespaces
@@ -31,7 +36,8 @@ extension W3C_XML.Parse {
     ///
     /// Returns the element name, attributes, namespaces, and whether it's empty (/>).
     @usableFromInline
-    struct StartTag<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    struct StartTag<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`,
+        Sendable
     where Input: Sendable, Input.Element == Byte {
         @usableFromInline typealias Output = StartTagOutput
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
@@ -115,7 +121,8 @@ extension W3C_XML.Parse {
     ///
     /// Validation of tag name matching happens in tryMap after parsing.
     @usableFromInline
-    struct EndTagAny<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    struct EndTagAny<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`,
+        Sendable
     where Input: Sendable, Input.Element == Byte {
         @usableFromInline typealias Output = W3C_XML.Name
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
@@ -181,7 +188,9 @@ extension W3C_XML.Parse {
     ) -> Parser_Primitives.Parser.Machine.Parser<Input, W3C_XML.Element, W3C_XML.Parse.Error>
     where Input: Sendable, Input.Element == Byte {
         typealias Builder = Parser_Primitives.Parser.Machine.Builder<Input, W3C_XML.Parse.Error>
-        typealias Expr<T> = Parser_Primitives.Parser.Machine.Expression<Input, W3C_XML.Parse.Error, T>
+        typealias Expr<T> = Parser_Primitives.Parser.Machine.Expression<
+            Input, W3C_XML.Parse.Error, T
+        >
         typealias Ref<T> = Parser_Primitives.Parser.Machine.Reference<Input, W3C_XML.Parse.Error, T>
 
         return Parser_Primitives.Parser.Machine.recursive(
@@ -230,7 +239,10 @@ extension W3C_XML.Parse {
                 )
 
                 // Content: many content items
-                let content: Expr<[W3C_XML.Content]> = Parser_Primitives.Parser.Machine.many(contentItem, in: &builder)
+                let content: Expr<[W3C_XML.Content]> = Parser_Primitives.Parser.Machine.many(
+                    contentItem,
+                    in: &builder
+                )
 
                 // EndTagAny: parse end tag, return name
                 let endTagAny: Expr<W3C_XML.Name> = Parser_Primitives.Parser.Machine.leaf(
@@ -241,12 +253,13 @@ extension W3C_XML.Parse {
                 // === Build element parsing branches ===
 
                 // Build: sequence(content, endTagAny) -> ([Content], Name)
-                let contentAndEndTag: Expr<([W3C_XML.Content], W3C_XML.Name)> = Parser_Primitives.Parser.Machine.sequence(
-                    content,
-                    endTagAny,
-                    combine: { ($0, $1) },
-                    in: &builder
-                )
+                let contentAndEndTag: Expr<([W3C_XML.Content], W3C_XML.Name)> = Parser_Primitives
+                    .Parser.Machine.sequence(
+                        content,
+                        endTagAny,
+                        combine: { ($0, $1) },
+                        in: &builder
+                    )
 
                 // Strategy: Use oneOf with two branches that share the StartTag parser
                 // but filter based on isEmpty via tryMap:
@@ -281,12 +294,13 @@ extension W3C_XML.Parse {
                 )
 
                 // Non-empty: openTag -> sequence(content, endTag) -> tryMap(validate)
-                let openWithContentEnd: Expr<(StartTagOutput, ([W3C_XML.Content], W3C_XML.Name))> = Parser_Primitives.Parser.Machine.sequence(
-                    openTag,
-                    contentAndEndTag,
-                    combine: { ($0, $1) },
-                    in: &builder
-                )
+                let openWithContentEnd: Expr<(StartTagOutput, ([W3C_XML.Content], W3C_XML.Name))> =
+                    Parser_Primitives.Parser.Machine.sequence(
+                        openTag,
+                        contentAndEndTag,
+                        combine: { ($0, $1) },
+                        in: &builder
+                    )
 
                 let nonEmptyElement: Expr<W3C_XML.Element> = openWithContentEnd.tryMap(
                     { parts throws(W3C_XML.Parse.Error) -> W3C_XML.Element in
@@ -295,7 +309,10 @@ extension W3C_XML.Parse {
 
                         // Validate tag names match
                         guard start.name.qualified == endName.qualified else {
-                            throw .mismatchedTags(open: start.name.qualified, close: endName.qualified)
+                            throw .mismatchedTags(
+                                open: start.name.qualified,
+                                close: endName.qualified
+                            )
                         }
 
                         // Merge adjacent text nodes
@@ -312,7 +329,10 @@ extension W3C_XML.Parse {
                 )
 
                 // Final element: try empty first (because /> is more specific), then non-empty
-                return Parser_Primitives.Parser.Machine.oneOf([emptyElement, nonEmptyElement], in: &builder)
+                return Parser_Primitives.Parser.Machine.oneOf(
+                    [emptyElement, nonEmptyElement],
+                    in: &builder
+                )
             }
         )
     }
@@ -339,7 +359,8 @@ extension W3C_XML.Parse {
     /// Parses non-empty text content (character data and/or references).
     /// Fails if the result would be empty.
     @usableFromInline
-    struct NonEmptyTextContent<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    struct NonEmptyTextContent<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+            .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         @usableFromInline typealias Output = String
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
@@ -355,7 +376,10 @@ extension W3C_XML.Parse {
 
             while let byte = input.first {
                 iterationCount += 1
-                precondition(iterationCount < maxIterations, "NonEmptyTextContent: runaway loop detected")
+                precondition(
+                    iterationCount < maxIterations,
+                    "NonEmptyTextContent: runaway loop detected"
+                )
 
                 if byte == ASCII.Code.lessThanSign.byte {
                     // Start of tag or other markup

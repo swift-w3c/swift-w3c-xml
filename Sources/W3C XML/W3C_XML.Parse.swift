@@ -125,22 +125,31 @@ extension W3C_XML.Parse.Error: CustomStringConvertible {
         switch self {
         case .depthExceeded(let limit):
             return "Maximum nesting depth (\(limit)) exceeded"
+
         case .expected(let what):
             return "Expected \(what)"
+
         case .mismatchedTags(let open, let close):
             return "Mismatched tags: opened '\(open)' but closed '\(close)'"
+
         case .invalidName:
             return "Invalid XML name"
+
         case .invalidCharacterReference(let ref):
             return "Invalid character reference: \(ref)"
+
         case .unknownEntity(let name):
             return "Unknown entity reference: &\(name);"
+
         case .unexpectedEndOfInput(let expected):
             return "Unexpected end of input, expected \(expected)"
+
         case .duplicateAttribute(let name):
             return "Duplicate attribute: \(name)"
+
         case .multipleRootElements:
             return "Multiple root elements found"
+
         case .missingRootElement:
             return "Missing root element"
         }

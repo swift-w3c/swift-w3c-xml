@@ -111,8 +111,10 @@ extension W3C_XML.Element {
             switch item {
             case .text(let t):
                 result += t
+
             case .cdata(let c):
                 result += c
+
             default:
                 break
             }

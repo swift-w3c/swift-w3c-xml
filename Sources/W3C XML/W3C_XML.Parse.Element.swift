@@ -15,7 +15,8 @@ extension W3C_XML.Parse {
     /// ```
     /// Attribute ::= Name Eq AttValue
     /// ```
-    public struct Attribute<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct Attribute<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+            .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Attribute
         public typealias Failure = W3C_XML.Parse.Error
@@ -90,7 +91,8 @@ extension W3C_XML.Parse {
     ///
     /// This parser uses explicit depth tracking instead of relying on the call stack.
     /// Nested elements are parsed via the `Content` parser which uses `Many + Lazy`.
-    public struct Element<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct Element<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+            .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Element
         public typealias Failure = W3C_XML.Parse.Error
@@ -241,7 +243,8 @@ extension W3C_XML.Parse {
     ///
     /// Combined with `Lazy` for the recursive Element reference, this allows
     /// parsing arbitrarily nested XML without growing the call stack.
-    public struct Content<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct Content<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+            .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = [W3C_XML.Content]
         public typealias Failure = W3C_XML.Parse.Error

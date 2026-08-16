@@ -80,13 +80,13 @@ extension W3C_XML.Doctype: CustomStringConvertible {
     public var description: String {
         var result = "<!DOCTYPE \(name)"
 
-        if let publicID = publicID, let systemID = systemID {
+        if let publicID, let systemID {
             result += " PUBLIC \"\(publicID)\" \"\(systemID)\""
-        } else if let systemID = systemID {
+        } else if let systemID {
             result += " SYSTEM \"\(systemID)\""
         }
 
-        if let internalSubset = internalSubset {
+        if let internalSubset {
             result += " [\(internalSubset)]"
         }
 

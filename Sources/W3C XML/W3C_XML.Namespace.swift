@@ -74,7 +74,7 @@ extension W3C_XML.Namespace {
 
 extension W3C_XML.Namespace: CustomStringConvertible {
     public var description: String {
-        if let prefix = prefix {
+        if let prefix {
             return "xmlns:\(prefix)=\"\(uri)\""
         }
         return "xmlns=\"\(uri)\""

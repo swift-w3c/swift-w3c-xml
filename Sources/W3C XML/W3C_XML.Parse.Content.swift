@@ -18,7 +18,8 @@ extension W3C_XML.Parse {
     ///
     /// Parses text until `<`, `&`, or end of input. Does not consume references.
     /// Returns empty string if no text found (to allow Many to continue).
-    public struct CharData<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct CharData<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+            .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
         public typealias Failure = Never
@@ -66,7 +67,8 @@ extension W3C_XML.Parse {
     /// Parses character data with entity references.
     ///
     /// Like CharData but also handles entity references (&lt; etc).
-    public struct TextContent<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct TextContent<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+            .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
@@ -107,7 +109,8 @@ extension W3C_XML.Parse {
     /// ```
     ///
     /// Note: Comments cannot contain `--` except at the end.
-    public struct Comment<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct Comment<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+            .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
@@ -163,7 +166,8 @@ extension W3C_XML.Parse {
     /// CData ::= (Char* - (Char* ']]>' Char*))
     /// CDEnd ::= ']]>'
     /// ```
-    public struct CDATASection<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct CDATASection<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+            .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
@@ -219,7 +223,8 @@ extension W3C_XML.Parse {
     /// PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'
     /// PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
     /// ```
-    public struct ProcessingInstruction<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct ProcessingInstruction<Input: Input_Primitives.Input.Streaming>: Parser_Primitives
+            .Parser.`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Instruction
         public typealias Failure = W3C_XML.Parse.Error
