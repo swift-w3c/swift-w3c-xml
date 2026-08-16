@@ -38,17 +38,24 @@ extension __W3CXMLLexerError: CustomStringConvertible {
     public var description: String {
         switch self {
         case .invalidCharacter(let scalar, let pos):
-            return "Invalid character U+\(String(scalar.value, radix: 16, uppercase: true)) at \(pos)"
+            return
+                "Invalid character U+\(String(scalar.value, radix: 16, uppercase: true)) at \(pos)"
+
         case .unexpectedEndOfInput(let expected, let pos):
             return "Unexpected end of input at \(pos), expected \(expected)"
+
         case .invalidEntity(let name, let pos):
             return "Invalid entity reference '\(name)' at \(pos)"
+
         case .invalidName(let pos):
             return "Invalid name at \(pos)"
+
         case .invalidUTF8(let byte, let pos):
             return "Invalid UTF-8 byte 0x\(String(byte, radix: 16)) at \(pos)"
+
         case .unterminated(let construct, let pos):
             return "Unterminated \(construct) at \(pos)"
+
         case .invalidDeclaration(let reason, let pos):
             return "Invalid XML declaration at \(pos): \(reason)"
         }

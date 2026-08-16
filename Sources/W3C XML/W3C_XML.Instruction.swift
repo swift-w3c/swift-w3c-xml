@@ -61,7 +61,7 @@ extension W3C_XML {
 
 extension W3C_XML.Instruction: CustomStringConvertible {
     public var description: String {
-        if let data = data {
+        if let data {
             return "<?\(target) \(data)?>"
         }
         return "<?\(target)?>"

@@ -22,7 +22,11 @@ extension Input_Primitives.Input.Streaming where Self: Copyable, Element: Copyab
     package var first: Element? {
         guard !isEmpty else { return nil }
         var copy = self
-        return try? copy.advance()
+        do {
+            return try copy.advance()
+        } catch {
+            return nil
+        }
     }
 
     /// Consumes and returns the next element.

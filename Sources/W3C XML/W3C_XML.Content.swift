@@ -143,12 +143,16 @@ extension W3C_XML.Content: CustomStringConvertible {
         switch self {
         case .element(let e):
             return e.description
+
         case .text(let t):
             return t
+
         case .cdata(let c):
             return "<![CDATA[\(c)]]>"
+
         case .comment(let c):
             return "<!--\(c)-->"
+
         case .instruction(let i):
             return i.description
         }

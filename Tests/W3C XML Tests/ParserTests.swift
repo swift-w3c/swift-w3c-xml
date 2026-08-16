@@ -3,7 +3,10 @@ import Testing
 @testable import W3C_XML
 
 @Suite(
-    .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
+    .disabled(
+        if: Toolchain.hasTaggedMetadataSIGSEGV,
+        "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"
+    )
 )
 struct `Parser Tests` {
     @Test
@@ -116,19 +119,22 @@ struct `Parser Tests` {
 
 @Suite(
     "W3C_XML Error Handling Tests",
-    .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
+    .disabled(
+        if: Toolchain.hasTaggedMetadataSIGSEGV,
+        "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"
+    )
 )
 struct ErrorHandlingTests {
     @Test
     func `Reject unclosed element`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse("<root>")
         }
     }
 
     @Test
     func `Reject mismatched tags`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse("<root></other>")
         }
     }
@@ -159,105 +165,105 @@ struct ErrorHandlingTests {
 
     @Test
     func `Reject missing root element`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse("")
         }
     }
 
     @Test
     func `Reject multiple root elements`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse("<a/><b/>")
         }
     }
 
     @Test
     func `Reject unterminated comment`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse("<root><!-- unterminated</root>")
         }
     }
 
     @Test
     func `Reject unterminated CDATA`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse("<root><![CDATA[unterminated</root>")
         }
     }
 
     @Test
     func `Reject unterminated attribute value`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse(#"<root attr="unterminated>"#)
         }
     }
 
     @Test
     func `Reject invalid entity reference`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse("<root>&invalid;</root>")
         }
     }
 
     @Test
     func `Reject unterminated entity reference`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse("<root>&amp</root>")
         }
     }
 
     @Test
     func `Reject invalid numeric character reference`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse("<root>&#xZZZ;</root>")
         }
     }
 
     @Test
     func `Reject less-than in attribute value`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse(#"<root attr="a<b"/>"#)
         }
     }
 
     @Test
     func `Reject duplicate attributes`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse(#"<root id="1" id="2"/>"#)
         }
     }
 
     @Test
     func `Reject invalid element name starting with number`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse("<123/>")
         }
     }
 
     @Test
     func `Reject unterminated processing instruction`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse("<?xml version=\"1.0\"")
         }
     }
 
     @Test
     func `Reject invalid XML declaration`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse("<?xml version=\"2.0\"?><root/>")
         }
     }
 
     @Test
     func `Reject double hyphen in comment`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse("<root><!-- -- --></root>")
         }
     }
 
     @Test
     func `Reject text before root element`() {
-        #expect(throws: (any Error).self) {
+        #expect(throws: (any Swift.Error).self) {
             _ = try W3C_XML.parse("text<root/>")
         }
     }
@@ -339,7 +345,10 @@ extension W3C_XML.Encoder {
                 name: "root",
                 content: [.element(W3C_XML.Element(name: "child"))]
             )
-            let output = String(decoding: element.encode(options: .init(prettyPrint: true)), as: UTF8.self)
+            let output = String(
+                decoding: element.encode(options: .init(prettyPrint: true)),
+                as: UTF8.self
+            )
             #expect(output.contains("\n"))
             #expect(output.contains("  "))  // Default indent
         }
@@ -365,7 +374,10 @@ extension W3C_XML.Encoder {
 
 @Suite(
     "W3C_XML Parser Edge Cases",
-    .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
+    .disabled(
+        if: Toolchain.hasTaggedMetadataSIGSEGV,
+        "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"
+    )
 )
 struct ParserEdgeCases {
     @Test
@@ -576,13 +588,23 @@ extension W3C_XML {
             #expect(!W3C_XML.isChar(Unicode.Scalar(0x1F)!))  // Control
         }
 
-        @Test(.disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"))
+        @Test(
+            .disabled(
+                if: Toolchain.hasTaggedMetadataSIGSEGV,
+                "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"
+            )
+        )
         func `Parse Unicode element name`() throws {
             let doc = try W3C_XML.parse("<日本語/>")
             #expect(doc.root.name.local == "日本語")
         }
 
-        @Test(.disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"))
+        @Test(
+            .disabled(
+                if: Toolchain.hasTaggedMetadataSIGSEGV,
+                "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"
+            )
+        )
         func `Parse Unicode text content`() throws {
             let doc = try W3C_XML.parse("<root>日本語 🎉 émojis</root>")
             #expect(doc.root.textContent == "日本語 🎉 émojis")
@@ -592,7 +614,10 @@ extension W3C_XML {
 
 @Suite(
     "W3C_XML Deep Nesting Tests",
-    .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
+    .disabled(
+        if: Toolchain.hasTaggedMetadataSIGSEGV,
+        "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"
+    )
 )
 struct DeepNestingTests {
     @Test
@@ -673,7 +698,10 @@ struct DeepNestingTests {
 
 @Suite(
     "W3C_XML Round-trip Tests",
-    .disabled(if: Toolchain.hasTaggedMetadataSIGSEGV, "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+")
+    .disabled(
+        if: Toolchain.hasTaggedMetadataSIGSEGV,
+        "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"
+    )
 )
 struct RoundtripTests {
     @Test

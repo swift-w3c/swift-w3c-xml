@@ -85,12 +85,12 @@ extension W3C_XML.Document: CustomStringConvertible {
     public var description: String {
         var result = ""
 
-        if let declaration = declaration {
+        if let declaration {
             result += declaration.description
             result += "\n"
         }
 
-        if let doctype = doctype {
+        if let doctype {
             result += doctype.description
             result += "\n"
         }

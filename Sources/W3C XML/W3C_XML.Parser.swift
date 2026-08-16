@@ -170,9 +170,11 @@ extension W3C_XML.Parser {
             switch token {
             case .text(let text) where text.allSatisfy({ $0.isWhitespace }):
                 continue
+
             case .startTagOpen:
                 pushBack(token)
                 return try parseElement()
+
             default:
                 throw .unexpectedToken(
                     found: token.kind,
@@ -251,7 +253,8 @@ extension W3C_XML.Parser {
                             at: lexer.currentPosition
                         )
                     }
-                    guard let valToken = try nextToken(), case .attributeValue(let uri) = valToken else {
+                    guard let valToken = try nextToken(), case .attributeValue(let uri) = valToken
+                    else {
                         throw .unexpectedToken(
                             found: .equals,
                             expected: "attribute value",
@@ -268,7 +271,8 @@ extension W3C_XML.Parser {
                             at: lexer.currentPosition
                         )
                     }
-                    guard let valToken = try nextToken(), case .attributeValue(let uri) = valToken else {
+                    guard let valToken = try nextToken(), case .attributeValue(let uri) = valToken
+                    else {
                         throw .unexpectedToken(
                             found: .equals,
                             expected: "attribute value",
@@ -291,7 +295,8 @@ extension W3C_XML.Parser {
                             at: lexer.currentPosition
                         )
                     }
-                    guard let valToken = try nextToken(), case .attributeValue(let value) = valToken else {
+                    guard let valToken = try nextToken(), case .attributeValue(let value) = valToken
+                    else {
                         throw .unexpectedToken(
                             found: .equals,
                             expected: "attribute value",

@@ -16,7 +16,8 @@ extension W3C_XML.Parse {
     ///
     /// Consumes zero or more whitespace characters (space, tab, CR, LF).
     /// Always succeeds, even if no whitespace is present.
-    public struct Whitespace<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct Whitespace<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+            .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = Void
         public typealias Failure = Never
@@ -33,7 +34,8 @@ extension W3C_XML.Parse {
     }
 
     /// Parses required XML whitespace (at least one character).
-    public struct RequiredWhitespace<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct RequiredWhitespace<Input: Input_Primitives.Input.Streaming>: Parser_Primitives
+            .Parser.`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = Void
         public typealias Failure = W3C_XML.Parse.Error
@@ -64,7 +66,8 @@ extension W3C_XML.Parse {
     /// ```
     ///
     /// Returns a `W3C_XML.Name` with prefix and local parts if a colon is present.
-    public struct Name<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct Name<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+            .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Name
         public typealias Failure = W3C_XML.Parse.Error
@@ -193,7 +196,8 @@ extension W3C_XML.Parse {
     /// ```
     ///
     /// Returns the resolved character(s) as a String.
-    public struct Reference<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`, Sendable
+    public struct Reference<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+            .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
@@ -303,6 +307,7 @@ extension W3C_XML.Parse {
             case "amp": return "&"
             case "apos": return "'"
             case "quot": return "\""
+
             default:
                 throw .unknownEntity(name.qualified)
             }

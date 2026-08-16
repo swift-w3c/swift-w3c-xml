@@ -10,44 +10,76 @@ let package = Package(
         .iOS(.v26),
         .tvOS(.v26),
         .watchOS(.v26),
-        .visionOS(.v26)
+        .visionOS(.v26),
     ],
     products: [
         .library(name: "W3C XML", targets: ["W3C XML"])
     ],
     dependencies: [
-        .package(url: "https://github.com/swift-primitives/swift-standard-library-extensions.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-parser-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-parser-machine-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-binary-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-ascii-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-ascii-parser-primitives.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-byte-parser-primitives.git", branch: "main")
+        .package(
+            url: "https://github.com/swift-primitives/swift-standard-library-extensions.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-parser-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-parser-machine-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-binary-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-ascii-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-ascii-parser-primitives.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/swift-primitives/swift-byte-parser-primitives.git",
+            branch: "main"
+        ),
     ],
     targets: [
         .target(
             name: "W3C XML",
             dependencies: [
-                .product(name: "Standard Library Extensions", package: "swift-standard-library-extensions"),
+                .product(
+                    name: "Standard Library Extensions",
+                    package: "swift-standard-library-extensions"
+                ),
                 .product(name: "Parser Primitives", package: "swift-parser-primitives"),
-                .product(name: "Parser Machine Primitives", package: "swift-parser-machine-primitives"),
+                .product(
+                    name: "Parser Machine Primitives",
+                    package: "swift-parser-machine-primitives"
+                ),
                 .product(name: "Binary Primitives", package: "swift-binary-primitives"),
                 .product(name: "ASCII Primitives", package: "swift-ascii-primitives"),
-                .product(name: "ASCII Decimal Parser Primitives", package: "swift-ascii-parser-primitives"),
-                .product(name: "ASCII Hexadecimal Parser Primitives", package: "swift-ascii-parser-primitives"),
-                .product(name: "Byte Parser Primitives", package: "swift-byte-parser-primitives")
+                .product(
+                    name: "ASCII Decimal Parser Primitives",
+                    package: "swift-ascii-parser-primitives"
+                ),
+                .product(
+                    name: "ASCII Hexadecimal Parser Primitives",
+                    package: "swift-ascii-parser-primitives"
+                ),
+                .product(name: "Byte Parser Primitives", package: "swift-byte-parser-primitives"),
             ]
         ),
         .testTarget(
             name: "W3C XML Tests",
             dependencies: [
-                "W3C XML",
+                "W3C XML"
             ]
         ),
     ],
     swiftLanguageModes: [.v6]
 )
-
 
 for target in package.targets where ![.system, .binary, .plugin, .macro].contains(target.type) {
     let ecosystem: [SwiftSetting] = [

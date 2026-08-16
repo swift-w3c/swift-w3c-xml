@@ -58,7 +58,7 @@ extension W3C_XML.Name {
     /// Returns `prefix:local` if prefix exists, otherwise just `local`.
     @inlinable
     public var qualified: String {
-        if let prefix = prefix {
+        if let prefix {
             return "\(prefix):\(local)"
         }
         return local
