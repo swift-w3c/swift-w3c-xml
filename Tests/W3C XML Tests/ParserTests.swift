@@ -2,12 +2,7 @@ import Testing
 
 @testable import W3C_XML
 
-@Suite(
-    .disabled(
-        if: Toolchain.hasTaggedMetadataSIGSEGV,
-        "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"
-    )
-)
+@Suite
 struct `Parser Tests` {
     @Test
     func `Parse simple element`() throws {
@@ -118,11 +113,7 @@ struct `Parser Tests` {
 }
 
 @Suite(
-    "W3C_XML Error Handling Tests",
-    .disabled(
-        if: Toolchain.hasTaggedMetadataSIGSEGV,
-        "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"
-    )
+    "W3C_XML Error Handling Tests"
 )
 struct ErrorHandlingTests {
     @Test
@@ -373,11 +364,7 @@ extension W3C_XML.Encoder {
 }
 
 @Suite(
-    "W3C_XML Parser Edge Cases",
-    .disabled(
-        if: Toolchain.hasTaggedMetadataSIGSEGV,
-        "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"
-    )
+    "W3C_XML Parser Edge Cases"
 )
 struct ParserEdgeCases {
     @Test
@@ -588,23 +575,13 @@ extension W3C_XML {
             #expect(!W3C_XML.isChar(Unicode.Scalar(0x1F)!))  // Control
         }
 
-        @Test(
-            .disabled(
-                if: Toolchain.hasTaggedMetadataSIGSEGV,
-                "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"
-            )
-        )
+        @Test
         func `Parse Unicode element name`() throws {
             let doc = try W3C_XML.parse("<日本語/>")
             #expect(doc.root.name.local == "日本語")
         }
 
-        @Test(
-            .disabled(
-                if: Toolchain.hasTaggedMetadataSIGSEGV,
-                "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"
-            )
-        )
+        @Test
         func `Parse Unicode text content`() throws {
             let doc = try W3C_XML.parse("<root>日本語 🎉 émojis</root>")
             #expect(doc.root.textContent == "日本語 🎉 émojis")
@@ -613,11 +590,7 @@ extension W3C_XML {
 }
 
 @Suite(
-    "W3C_XML Deep Nesting Tests",
-    .disabled(
-        if: Toolchain.hasTaggedMetadataSIGSEGV,
-        "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"
-    )
+    "W3C_XML Deep Nesting Tests"
 )
 struct DeepNestingTests {
     @Test
@@ -697,11 +670,7 @@ struct DeepNestingTests {
 }
 
 @Suite(
-    "W3C_XML Round-trip Tests",
-    .disabled(
-        if: Toolchain.hasTaggedMetadataSIGSEGV,
-        "§A9 Tagged-metadata SIGSEGV on Swift 6.3.x (W3C_XML.parse → Parser.Machine.Parser over Byte.Input forces Tagged VWT); fixed on 6.4+"
-    )
+    "W3C_XML Round-trip Tests"
 )
 struct RoundtripTests {
     @Test

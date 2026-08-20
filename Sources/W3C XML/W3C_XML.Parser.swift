@@ -412,7 +412,7 @@ extension W3C_XML {
     /// - Throws: `W3C_XML.Parser.Error` if parsing fails.
     @inlinable
     public static func fragment(_ string: String) throws(Parser<Byte.Input>.Error) -> Element {
-        var input = Byte.Input(Swift.Array(string.utf8))
+        let input = Byte.Input(Swift.Array(string.utf8))
         var parser = Parser(consume input)
         return try parser.parseFragment()
     }

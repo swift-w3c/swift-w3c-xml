@@ -293,21 +293,15 @@ extension W3C_XML.Parse {
         _ string: StaticString
     ) throws(W3C_XML.Parse.Error)
     where Input.Element == Byte {
-        let bytes = Swift.Array(
-            string.utf8Start.withMemoryRebound(
-                to: UInt8.self,
-                capacity: string.utf8CodeUnitCount
-            ) {
-                UnsafeBufferPointer(start: $0, count: string.utf8CodeUnitCount)
-            }
-        )
+        let bytes = unsafe string.withUTF8Buffer { Swift.Array($0) }
+        let expectedString = String(decoding: bytes, as: UTF8.self)
 
         for expected in bytes {
             guard let actual = input.first else {
-                throw .unexpectedEndOfInput(expected: String(cString: string.utf8Start))
+                throw .unexpectedEndOfInput(expected: expectedString)
             }
             guard actual.underlying == expected else {
-                throw .expected(String(cString: string.utf8Start))
+                throw .expected(expectedString)
             }
             _ = input.removeFirst()
         }
