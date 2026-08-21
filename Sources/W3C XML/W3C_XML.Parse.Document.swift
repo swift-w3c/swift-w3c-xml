@@ -114,7 +114,7 @@ extension W3C_XML.Parse {
         /// Tries to match a literal, returning true if successful.
         @inlinable
         package func matchLiteral(_ input: inout Input, _ string: StaticString) -> Bool {
-            let bytes = unsafe string.withUTF8Buffer { Swift.Array($0) }
+            let bytes = string.withUTF8Buffer { unsafe Swift.Array($0) }
 
             let saved = input
             for expected in bytes {
@@ -242,7 +242,7 @@ extension W3C_XML.Parse {
         /// Tries to match a literal.
         @inlinable
         package func matchLiteral(_ input: inout Input, _ string: StaticString) -> Bool {
-            let bytes = unsafe string.withUTF8Buffer { Swift.Array($0) }
+            let bytes = string.withUTF8Buffer { unsafe Swift.Array($0) }
 
             let saved = input
             for expected in bytes {
