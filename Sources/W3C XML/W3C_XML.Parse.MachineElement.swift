@@ -1,16 +1,9 @@
-/// W3C_XML.Parse.MachineElement.swift
-/// swift-w3c-xml
-///
-/// Stack-safe element parser using Parser.Machine for arbitrary nesting depth.
-
 public import Input_Primitives
 import Parser_Machine_Primitives
 import Parser_Primitives
 
-// MARK: - StartTag Parser
-
 extension W3C_XML.Parse {
-    /// Output of the StartTag parser.
+
     @usableFromInline
     struct StartTagOutput: Sendable {
         @usableFromInline let name: W3C_XML.Name
@@ -32,9 +25,6 @@ extension W3C_XML.Parse {
         }
     }
 
-    /// Parses an XML start tag (or empty element tag).
-    ///
-    /// Returns the element name, attributes, namespaces, and whether it's empty (/>).
     @usableFromInline
     struct StartTag<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`,
         Sendable
@@ -47,16 +37,14 @@ extension W3C_XML.Parse {
 
         @usableFromInline
         func parse(_ input: inout Input) throws(Failure) -> Output {
-            // Expect <
+
             guard input.first == ASCII.Code.lessThanSign.byte else {
                 throw .expected("<")
             }
             _ = input.removeFirst()
 
-            // Parse element name
             let name = try Name<Input>().parse(&input)
 
-            // Parse attributes and namespace declarations
             var attributes: [W3C_XML.Attribute] = []
             var namespaces: [W3C_XML.Namespace] = []
             var seenAttributes: Swift.Set<String> = Swift.Set()
@@ -68,7 +56,6 @@ extension W3C_XML.Parse {
                     throw .unexpectedEndOfInput(expected: "> or />")
                 }
 
-                // Check for tag end
                 if byte == ASCII.Code.greaterThanSign.byte {
                     _ = input.removeFirst()
                     return StartTagOutput(
@@ -93,16 +80,14 @@ extension W3C_XML.Parse {
                     )
                 }
 
-                // Parse attribute
                 let attr = try Attribute<Input>().parse(&input)
 
-                // Check for namespace declaration
                 if attr.name.qualified == "xmlns" {
                     namespaces.append(W3C_XML.Namespace(prefix: nil, uri: attr.value))
                 } else if attr.name.prefix == "xmlns" {
                     namespaces.append(W3C_XML.Namespace(prefix: attr.name.local, uri: attr.value))
                 } else {
-                    // Check for duplicate
+
                     guard !seenAttributes.contains(attr.name.qualified) else {
                         throw .duplicateAttribute(name: attr.name.qualified)
                     }
@@ -114,12 +99,8 @@ extension W3C_XML.Parse {
     }
 }
 
-// MARK: - EndTagAny Parser
-
 extension W3C_XML.Parse {
-    /// Parses an XML end tag and returns the tag name (without validation).
-    ///
-    /// Validation of tag name matching happens in tryMap after parsing.
+
     @usableFromInline
     struct EndTagAny<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`,
         Sendable
@@ -132,7 +113,7 @@ extension W3C_XML.Parse {
 
         @usableFromInline
         func parse(_ input: inout Input) throws(Failure) -> W3C_XML.Name {
-            // Expect </
+
             guard input.first == ASCII.Code.lessThanSign.byte else {
                 throw .expected("</")
             }
@@ -143,7 +124,6 @@ extension W3C_XML.Parse {
             }
             _ = input.removeFirst()
 
-            // Parse end tag name
             let endName = try Name<Input>().parse(&input)
 
             Whitespace<Input>().parse(&input)
@@ -158,10 +138,8 @@ extension W3C_XML.Parse {
     }
 }
 
-// MARK: - Machine Element Parser
-
 extension W3C_XML.Parse {
-    /// Intermediate result for non-empty elements before validation.
+
     @usableFromInline
     struct NonEmptyElementParts: Sendable {
         @usableFromInline let start: StartTagOutput
@@ -176,13 +154,6 @@ extension W3C_XML.Parse {
         }
     }
 
-    /// Creates a stack-safe element parser using Parser.Machine.
-    ///
-    /// This parser handles arbitrary nesting depth without stack overflow by using
-    /// an explicit heap-allocated continuation stack instead of recursive descent.
-    ///
-    /// - Parameter maxDepth: Maximum nesting depth (default: 10000).
-    /// - Returns: A parser for XML elements.
     static func machineElement<Input: Input_Primitives.Input.`Protocol`>(
         maxDepth: Int = 10000
     ) -> Parser_Primitives.Parser.Machine.Parser<Input, W3C_XML.Element, W3C_XML.Parse.Error>
@@ -198,61 +169,49 @@ extension W3C_XML.Parse {
             onDepthExceeded: { W3C_XML.Parse.Error.depthExceeded(limit: $0) },
             { (builder: inout Builder, elementRef: Ref<W3C_XML.Element>) -> Expr<W3C_XML.Element> in
 
-                // Leaf: StartTag
                 let startTag: Expr<StartTagOutput> = Parser_Primitives.Parser.Machine.leaf(
                     StartTag<Input>(),
                     in: &builder
                 )
 
-                // Leaf: Comment -> Content
                 let comment: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
                     Comment<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.comment($0) }, in: &builder)
 
-                // Leaf: CDATA -> Content
                 let cdata: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
                     CDATASection<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.cdata($0) }, in: &builder)
 
-                // Leaf: ProcessingInstruction -> Content
                 let pi: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
                     ProcessingInstruction<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.instruction($0) }, in: &builder)
 
-                // Leaf: TextContent -> Content (fails if empty)
                 let text: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
                     NonEmptyTextContent<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.text($0) }, in: &builder)
 
-                // Recursive: Element -> Content
                 let elementContent: Expr<W3C_XML.Content> = elementRef.expression(in: &builder)
                     .map({ W3C_XML.Content.element($0) }, in: &builder)
 
-                // ContentItem: one of the above (element first for proper recursion)
                 let contentItem: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.oneOf(
                     [elementContent, comment, cdata, pi, text],
                     in: &builder
                 )
 
-                // Content: many content items
                 let content: Expr<[W3C_XML.Content]> = Parser_Primitives.Parser.Machine.many(
                     contentItem,
                     in: &builder
                 )
 
-                // EndTagAny: parse end tag, return name
                 let endTagAny: Expr<W3C_XML.Name> = Parser_Primitives.Parser.Machine.leaf(
                     EndTagAny<Input>(),
                     in: &builder
                 )
 
-                // === Build element parsing branches ===
-
-                // Build: sequence(content, endTagAny) -> ([Content], Name)
                 let contentAndEndTag: Expr<([W3C_XML.Content], W3C_XML.Name)> = Parser_Primitives
                     .Parser.Machine.sequence(
                         content,
@@ -261,16 +220,10 @@ extension W3C_XML.Parse {
                         in: &builder
                     )
 
-                // Strategy: Use oneOf with two branches that share the StartTag parser
-                // but filter based on isEmpty via tryMap:
-                // - emptyElement: startTag -> tryMap (require isEmpty) -> Element
-                // - nonEmptyElement: startTag -> tryMap (require !isEmpty) -> sequence(content, endTag) -> tryMap(validate)
-
-                // Empty element: startTag -> tryMap (require isEmpty) -> Element
                 let emptyElement: Expr<W3C_XML.Element> = startTag.tryMap(
                     { start throws(W3C_XML.Parse.Error) -> W3C_XML.Element in
                         guard start.isEmpty else {
-                            throw .expected("/>")  // Not an empty element, fail to try next oneOf
+                            throw .expected("/>")
                         }
                         return W3C_XML.Element(
                             name: start.name,
@@ -282,18 +235,16 @@ extension W3C_XML.Parse {
                     in: &builder
                 )
 
-                // Non-empty element: startTag -> tryMap (require !isEmpty) -> StartTagOutput
                 let openTag: Expr<StartTagOutput> = startTag.tryMap(
                     { start throws(W3C_XML.Parse.Error) -> StartTagOutput in
                         guard !start.isEmpty else {
-                            throw .expected(">")  // Is empty element, fail to try next oneOf
+                            throw .expected(">")
                         }
                         return start
                     },
                     in: &builder
                 )
 
-                // Non-empty: openTag -> sequence(content, endTag) -> tryMap(validate)
                 let openWithContentEnd: Expr<(StartTagOutput, ([W3C_XML.Content], W3C_XML.Name))> =
                     Parser_Primitives.Parser.Machine.sequence(
                         openTag,
@@ -307,7 +258,6 @@ extension W3C_XML.Parse {
                         let (start, contentAndEnd) = parts
                         let (contents, endName) = contentAndEnd
 
-                        // Validate tag names match
                         guard start.name.qualified == endName.qualified else {
                             throw .mismatchedTags(
                                 open: start.name.qualified,
@@ -315,7 +265,6 @@ extension W3C_XML.Parse {
                             )
                         }
 
-                        // Merge adjacent text nodes
                         let merged = mergeTextNodes(contents)
 
                         return W3C_XML.Element(
@@ -328,7 +277,6 @@ extension W3C_XML.Parse {
                     in: &builder
                 )
 
-                // Final element: try empty first (because /> is more specific), then non-empty
                 return Parser_Primitives.Parser.Machine.oneOf(
                     [emptyElement, nonEmptyElement],
                     in: &builder
@@ -337,7 +285,6 @@ extension W3C_XML.Parse {
         )
     }
 
-    /// Merges adjacent text nodes in content.
     @usableFromInline
     static func mergeTextNodes(_ content: [W3C_XML.Content]) -> [W3C_XML.Content] {
         var result: [W3C_XML.Content] = []
@@ -353,11 +300,8 @@ extension W3C_XML.Parse {
     }
 }
 
-// MARK: - Helper Parsers
-
 extension W3C_XML.Parse {
-    /// Parses non-empty text content (character data and/or references).
-    /// Fails if the result would be empty.
+
     @usableFromInline
     struct NonEmptyTextContent<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
             .`Protocol`, Sendable
@@ -372,7 +316,7 @@ extension W3C_XML.Parse {
         func parse(_ input: inout Input) throws(Failure) -> String {
             var result: [Byte] = []
             var iterationCount = 0
-            let maxIterations = 1_000_000  // Safety limit
+            let maxIterations = 1_000_000
 
             while let byte = input.first {
                 iterationCount += 1
@@ -382,14 +326,14 @@ extension W3C_XML.Parse {
                 )
 
                 if byte == ASCII.Code.lessThanSign.byte {
-                    // Start of tag or other markup
+
                     break
                 } else if byte == ASCII.Code.ampersand.byte {
-                    // Reference - must consume &
+
                     let resolved = try Reference<Input>().parse(&input)
                     result.append(contentsOf: resolved.utf8)
                 } else {
-                    // Character data - must consume at least one byte or return empty
+
                     let text = CharData<Input>().parse(&input)
                     if text.isEmpty {
                         break

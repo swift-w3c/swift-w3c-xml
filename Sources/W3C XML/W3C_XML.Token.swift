@@ -1,71 +1,37 @@
-/// W3C_XML.Token.swift
-/// swift-w3c-xml
-///
-/// Lexer token types for XML parsing
-
 extension W3C_XML {
-    /// Tokens produced by the XML lexer.
-    ///
-    /// These represent the atomic units of XML syntax. The lexer produces
-    /// a stream of these tokens for the parser to consume.
-    public enum Token: Sendable, Hashable {
-        // MARK: - Tags
 
-        /// Start tag opening: `<name`
+    public enum Token: Sendable, Hashable {
+
         case startTagOpen(Name)
 
-        /// End tag opening: `</name`
         case endTagOpen(Name)
 
-        /// Tag close: `>`
         case tagClose
 
-        /// Empty element tag close: `/>`
         case emptyTagClose
 
-        // MARK: - Attributes
-
-        /// Attribute name
         case attributeName(Name)
 
-        /// Attribute value (after `=`)
         case attributeValue(String)
 
-        /// Equals sign in attribute: `=`
         case equals
 
-        // MARK: - Content
-
-        /// Text content (character data)
         case text(String)
 
-        /// CDATA section content
         case cdata(String)
 
-        /// Comment content
         case comment(String)
 
-        // MARK: - Processing Instructions
-
-        /// Processing instruction: `<?target data?>`
         case instruction(Instruction)
 
-        // MARK: - Declarations
-
-        /// XML declaration: `<?xml ...?>`
         case xmlDeclaration(Declaration)
 
-        /// DOCTYPE declaration
         case doctype(Doctype)
     }
 }
 
-// MARK: - Token Kind (for error messages)
-
 extension W3C_XML {
-    /// Token kind for error messages.
-    ///
-    /// Simplified representation used in error reporting.
+
     public enum TokenKind: Sendable, Hashable {
         case startTag
         case endTag
@@ -105,10 +71,8 @@ extension W3C_XML.TokenKind: CustomStringConvertible {
     }
 }
 
-// MARK: - Token to TokenKind
-
 extension W3C_XML.Token {
-    /// Converts this token to a TokenKind for error reporting.
+
     public var kind: W3C_XML.TokenKind {
         switch self {
         case .startTagOpen: return .startTag
@@ -127,8 +91,6 @@ extension W3C_XML.Token {
         }
     }
 }
-
-// MARK: - Token CustomStringConvertible
 
 extension W3C_XML.Token: CustomStringConvertible {
     public var description: String {

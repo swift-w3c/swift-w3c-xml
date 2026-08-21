@@ -132,9 +132,7 @@ struct ErrorHandlingTests {
 
     @Test
     func `Truncated inputs report a typed parse error without terminating`() {
-        // Regression battery: every truncation point of a well-formed
-        // document must surface as a typed parse failure — never a trap in
-        // the input-consuming bridging layer.
+
         let document = #"<root id="value"><child>text</child></root>"#
         for length in 0..<document.count {
             let truncated = String(document.prefix(length))
@@ -341,7 +339,7 @@ extension W3C_XML.Encoder {
                 as: UTF8.self
             )
             #expect(output.contains("\n"))
-            #expect(output.contains("  "))  // Default indent
+            #expect(output.contains("  "))
         }
 
         @Test
@@ -424,7 +422,7 @@ struct ParserEdgeCases {
 
     @Test
     func `Parse adjacent text nodes`() throws {
-        // Entity references can create adjacent text - parser should handle
+
         let doc = try W3C_XML.parse("<root>a&amp;b</root>")
         #expect(doc.root.textContent == "a&b")
     }
@@ -530,11 +528,11 @@ extension W3C_XML {
     struct Test {
         @Test
         func `isWhitespace`() {
-            #expect(W3C_XML.isWhitespace(0x20))  // Space
-            #expect(W3C_XML.isWhitespace(0x09))  // Tab
-            #expect(W3C_XML.isWhitespace(0x0A))  // LF
-            #expect(W3C_XML.isWhitespace(0x0D))  // CR
-            #expect(!W3C_XML.isWhitespace(0x41))  // 'A'
+            #expect(W3C_XML.isWhitespace(0x20))
+            #expect(W3C_XML.isWhitespace(0x09))
+            #expect(W3C_XML.isWhitespace(0x0A))
+            #expect(W3C_XML.isWhitespace(0x0D))
+            #expect(!W3C_XML.isWhitespace(0x41))
         }
 
         @Test
@@ -561,18 +559,18 @@ extension W3C_XML {
 
         @Test
         func `isChar valid characters`() {
-            #expect(W3C_XML.isChar(Unicode.Scalar(0x09)!))  // Tab
-            #expect(W3C_XML.isChar(Unicode.Scalar(0x0A)!))  // LF
-            #expect(W3C_XML.isChar(Unicode.Scalar(0x0D)!))  // CR
-            #expect(W3C_XML.isChar(Unicode.Scalar(0x20)!))  // Space
+            #expect(W3C_XML.isChar(Unicode.Scalar(0x09)!))
+            #expect(W3C_XML.isChar(Unicode.Scalar(0x0A)!))
+            #expect(W3C_XML.isChar(Unicode.Scalar(0x0D)!))
+            #expect(W3C_XML.isChar(Unicode.Scalar(0x20)!))
             #expect(W3C_XML.isChar(Unicode.Scalar("A")))
         }
 
         @Test
         func `isChar invalid characters`() {
-            #expect(!W3C_XML.isChar(Unicode.Scalar(0x00)!))  // NUL
-            #expect(!W3C_XML.isChar(Unicode.Scalar(0x01)!))  // Control
-            #expect(!W3C_XML.isChar(Unicode.Scalar(0x1F)!))  // Control
+            #expect(!W3C_XML.isChar(Unicode.Scalar(0x00)!))
+            #expect(!W3C_XML.isChar(Unicode.Scalar(0x01)!))
+            #expect(!W3C_XML.isChar(Unicode.Scalar(0x1F)!))
         }
 
         @Test

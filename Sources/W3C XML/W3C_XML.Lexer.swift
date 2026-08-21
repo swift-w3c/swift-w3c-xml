@@ -1,43 +1,20 @@
-/// W3C_XML.Lexer.swift
-/// swift-w3c-xml
-///
-/// Zero-copy XML lexer (~Copyable)
-
 public import Input_Primitives
 import Parser_Primitives
 
 extension W3C_XML {
-    /// Zero-copy XML lexer.
-    ///
-    /// The lexer tokenizes UTF-8 byte input into XML tokens.
-    /// It is `~Copyable` to prevent accidental state copies.
-    ///
-    /// ## Usage
-    ///
-    /// ```swift
-    /// var input = Parser.CollectionInput(bytes)
-    /// var lexer = W3C_XML.Lexer(consume input)
-    /// while let token = try lexer.next() {
-    ///     print(token)
-    /// }
-    /// ```
+
     public struct Lexer<Input: Input_Primitives.Input.Streaming>: ~Copyable
     where Input.Element == Byte {
-        /// The input being lexed.
+
         @usableFromInline
         internal var input: Input
 
-        /// Current position for error reporting.
         @usableFromInline
         internal var position: W3C_XML.Position
 
-        /// Current lexer state.
         @usableFromInline
         internal var state: State
 
-        /// Creates a lexer for the given input.
-        ///
-        /// - Parameter input: The UTF-8 byte input to lex.
         @inlinable
         public init(_ input: consuming Input) {
             self.input = input
@@ -45,49 +22,32 @@ extension W3C_XML {
             self.state = .content
         }
 
-        /// The current position in the input.
         public var currentPosition: W3C_XML.Position {
             position
         }
     }
 }
 
-// MARK: - Lexer State
-
 extension W3C_XML.Lexer {
-    /// Lexer state for tracking context.
+
     @usableFromInline
     internal enum State {
-        /// In content (text, elements, etc.)
+
         case content
 
-        /// Inside a start tag (reading attributes)
         case inStartTag
 
-        /// Inside an end tag
         case inEndTag
     }
 }
 
-// MARK: - Lexer Error
-
 extension W3C_XML.Lexer {
-    /// Lexer errors.
-    ///
-    /// Spelled `W3C_XML.Lexer.Error`; the underlying type is the module-scope,
-    /// non-generic `__W3CXMLLexerError`, hoisted out of the generic `Lexer<Input>`
-    /// context so the `@error` SIL result carries no phantom `Input` type
-    /// parameter - the structural fix for the `FunctionSignatureOpts` release-build
-    /// ICE (`SILArgument.cpp:40`; Research section A13 / swiftlang/swift#89617).
+
     public typealias Error = __W3CXMLLexerError
 }
 
-// MARK: - Lexer Core Methods
-
 extension W3C_XML.Lexer {
-    /// Returns the next token, or nil if at end of input.
-    ///
-    /// - Throws: `W3C_XML.Lexer.Error` if the input is malformed.
+
     @inlinable
     public mutating func next() throws(Error) -> W3C_XML.Token? {
         switch state {
@@ -103,10 +63,8 @@ extension W3C_XML.Lexer {
     }
 }
 
-// MARK: - Lexer Content Mode
-
 extension W3C_XML.Lexer {
-    /// Lexes content (text, elements, etc.).
+
     @inlinable
     package mutating func lexContent() throws(Error) -> W3C_XML.Token? {
         guard let byte = input.first else {
@@ -114,7 +72,7 @@ extension W3C_XML.Lexer {
         }
 
         switch byte {
-        case ASCII.Code.lessThanSign.byte:  // <
+        case ASCII.Code.lessThanSign.byte:
             return try lexMarkup()
 
         default:
@@ -122,31 +80,30 @@ extension W3C_XML.Lexer {
         }
     }
 
-    /// Lexes markup starting with `<`.
     @inlinable
     package mutating func lexMarkup() throws(Error) -> W3C_XML.Token {
         let startPos = position
-        advance()  // consume <
+        advance()
 
         guard let byte = input.first else {
             throw .unexpectedEndOfInput(expected: "tag name or markup", at: startPos)
         }
 
         switch byte {
-        case ASCII.Code.solidus.byte:  // </  (end tag)
+        case ASCII.Code.solidus.byte:
             advance()
             return try lexEndTag()
 
-        case ASCII.Code.exclamationPoint.byte:  // <!  (comment, CDATA, DOCTYPE)
+        case ASCII.Code.exclamationPoint.byte:
             advance()
             return try lexBangMarkup(startPos: startPos)
 
-        case ASCII.Code.questionMark.byte:  // <?  (PI or XML declaration)
+        case ASCII.Code.questionMark.byte:
             advance()
             return try lexProcessingInstruction(startPos: startPos)
 
         default:
-            // Start tag
+
             guard W3C_XML.isASCIINameStartChar(byte) || byte >= 0x80 else {
                 throw .invalidName(at: position)
             }
@@ -155,10 +112,8 @@ extension W3C_XML.Lexer {
     }
 }
 
-// MARK: - Lexer Start Tag
-
 extension W3C_XML.Lexer {
-    /// Lexes a start tag after `<`.
+
     @inlinable
     package mutating func lexStartTag() throws(Error) -> W3C_XML.Token {
         let name = try lexName()
@@ -166,7 +121,6 @@ extension W3C_XML.Lexer {
         return .startTagOpen(name)
     }
 
-    /// Lexes content inside a start tag (attributes, close).
     @inlinable
     package mutating func lexInStartTag() throws(Error) -> W3C_XML.Token? {
         skipWhitespace()
@@ -176,12 +130,12 @@ extension W3C_XML.Lexer {
         }
 
         switch byte {
-        case ASCII.Code.greaterThanSign.byte:  // >
+        case ASCII.Code.greaterThanSign.byte:
             advance()
             state = .content
             return .tagClose
 
-        case ASCII.Code.solidus.byte:  // />
+        case ASCII.Code.solidus.byte:
             advance()
             guard input.first == ASCII.Code.greaterThanSign.byte else {
                 throw .unexpectedEndOfInput(expected: "'>'", at: position)
@@ -190,15 +144,15 @@ extension W3C_XML.Lexer {
             state = .content
             return .emptyTagClose
 
-        case ASCII.Code.equalsSign.byte:  // =
+        case ASCII.Code.equalsSign.byte:
             advance()
             return .equals
 
-        case ASCII.Code.quotationMark.byte, ASCII.Code.apostrophe.byte:  // " or '
+        case ASCII.Code.quotationMark.byte, ASCII.Code.apostrophe.byte:
             return try lexAttributeValue()
 
         default:
-            // Must be attribute name
+
             guard W3C_XML.isASCIINameStartChar(byte) || byte >= 0x80 else {
                 throw .invalidName(at: position)
             }
@@ -207,7 +161,6 @@ extension W3C_XML.Lexer {
         }
     }
 
-    /// Lexes an attribute value.
     @inlinable
     package mutating func lexAttributeValue() throws(Error) -> W3C_XML.Token {
         let startPos = position
@@ -237,7 +190,7 @@ extension W3C_XML.Lexer {
                 let resolved = try lexEntityReference()
                 value.append(contentsOf: String(resolved))
             } else {
-                // Regular character
+
                 let scalar = try consumeUTF8Scalar()
                 value.append(Character(scalar))
             }
@@ -247,10 +200,8 @@ extension W3C_XML.Lexer {
     }
 }
 
-// MARK: - Lexer End Tag
-
 extension W3C_XML.Lexer {
-    /// Lexes an end tag after `</`.
+
     @inlinable
     package mutating func lexEndTag() throws(Error) -> W3C_XML.Token {
         let name = try lexName()
@@ -258,7 +209,6 @@ extension W3C_XML.Lexer {
         return .endTagOpen(name)
     }
 
-    /// Lexes content inside an end tag.
     @inlinable
     package mutating func lexInEndTag() throws(Error) -> W3C_XML.Token? {
         skipWhitespace()
@@ -277,10 +227,8 @@ extension W3C_XML.Lexer {
     }
 }
 
-// MARK: - Lexer Bang Markup
-
 extension W3C_XML.Lexer {
-    /// Lexes `<!` markup (comment, CDATA, DOCTYPE).
+
     @inlinable
     package mutating func lexBangMarkup(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
         guard let byte = input.first else {
@@ -288,13 +236,13 @@ extension W3C_XML.Lexer {
         }
 
         switch byte {
-        case ASCII.Code.hyphen.byte:  // <!-- comment
+        case ASCII.Code.hyphen.byte:
             return try lexComment(startPos: startPos)
 
-        case ASCII.Code.leftBracket.byte:  // <![CDATA[
+        case ASCII.Code.leftBracket.byte:
             return try lexCDATA(startPos: startPos)
 
-        case ASCII.Code.D.byte:  // <!DOCTYPE
+        case ASCII.Code.D.byte:
             return try lexDoctype(startPos: startPos)
 
         default:
@@ -302,10 +250,9 @@ extension W3C_XML.Lexer {
         }
     }
 
-    /// Lexes a comment after `<!-`.
     @inlinable
     package mutating func lexComment(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
-        // Expect second -
+
         advance()
         guard input.first == ASCII.Code.hyphen.byte else {
             throw .unexpectedEndOfInput(expected: "'--' for comment", at: position)
@@ -338,11 +285,10 @@ extension W3C_XML.Lexer {
         throw .unterminated(construct: "comment", at: startPos)
     }
 
-    /// Lexes a CDATA section after `<![`.
     @inlinable
     package mutating func lexCDATA(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
-        // Expect CDATA[
-        advance()  // [
+
+        advance()
         try expectLiteral([
             ASCII.Code.C.byte, ASCII.Code.D.byte, ASCII.Code.A.byte, ASCII.Code.T.byte,
             ASCII.Code.A.byte, ASCII.Code.leftBracket.byte,
@@ -371,10 +317,9 @@ extension W3C_XML.Lexer {
         throw .unterminated(construct: "CDATA section", at: startPos)
     }
 
-    /// Lexes a DOCTYPE declaration after `<!D`.
     @inlinable
     package mutating func lexDoctype(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
-        // Expect OCTYPE (D already matched in lexBangMarkup)
+
         try expectLiteral([
             ASCII.Code.D.byte, ASCII.Code.O.byte, ASCII.Code.C.byte, ASCII.Code.T.byte,
             ASCII.Code.Y.byte, ASCII.Code.P.byte, ASCII.Code.E.byte,
@@ -389,9 +334,8 @@ extension W3C_XML.Lexer {
         var systemID: String?
         var internalSubset: String?
 
-        // Check for external ID - branch on first character
         if input.first == ASCII.Code.P.byte {
-            // PUBLIC
+
             try expectLiteral([
                 ASCII.Code.P.byte, ASCII.Code.U.byte, ASCII.Code.B.byte, ASCII.Code.L.byte,
                 ASCII.Code.I.byte, ASCII.Code.C.byte,
@@ -401,7 +345,7 @@ extension W3C_XML.Lexer {
             skipWhitespace()
             systemID = try lexQuotedString()
         } else if input.first == ASCII.Code.S.byte {
-            // SYSTEM
+
             try expectLiteral([
                 ASCII.Code.S.byte, ASCII.Code.Y.byte, ASCII.Code.S.byte, ASCII.Code.T.byte,
                 ASCII.Code.E.byte, ASCII.Code.M.byte,
@@ -412,7 +356,6 @@ extension W3C_XML.Lexer {
 
         skipWhitespace()
 
-        // Check for internal subset
         if input.first == ASCII.Code.leftBracket.byte {
             advance()
             internalSubset = try lexInternalSubset()
@@ -434,7 +377,6 @@ extension W3C_XML.Lexer {
         )
     }
 
-    /// Lexes the internal subset of a DOCTYPE.
     @inlinable
     package mutating func lexInternalSubset() throws(Error) -> String {
         let startPos = position
@@ -468,22 +410,18 @@ extension W3C_XML.Lexer {
     }
 }
 
-// MARK: - Lexer Processing Instruction
-
 extension W3C_XML.Lexer {
-    /// Lexes a processing instruction after `<?`.
+
     @inlinable
     package mutating func lexProcessingInstruction(
         startPos: W3C_XML.Position
     ) throws(Error) -> W3C_XML.Token {
         let target = try lexNameString()
 
-        // Check for XML declaration
         if target.lowercased() == "xml" {
             return try lexXMLDeclaration(startPos: startPos)
         }
 
-        // Regular PI
         var data: String?
 
         if input.first?.isXMLWhitespace == true {
@@ -508,7 +446,6 @@ extension W3C_XML.Lexer {
             throw .unterminated(construct: "processing instruction", at: startPos)
         }
 
-        // No data - expect ?>
         guard input.first == ASCII.Code.questionMark.byte else {
             throw .unexpectedEndOfInput(expected: "'?>'", at: position)
         }
@@ -521,7 +458,6 @@ extension W3C_XML.Lexer {
         return .instruction(W3C_XML.Instruction(target: target, data: nil))
     }
 
-    /// Lexes an XML declaration after `<?xml`.
     @inlinable
     package mutating func lexXMLDeclaration(
         startPos: W3C_XML.Position
@@ -532,7 +468,6 @@ extension W3C_XML.Lexer {
         var encoding: String?
         var standalone: Bool?
 
-        // version (required)
         try expectAttributeName("version")
         skipWhitespace()
         try expectByte(ASCII.Code.equalsSign.byte)
@@ -549,7 +484,6 @@ extension W3C_XML.Lexer {
 
         skipWhitespace()
 
-        // encoding (optional)
         if matchAttributeName("encoding") {
             skipWhitespace()
             try expectByte(ASCII.Code.equalsSign.byte)
@@ -558,7 +492,6 @@ extension W3C_XML.Lexer {
             skipWhitespace()
         }
 
-        // standalone (optional)
         if matchAttributeName("standalone") {
             skipWhitespace()
             try expectByte(ASCII.Code.equalsSign.byte)
@@ -577,7 +510,6 @@ extension W3C_XML.Lexer {
             skipWhitespace()
         }
 
-        // Expect ?>
         guard input.first == ASCII.Code.questionMark.byte else {
             throw .unexpectedEndOfInput(expected: "'?>'", at: position)
         }
@@ -597,17 +529,15 @@ extension W3C_XML.Lexer {
     }
 }
 
-// MARK: - Lexer Text
-
 extension W3C_XML.Lexer {
-    /// Lexes text content.
+
     @inlinable
     package mutating func lexText() throws(Error) -> W3C_XML.Token {
         var text = ""
 
         while let byte = input.first {
             if byte == ASCII.Code.lessThanSign.byte {
-                // End of text content
+
                 break
             }
 
@@ -624,26 +554,23 @@ extension W3C_XML.Lexer {
     }
 }
 
-// MARK: - Lexer Entity Reference
-
 extension W3C_XML.Lexer {
-    /// Lexes an entity reference after `&`.
+
     @inlinable
     package mutating func lexEntityReference() throws(Error) -> Unicode.Scalar {
         let startPos = position
-        advance()  // consume &
+        advance()
 
         guard let firstByte = input.first else {
             throw .unexpectedEndOfInput(expected: "entity name", at: startPos)
         }
 
         if firstByte == ASCII.Code.numberSign.byte {
-            // Numeric character reference
+
             advance()
             return try lexNumericReference(startPos: startPos)
         }
 
-        // Named entity reference
         var name = ""
         while let byte = input.first, byte != ASCII.Code.semicolon.byte {
             guard W3C_XML.isASCIINameChar(byte) else {
@@ -665,7 +592,6 @@ extension W3C_XML.Lexer {
         return scalar
     }
 
-    /// Lexes a numeric character reference after `&#`.
     @inlinable
     package mutating func lexNumericReference(
         startPos: W3C_XML.Position
@@ -678,9 +604,7 @@ extension W3C_XML.Lexer {
         }
 
         while let byte = input.first, byte != ASCII.Code.semicolon.byte {
-            // Numeric-reference digits are strict ASCII; lift to ASCII.Code to
-            // classify (isHexDigit already subsumes isDigit). A non-ASCII byte
-            // here is an invalid entity. ([API-BYTE-004])
+
             guard byte.underlying < 0x80, ASCII.Code(unchecked: byte).isHexDigit else {
                 throw .invalidEntity(refString, at: startPos)
             }
@@ -701,17 +625,14 @@ extension W3C_XML.Lexer {
     }
 }
 
-// MARK: - Lexer Name
-
 extension W3C_XML.Lexer {
-    /// Lexes an XML name and returns it as a Name struct.
+
     @inlinable
     package mutating func lexName() throws(Error) -> W3C_XML.Name {
         let nameStr = try lexNameString()
         return W3C_XML.Name(nameStr)
     }
 
-    /// Lexes an XML name and returns it as a String.
     @inlinable
     package mutating func lexNameString() throws(Error) -> String {
         guard let firstByte = input.first else {
@@ -724,27 +645,23 @@ extension W3C_XML.Lexer {
 
         var name = ""
 
-        // First character (must be NameStartChar)
         let firstScalar = try consumeUTF8Scalar()
         guard W3C_XML.isNameStartChar(firstScalar) else {
             throw .invalidName(at: position)
         }
         name.append(Character(firstScalar))
 
-        // Subsequent characters (NameChar)
         while let byte = input.first {
             if W3C_XML.isASCIINameChar(byte) {
                 name.append(Character(UnicodeScalar(byte)))
                 advance()
             } else if byte >= 0x80 {
-                // Multi-byte UTF-8 - need to check if valid NameChar
+
                 let scalar = try consumeUTF8Scalar()
                 if W3C_XML.isNameChar(scalar) {
                     name.append(Character(scalar))
                 } else {
-                    // Put back - not part of name
-                    // Since we can't put back, this is a limitation
-                    // For now, we'll accept it and let parser handle
+
                     break
                 }
             } else {
@@ -756,10 +673,8 @@ extension W3C_XML.Lexer {
     }
 }
 
-// MARK: - Lexer Utilities
-
 extension W3C_XML.Lexer {
-    /// Skips whitespace bytes.
+
     @inlinable
     package mutating func skipWhitespace() {
         while let byte = input.first, W3C_XML.isWhitespace(byte) {
@@ -767,7 +682,6 @@ extension W3C_XML.Lexer {
         }
     }
 
-    /// Advances by one byte, updating position.
     @inlinable
     package mutating func advance() {
         guard !input.isEmpty else { return }
@@ -780,7 +694,6 @@ extension W3C_XML.Lexer {
         )
     }
 
-    /// Consumes and returns a UTF-8 scalar.
     @inlinable
     package mutating func consumeUTF8Scalar() throws(Error) -> Unicode.Scalar {
         guard let firstByte = input.first else {
@@ -790,12 +703,11 @@ extension W3C_XML.Lexer {
         let startPos = position
 
         if firstByte < 0x80 {
-            // ASCII
+
             advance()
             return Unicode.Scalar(firstByte)
         }
 
-        // Multi-byte UTF-8
         let length: Int
         let mask: UInt8
 
@@ -833,7 +745,6 @@ extension W3C_XML.Lexer {
         return scalar
     }
 
-    /// Expects the given literal bytes.
     @inlinable
     package mutating func expectLiteral(_ expected: [Byte]) throws(Error) {
         let startPos = position
@@ -848,27 +759,22 @@ extension W3C_XML.Lexer {
         }
     }
 
-    /// Checks if input starts with the given byte (for branching).
     @inlinable
     package func peekByte() -> Byte? {
         input.first
     }
 
-    /// Tries to match the given literal bytes, consuming them if matched.
-    /// Returns false and consumes nothing if first byte doesn't match.
     @inlinable
     package mutating func matchLiteral(_ expected: [Byte]) -> Bool {
         guard let first = expected.first else { return true }
         guard input.first == first else { return false }
 
-        // First byte matches, consume all (will fail later if rest don't match)
         for _ in expected {
             advance()
         }
         return true
     }
 
-    /// Expects a specific byte.
     @inlinable
     package mutating func expectByte(_ expected: Byte) throws(Error) {
         guard let byte = input.first else {
@@ -883,21 +789,18 @@ extension W3C_XML.Lexer {
         advance()
     }
 
-    /// Expects an attribute name.
     @inlinable
     package mutating func expectAttributeName(_ name: String) throws(Error) {
         let nameBytes = name.utf8.map(Byte.init)
         try expectLiteral(nameBytes)
     }
 
-    /// Matches an attribute name.
     @inlinable
     package mutating func matchAttributeName(_ name: String) -> Bool {
         let nameBytes = name.utf8.map(Byte.init)
         return matchLiteral(nameBytes)
     }
 
-    /// Lexes a quoted string (single or double quotes).
     @inlinable
     package mutating func lexQuotedString() throws(Error) -> String {
         let startPos = position
@@ -923,10 +826,8 @@ extension W3C_XML.Lexer {
     }
 }
 
-// MARK: - UInt8 XML Whitespace Extension
-
 extension Byte {
-    /// Returns true if this byte is XML whitespace.
+
     @inlinable
     package var isXMLWhitespace: Bool {
         W3C_XML.isWhitespace(self)

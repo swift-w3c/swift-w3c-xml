@@ -1,28 +1,7 @@
-/// W3C_XML.Encode.swift
-/// swift-w3c-xml
-///
-/// XML encoding (Document/Element → bytes)
-
 extension W3C_XML {
-    /// Encodes an XML document to UTF-8 bytes.
-    ///
-    /// ## Usage
-    ///
-    /// ```swift
-    /// let doc: W3C_XML.Document = ...
-    ///
-    /// // Compact encoding
-    /// let bytes = doc.encode()
-    ///
-    /// // Pretty-printed
-    /// let pretty = doc.encode(options: .init(prettyPrint: true))
-    ///
-    /// // Encode into existing buffer
-    /// var buffer: [UInt8] = []
-    /// doc.encode(into: &buffer)
-    /// ```
+
     public struct Encode: Sendable {
-        /// The document to encode.
+
         public let document: Document
 
         @usableFromInline
@@ -32,13 +11,8 @@ extension W3C_XML {
     }
 }
 
-// MARK: - Encode Call
-
 extension W3C_XML.Encode {
-    /// Encodes the document to a byte array.
-    ///
-    /// - Parameter options: Encoding options.
-    /// - Returns: UTF-8 encoded XML bytes.
+
     @inlinable
     public func callAsFunction(options: W3C_XML.Options = W3C_XML.Options()) -> [UInt8] {
         var buffer: [UInt8] = []
@@ -46,11 +20,6 @@ extension W3C_XML.Encode {
         return buffer
     }
 
-    /// Encodes the document into an existing buffer.
-    ///
-    /// - Parameters:
-    ///   - buffer: The buffer to append to.
-    ///   - options: Encoding options.
     @inlinable
     public func callAsFunction<Buffer: RangeReplaceableCollection>(
         into buffer: inout Buffer,
@@ -61,24 +30,18 @@ extension W3C_XML.Encode {
     }
 }
 
-// MARK: - Encode Options
-
 extension W3C_XML {
-    /// Options for XML encoding.
+
     public struct Options: Sendable {
-        /// Whether to format with indentation and newlines.
+
         public var prettyPrint: Bool
 
-        /// Indentation string (used when prettyPrint is true).
         public var indent: String
 
-        /// Whether to include XML declaration.
         public var includeDeclaration: Bool
 
-        /// Whether to escape ' as &apos; in attribute values.
         public var escapeApostrophe: Bool
 
-        /// Creates default encoding options.
         public init(
             prettyPrint: Bool = false,
             indent: String = "  ",
@@ -93,10 +56,8 @@ extension W3C_XML {
     }
 }
 
-// MARK: - Internal Encoder
-
 extension W3C_XML {
-    /// Internal encoder state.
+
     @usableFromInline
     internal struct Encoder {
         @usableFromInline
@@ -113,13 +74,13 @@ extension W3C_XML {
 }
 
 extension W3C_XML.Encoder {
-    /// Encodes a document into the buffer.
+
     @inlinable
     package mutating func encode<Buffer: RangeReplaceableCollection>(
         _ document: W3C_XML.Document,
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
-        // XML declaration
+
         if options.includeDeclaration, let decl = document.declaration {
             encodeDeclaration(decl, into: &buffer)
             if options.prettyPrint {
@@ -127,7 +88,6 @@ extension W3C_XML.Encoder {
             }
         }
 
-        // DOCTYPE
         if let doctype = document.doctype {
             encodeDoctype(doctype, into: &buffer)
             if options.prettyPrint {
@@ -135,7 +95,6 @@ extension W3C_XML.Encoder {
             }
         }
 
-        // Prologue PIs
         for instruction in document.prologue {
             encodeInstruction(instruction, into: &buffer)
             if options.prettyPrint {
@@ -143,10 +102,8 @@ extension W3C_XML.Encoder {
             }
         }
 
-        // Root element
         encodeElement(document.root, into: &buffer)
 
-        // Epilogue
         for content in document.epilogue {
             if options.prettyPrint {
                 buffer.append(ASCII.Code.lf.byte.underlying)
@@ -155,7 +112,6 @@ extension W3C_XML.Encoder {
         }
     }
 
-    /// Encodes an XML declaration.
     @inlinable
     package mutating func encodeDeclaration<Buffer: RangeReplaceableCollection>(
         _ decl: W3C_XML.Declaration,
@@ -163,7 +119,7 @@ extension W3C_XML.Encoder {
     ) where Buffer.Element == UInt8 {
         buffer.append(contentsOf: [
             ASCII.Code.lessThanSign.byte.underlying, ASCII.Code.questionMark.byte.underlying,
-        ])  // <?
+        ])
         buffer.append(contentsOf: Swift.Array("xml".utf8))
 
         buffer.append(contentsOf: Swift.Array(" version=\"".utf8))
@@ -184,10 +140,9 @@ extension W3C_XML.Encoder {
 
         buffer.append(contentsOf: [
             ASCII.Code.questionMark.byte.underlying, ASCII.Code.greaterThanSign.byte.underlying,
-        ])  // ?>
+        ])
     }
 
-    /// Encodes a DOCTYPE declaration.
     @inlinable
     package mutating func encodeDoctype<Buffer: RangeReplaceableCollection>(
         _ doctype: W3C_XML.Doctype,
@@ -217,7 +172,6 @@ extension W3C_XML.Encoder {
         buffer.append(ASCII.Code.greaterThanSign.byte.underlying)
     }
 
-    /// Encodes a processing instruction.
     @inlinable
     package mutating func encodeInstruction<Buffer: RangeReplaceableCollection>(
         _ instruction: W3C_XML.Instruction,
@@ -225,7 +179,7 @@ extension W3C_XML.Encoder {
     ) where Buffer.Element == UInt8 {
         buffer.append(contentsOf: [
             ASCII.Code.lessThanSign.byte.underlying, ASCII.Code.questionMark.byte.underlying,
-        ])  // <?
+        ])
         buffer.append(contentsOf: Swift.Array(instruction.target.utf8))
 
         if let data = instruction.data {
@@ -235,20 +189,18 @@ extension W3C_XML.Encoder {
 
         buffer.append(contentsOf: [
             ASCII.Code.questionMark.byte.underlying, ASCII.Code.greaterThanSign.byte.underlying,
-        ])  // ?>
+        ])
     }
 
-    /// Encodes an element.
     @inlinable
     package mutating func encodeElement<Buffer: RangeReplaceableCollection>(
         _ element: W3C_XML.Element,
         into buffer: inout Buffer
     ) where Buffer.Element == UInt8 {
-        // Opening tag
+
         buffer.append(ASCII.Code.lessThanSign.byte.underlying)
         buffer.append(contentsOf: Swift.Array(element.name.qualified.utf8))
 
-        // Namespace declarations
         for ns in element.namespaces {
             buffer.append(ASCII.Code.sp.byte.underlying)
             if let prefix = ns.prefix {
@@ -264,7 +216,6 @@ extension W3C_XML.Encoder {
             buffer.append(ASCII.Code.quotationMark.byte.underlying)
         }
 
-        // Attributes
         for attr in element.attributes {
             buffer.append(ASCII.Code.sp.byte.underlying)
             buffer.append(contentsOf: Swift.Array(attr.name.qualified.utf8))
@@ -276,14 +227,13 @@ extension W3C_XML.Encoder {
         }
 
         if element.content.isEmpty {
-            // Empty element
+
             buffer.append(contentsOf: [
                 ASCII.Code.solidus.byte.underlying, ASCII.Code.greaterThanSign.byte.underlying,
-            ])  // />
+            ])
         } else {
             buffer.append(ASCII.Code.greaterThanSign.byte.underlying)
 
-            // Check if content is text-only (no formatting)
             let hasElementChildren = element.content.contains { $0.isElement }
 
             depth += 1
@@ -303,16 +253,14 @@ extension W3C_XML.Encoder {
                 appendIndent(into: &buffer)
             }
 
-            // Closing tag
             buffer.append(contentsOf: [
                 ASCII.Code.lessThanSign.byte.underlying, ASCII.Code.solidus.byte.underlying,
-            ])  // </
+            ])
             buffer.append(contentsOf: Swift.Array(element.name.qualified.utf8))
             buffer.append(ASCII.Code.greaterThanSign.byte.underlying)
         }
     }
 
-    /// Encodes content.
     @inlinable
     package mutating func encodeContent<Buffer: RangeReplaceableCollection>(
         _ content: W3C_XML.Content,
@@ -340,7 +288,6 @@ extension W3C_XML.Encoder {
         }
     }
 
-    /// Encodes text content with entity escaping.
     @inlinable
     package mutating func encodeText<Buffer: RangeReplaceableCollection>(
         _ text: String,
@@ -363,7 +310,6 @@ extension W3C_XML.Encoder {
         }
     }
 
-    /// Encodes an attribute value with entity escaping.
     @inlinable
     package mutating func encodeAttributeValue<Buffer: RangeReplaceableCollection>(
         _ value: String,
@@ -383,13 +329,13 @@ extension W3C_XML.Encoder {
             case UInt32(UInt8.ascii.apostrophe) where options.escapeApostrophe:
                 buffer.append(contentsOf: Swift.Array("&apos;".utf8))
 
-            case 0x09:  // Tab
+            case 0x09:
                 buffer.append(contentsOf: Swift.Array("&#9;".utf8))
 
-            case 0x0A:  // LF
+            case 0x0A:
                 buffer.append(contentsOf: Swift.Array("&#10;".utf8))
 
-            case 0x0D:  // CR
+            case 0x0D:
                 buffer.append(contentsOf: Swift.Array("&#13;".utf8))
 
             default:
@@ -398,7 +344,6 @@ extension W3C_XML.Encoder {
         }
     }
 
-    /// Encodes a Unicode scalar directly to UTF-8 bytes.
     @inlinable
     package func encodeScalarUTF8<Buffer: RangeReplaceableCollection>(
         _ scalar: Unicode.Scalar,
@@ -426,7 +371,6 @@ extension W3C_XML.Encoder {
         }
     }
 
-    /// Appends indentation for the current depth.
     @inlinable
     package func appendIndent<Buffer: RangeReplaceableCollection>(
         into buffer: inout Buffer
@@ -437,29 +381,15 @@ extension W3C_XML.Encoder {
     }
 }
 
-// MARK: - Document.encode Extension
-
 extension W3C_XML.Document {
-    /// Creates an encoder for this document.
-    ///
-    /// ## Usage
-    ///
-    /// ```swift
-    /// let bytes = document.encode()
-    /// let pretty = document.encode(options: .init(prettyPrint: true))
-    /// ```
+
     public var encode: W3C_XML.Encode {
         W3C_XML.Encode(self)
     }
 }
 
-// MARK: - Element Encode Extension
-
 extension W3C_XML.Element {
-    /// Encodes this element to a byte array.
-    ///
-    /// - Parameter options: Encoding options.
-    /// - Returns: UTF-8 encoded XML bytes.
+
     @inlinable
     public func encode(options: W3C_XML.Options = W3C_XML.Options()) -> [UInt8] {
         var buffer: [UInt8] = []
@@ -468,11 +398,6 @@ extension W3C_XML.Element {
         return buffer
     }
 
-    /// Encodes this element into an existing buffer.
-    ///
-    /// - Parameters:
-    ///   - buffer: The buffer to append to.
-    ///   - options: Encoding options.
     @inlinable
     public func encode<Buffer: RangeReplaceableCollection>(
         into buffer: inout Buffer,

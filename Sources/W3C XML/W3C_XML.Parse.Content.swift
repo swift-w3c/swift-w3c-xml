@@ -1,23 +1,8 @@
-/// W3C_XML.Parse.Content.swift
-/// swift-w3c-xml
-///
-/// Content parsers for text, comments, CDATA, and processing instructions.
-
 public import Input_Primitives
 import Parser_Primitives
 
-// MARK: - CharData Parser
-
 extension W3C_XML.Parse {
-    /// Parses character data (text content).
-    ///
-    /// Production [14]:
-    /// ```
-    /// CharData ::= [^<&]* - ([^<&]* ']]>' [^<&]*)
-    /// ```
-    ///
-    /// Parses text until `<`, `&`, or end of input. Does not consume references.
-    /// Returns empty string if no text found (to allow Many to continue).
+
     public struct CharData<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
@@ -32,28 +17,28 @@ extension W3C_XML.Parse {
             var bytes: [Byte] = []
 
             while let byte = input.first {
-                // Stop at < or &
+
                 if byte == ASCII.Code.lessThanSign.byte || byte == ASCII.Code.ampersand.byte {
                     break
                 }
-                // Check for forbidden ]]> sequence
+
                 if byte == ASCII.Code.rightBracket.byte {
-                    // Look ahead for ]>
+
                     let saved = input
                     _ = input.removeFirst()
                     if input.first == ASCII.Code.rightBracket.byte {
                         _ = input.removeFirst()
                         if input.first == ASCII.Code.greaterThanSign.byte {
-                            // Found ]]> - restore and stop
+
                             input = saved
                             break
                         }
-                        // Not ]]>, add both ] to bytes
+
                         bytes.append(ASCII.Code.rightBracket.byte)
                         bytes.append(ASCII.Code.rightBracket.byte)
                         continue
                     }
-                    // Single ], add to bytes
+
                     bytes.append(ASCII.Code.rightBracket.byte)
                     continue
                 }
@@ -64,9 +49,6 @@ extension W3C_XML.Parse {
         }
     }
 
-    /// Parses character data with entity references.
-    ///
-    /// Like CharData but also handles entity references (&lt; etc).
     public struct TextContent<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
@@ -84,11 +66,11 @@ extension W3C_XML.Parse {
                 if byte == ASCII.Code.lessThanSign.byte {
                     break
                 } else if byte == ASCII.Code.ampersand.byte {
-                    // Parse reference
+
                     let resolved = try Reference<Input>().parse(&input)
                     result += resolved
                 } else {
-                    // Regular character
+
                     result.append(Character(UnicodeScalar(input.removeFirst())))
                 }
             }
@@ -98,17 +80,8 @@ extension W3C_XML.Parse {
     }
 }
 
-// MARK: - Comment Parser
-
 extension W3C_XML.Parse {
-    /// Parses an XML comment.
-    ///
-    /// Production [15]:
-    /// ```
-    /// Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->'
-    /// ```
-    ///
-    /// Note: Comments cannot contain `--` except at the end.
+
     public struct Comment<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
@@ -120,7 +93,7 @@ extension W3C_XML.Parse {
 
         @inlinable
         public func parse(_ input: inout Input) throws(Failure) -> Output {
-            // Match <!--
+
             try expectLiteral(&input, "<!--")
 
             var bytes: [Byte] = []
@@ -137,14 +110,14 @@ extension W3C_XML.Parse {
                     }
                     if next == ASCII.Code.hyphen.byte {
                         _ = input.removeFirst()
-                        // Must be followed by >
+
                         guard input.first == ASCII.Code.greaterThanSign.byte else {
                             throw .expected("> after --")
                         }
                         _ = input.removeFirst()
                         return String(decoding: bytes, as: UTF8.self)
                     }
-                    // Single -, add to content
+
                     bytes.append(ASCII.Code.hyphen.byte)
                     continue
                 }
@@ -154,18 +127,8 @@ extension W3C_XML.Parse {
     }
 }
 
-// MARK: - CDATA Section Parser
-
 extension W3C_XML.Parse {
-    /// Parses a CDATA section.
-    ///
-    /// Productions [18]-[21]:
-    /// ```
-    /// CDSect ::= CDStart CData CDEnd
-    /// CDStart ::= '<![CDATA['
-    /// CData ::= (Char* - (Char* ']]>' Char*))
-    /// CDEnd ::= ']]>'
-    /// ```
+
     public struct CDATASection<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
@@ -177,7 +140,7 @@ extension W3C_XML.Parse {
 
         @inlinable
         public func parse(_ input: inout Input) throws(Failure) -> Output {
-            // Match <![CDATA[
+
             try expectLiteral(&input, "<![CDATA[")
 
             var bytes: [Byte] = []
@@ -198,12 +161,12 @@ extension W3C_XML.Parse {
                             _ = input.removeFirst()
                             return String(decoding: bytes, as: UTF8.self)
                         }
-                        // Not end, add both ]
+
                         bytes.append(ASCII.Code.rightBracket.byte)
                         bytes.append(ASCII.Code.rightBracket.byte)
                         continue
                     }
-                    // Single ]
+
                     bytes.append(ASCII.Code.rightBracket.byte)
                     continue
                 }
@@ -213,16 +176,8 @@ extension W3C_XML.Parse {
     }
 }
 
-// MARK: - Processing Instruction Parser
-
 extension W3C_XML.Parse {
-    /// Parses a processing instruction.
-    ///
-    /// Productions [16]-[17]:
-    /// ```
-    /// PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'
-    /// PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
-    /// ```
+
     public struct ProcessingInstruction<Input: Input_Primitives.Input.Streaming>: Parser_Primitives
             .Parser.`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
@@ -234,18 +189,15 @@ extension W3C_XML.Parse {
 
         @inlinable
         public func parse(_ input: inout Input) throws(Failure) -> Output {
-            // Match <?
+
             try expectLiteral(&input, "<?")
 
-            // Parse target name
             let target = try Name<Input>().parse(&input)
 
-            // Check for reserved 'xml' target (case-insensitive)
             if target.qualified.lowercased() == "xml" {
                 throw .expected("processing instruction target (not 'xml')")
             }
 
-            // Optional whitespace and data
             var data: String? = nil
 
             if let byte = input.first, W3C_XML.isWhitespace(byte) {
@@ -267,7 +219,7 @@ extension W3C_XML.Parse {
                             }
                             return W3C_XML.Instruction(target: target.qualified, data: data)
                         }
-                        // Not end, add ?
+
                         bytes.append(ASCII.Code.questionMark.byte)
                         continue
                     }
@@ -275,7 +227,6 @@ extension W3C_XML.Parse {
                 }
             }
 
-            // No data, expect ?>
             try expectLiteral(&input, "?>")
 
             return W3C_XML.Instruction(target: target.qualified, data: nil)
@@ -283,10 +234,8 @@ extension W3C_XML.Parse {
     }
 }
 
-// MARK: - Helper Functions
-
 extension W3C_XML.Parse {
-    /// Expects and consumes a literal byte sequence.
+
     @inlinable
     package static func expectLiteral<Input: Input_Primitives.Input.Streaming>(
         _ input: inout Input,

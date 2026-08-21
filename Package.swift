@@ -2,7 +2,6 @@
 
 import PackageDescription
 
-// W3C XML 1.0 (Fifth Edition) - Extensible Markup Language
 let package = Package(
     name: "swift-w3c-xml",
     platforms: [

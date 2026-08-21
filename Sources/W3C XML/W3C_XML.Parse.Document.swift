@@ -1,24 +1,11 @@
-/// W3C_XML.Parse.Document.swift
-/// swift-w3c-xml
-///
-/// Document-level parsers including XML declaration and DOCTYPE.
-
 import ASCII_Primitives
 public import Byte_Parser_Primitives
 public import Input_Primitives
 import Parser_Machine_Primitives
 import Parser_Primitives
 
-// MARK: - XML Declaration Parser
-
 extension W3C_XML.Parse {
-    /// Parses an XML declaration.
-    ///
-    /// Production [23]-[26]:
-    /// ```
-    /// XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>'
-    /// VersionInfo ::= S 'version' Eq ("'" VersionNum "'" | '"' VersionNum '"')
-    /// ```
+
     public struct XMLDeclaration<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
@@ -30,16 +17,14 @@ extension W3C_XML.Parse {
 
         @inlinable
         public func parse(_ input: inout Input) throws(Failure) -> Output {
-            // Match <?xml
+
             try expectLiteral(&input, "<?xml")
 
-            // Required whitespace
             guard let ws = input.first, W3C_XML.isWhitespace(ws) else {
                 throw .expected("whitespace after <?xml")
             }
             Whitespace<Input>().parse(&input)
 
-            // Parse version="..."
             try expectLiteral(&input, "version")
             Whitespace<Input>().parse(&input)
             try expectLiteral(&input, "=")
@@ -53,7 +38,6 @@ extension W3C_XML.Parse {
             default: throw .expected("valid XML version (1.0 or 1.1)")
             }
 
-            // Optional encoding
             var encoding: String? = nil
             Whitespace<Input>().parse(&input)
             if matchLiteral(&input, "encoding") {
@@ -63,7 +47,6 @@ extension W3C_XML.Parse {
                 encoding = try parseQuotedValue(&input)
             }
 
-            // Optional standalone
             var standalone: Bool? = nil
             Whitespace<Input>().parse(&input)
             if matchLiteral(&input, "standalone") {
@@ -88,7 +71,6 @@ extension W3C_XML.Parse {
             )
         }
 
-        /// Parses a quoted value (single or double quotes).
         @inlinable
         package func parseQuotedValue(_ input: inout Input) throws(Failure) -> String {
             guard let quote = input.first,
@@ -111,7 +93,6 @@ extension W3C_XML.Parse {
             return String(decoding: bytes, as: UTF8.self)
         }
 
-        /// Tries to match a literal, returning true if successful.
         @inlinable
         package func matchLiteral(_ input: inout Input, _ string: StaticString) -> Bool {
             let bytes = string.withUTF8Buffer { unsafe Swift.Array($0) }
@@ -129,15 +110,8 @@ extension W3C_XML.Parse {
     }
 }
 
-// MARK: - DOCTYPE Parser
-
 extension W3C_XML.Parse {
-    /// Parses a DOCTYPE declaration.
-    ///
-    /// Production [28]:
-    /// ```
-    /// doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>'
-    /// ```
+
     public struct Doctype<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
@@ -149,13 +123,11 @@ extension W3C_XML.Parse {
 
         @inlinable
         public func parse(_ input: inout Input) throws(Failure) -> Output {
-            // Match <!DOCTYPE
+
             try expectLiteral(&input, "<!DOCTYPE")
 
-            // Required whitespace
             try RequiredWhitespace<Input>().parse(&input)
 
-            // Parse name
             let name = try Name<Input>().parse(&input)
 
             var publicID: String? = nil
@@ -164,7 +136,6 @@ extension W3C_XML.Parse {
 
             Whitespace<Input>().parse(&input)
 
-            // Check for external ID
             if matchLiteral(&input, "PUBLIC") {
                 try RequiredWhitespace<Input>().parse(&input)
                 publicID = try parseQuotedValue(&input)
@@ -177,7 +148,6 @@ extension W3C_XML.Parse {
 
             Whitespace<Input>().parse(&input)
 
-            // Check for internal subset
             if input.first == ASCII.Code.leftBracket.byte {
                 _ = input.removeFirst()
                 var bytes: [Byte] = []
@@ -216,7 +186,6 @@ extension W3C_XML.Parse {
             )
         }
 
-        /// Parses a quoted value.
         @inlinable
         package func parseQuotedValue(_ input: inout Input) throws(Failure) -> String {
             guard let quote = input.first,
@@ -239,7 +208,6 @@ extension W3C_XML.Parse {
             return String(decoding: bytes, as: UTF8.self)
         }
 
-        /// Tries to match a literal.
         @inlinable
         package func matchLiteral(_ input: inout Input, _ string: StaticString) -> Bool {
             let bytes = string.withUTF8Buffer { unsafe Swift.Array($0) }
@@ -257,23 +225,14 @@ extension W3C_XML.Parse {
     }
 }
 
-// MARK: - Document Parser
-
 extension W3C_XML.Parse {
-    /// Parses a complete XML document.
-    ///
-    /// Production [1]:
-    /// ```
-    /// document ::= prolog element Misc*
-    /// prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
-    /// ```
+
     public struct Document<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Document
         public typealias Failure = W3C_XML.Parse.Error
 
-        /// Maximum nesting depth.
         @usableFromInline
         let maxDepth: Int
 
@@ -290,10 +249,8 @@ extension W3C_XML.Parse {
             var root: W3C_XML.Element? = nil
             var epilogue: [W3C_XML.Content] = []
 
-            // Skip leading whitespace
             Whitespace<Input>().parse(&input)
 
-            // Parse prolog
             while let byte = input.first {
                 if byte == ASCII.Code.lessThanSign.byte {
                     let saved = input
@@ -305,10 +262,9 @@ extension W3C_XML.Parse {
                     }
 
                     if next == ASCII.Code.questionMark.byte {
-                        // PI or XML declaration
+
                         input = saved
 
-                        // Check if it's <?xml
                         if isXMLDeclaration(&input) {
                             declaration = try XMLDeclaration<Input>().parse(&input)
                         } else {
@@ -320,7 +276,7 @@ extension W3C_XML.Parse {
                             }
                         }
                     } else if next == ASCII.Code.exclamationPoint.byte {
-                        // Comment or DOCTYPE
+
                         _ = input.removeFirst()
                         guard let third = input.first else {
                             input = saved
@@ -328,15 +284,15 @@ extension W3C_XML.Parse {
                         }
 
                         if third == ASCII.Code.hyphen.byte {
-                            // Comment
+
                             input = saved
                             let text = try Comment<Input>().parse(&input)
                             if root != nil {
                                 epilogue.append(.comment(text))
                             }
-                            // Comments before root are ignored per XML spec
+
                         } else if third == ASCII.Code.D.byte {
-                            // DOCTYPE
+
                             input = saved
                             doctype = try Doctype<Input>().parse(&input)
                         } else {
@@ -344,7 +300,7 @@ extension W3C_XML.Parse {
                             throw .expected("comment or DOCTYPE")
                         }
                     } else {
-                        // Element
+
                         input = saved
                         if root != nil {
                             throw .multipleRootElements
@@ -371,12 +327,10 @@ extension W3C_XML.Parse {
             )
         }
 
-        /// Checks if input starts with <?xml (for XML declaration detection).
         @inlinable
         package func isXMLDeclaration(_ input: inout Input) -> Bool {
             let saved = input
 
-            // Check for <?xml followed by whitespace
             let pattern: [Byte] = [
                 ASCII.Code.lessThanSign.byte,
                 ASCII.Code.questionMark.byte,
@@ -391,7 +345,6 @@ extension W3C_XML.Parse {
                 _ = input.removeFirst()
             }
 
-            // Must be followed by whitespace (not just <?xml...?>)
             let result = input.first.map { W3C_XML.isWhitespace($0) } ?? false
             input = saved
             return result
@@ -399,38 +352,16 @@ extension W3C_XML.Parse {
     }
 }
 
-// MARK: - Convenience Parse Functions
-
 extension W3C_XML {
-    /// Parses an XML document from a string using the stack-safe Machine parser.
-    ///
-    /// This parser handles arbitrary nesting depth without stack overflow.
-    ///
-    /// - Parameters:
-    ///   - string: The XML string to parse.
-    ///   - maxDepth: Maximum nesting depth (default: 10000).
-    /// - Returns: The parsed document.
-    /// - Throws: `W3C_XML.Parse.Error` if parsing fails.
-    /// Parses an XML document from a string using the stack-safe Machine parser.
-    ///
-    /// This parser handles arbitrary nesting depth without stack overflow.
-    /// Use this instead of the deprecated `Parser`-based convenience function.
-    ///
-    /// - Parameters:
-    ///   - string: The XML string to parse.
-    ///   - maxDepth: Maximum nesting depth (default: 10000).
-    /// - Returns: The parsed document.
-    /// - Throws: `W3C_XML.Parse.Error` if parsing fails.
+
     public static func parse(
         _ string: String,
         maxDepth: Int = 10000
     ) throws(Parse.Error) -> Document {
         var input = Byte.Input(Swift.Array(string.utf8))
 
-        // Skip leading whitespace
         Parse.Whitespace<Byte.Input>().parse(&input)
 
-        // Check for XML declaration
         var declaration: Declaration?
         if let byte = input.first, byte == ASCII.Code.lessThanSign.byte {
             let saved = input
@@ -440,7 +371,7 @@ extension W3C_XML {
                 do {
                     declaration = try Parse.XMLDeclaration<Byte.Input>().parse(&input)
                 } catch {
-                    // XMLDeclaration parsing failed - restore input for prologue parsing
+
                     input = saved
                 }
             } else {
@@ -448,7 +379,6 @@ extension W3C_XML {
             }
         }
 
-        // Parse prologue (processing instructions and comments before root)
         var prologue: [Instruction] = []
         while true {
             Parse.Whitespace<Byte.Input>().parse(&input)
@@ -462,7 +392,7 @@ extension W3C_XML {
             }
 
             if next == ASCII.Code.questionMark.byte {
-                // Processing instruction
+
                 input = saved
                 do {
                     let pi = try Parse.ProcessingInstruction<Byte.Input>().parse(&input)
@@ -473,9 +403,9 @@ extension W3C_XML {
                     break
                 }
             } else if next == ASCII.Code.exclamationPoint.byte {
-                // Could be comment (<!--) - skip for now, comments aren't instructions
+
                 input = saved
-                // Try to parse comment and discard
+
                 do {
                     _ = try Parse.Comment<Byte.Input>().parse(&input)
                     continue
@@ -484,19 +414,17 @@ extension W3C_XML {
                     break
                 }
             } else {
-                // Start of root element
+
                 input = saved
                 break
             }
         }
 
-        // Parse root element using Machine parser
         let machineParser =
             Parse.machineElement(maxDepth: maxDepth)
             as Parser_Primitives.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
         let root = try machineParser.parse(&input)
 
-        // Parse epilogue (processing instructions and comments after root)
         var epilogue: [Content] = []
         while true {
             Parse.Whitespace<Byte.Input>().parse(&input)
@@ -510,7 +438,7 @@ extension W3C_XML {
             }
 
             if next == ASCII.Code.questionMark.byte {
-                // Processing instruction
+
                 input = saved
                 do {
                     let pi = try Parse.ProcessingInstruction<Byte.Input>().parse(&input)
@@ -521,7 +449,7 @@ extension W3C_XML {
                     break
                 }
             } else if next == ASCII.Code.exclamationPoint.byte {
-                // Could be comment (<!--)
+
                 input = saved
                 do {
                     let comment = try Parse.Comment<Byte.Input>().parse(&input)
@@ -532,13 +460,12 @@ extension W3C_XML {
                     break
                 }
             } else {
-                // Found another element - multiple root elements not allowed
+
                 input = saved
                 throw Parse.Error.expected("end of input (multiple root elements not allowed)")
             }
         }
 
-        // Verify no remaining non-whitespace content
         Parse.Whitespace<Byte.Input>().parse(&input)
         if !input.isEmpty {
             throw Parse.Error.expected("end of input (multiple root elements not allowed)")
@@ -553,15 +480,6 @@ extension W3C_XML {
         )
     }
 
-    /// Parses an XML document from UTF-8 bytes using the stack-safe Machine parser.
-    ///
-    /// This parser handles arbitrary nesting depth without stack overflow.
-    ///
-    /// - Parameters:
-    ///   - bytes: The UTF-8 encoded XML bytes.
-    ///   - maxDepth: Maximum nesting depth (default: 10000).
-    /// - Returns: The parsed document.
-    /// - Throws: `W3C_XML.Parse.Error` if parsing fails.
     public static func parse<Bytes>(
         _ bytes: Bytes,
         maxDepth: Int = 10000
@@ -569,10 +487,8 @@ extension W3C_XML {
     where Bytes: Swift.Collection<UInt8>, Bytes: Sendable {
         var input = Byte.Input(Swift.Array(bytes))
 
-        // Skip leading whitespace
         Parse.Whitespace<Byte.Input>().parse(&input)
 
-        // Check for XML declaration
         var declaration: Declaration?
         if let byte = input.first, byte == ASCII.Code.lessThanSign.byte {
             let saved = input
@@ -582,7 +498,7 @@ extension W3C_XML {
                 do {
                     declaration = try Parse.XMLDeclaration<Byte.Input>().parse(&input)
                 } catch {
-                    // XMLDeclaration parsing failed - restore input for prologue parsing
+
                     input = saved
                 }
             } else {
@@ -590,10 +506,8 @@ extension W3C_XML {
             }
         }
 
-        // Skip whitespace before root
         Parse.Whitespace<Byte.Input>().parse(&input)
 
-        // Parse root element using Machine parser
         let machineParser =
             Parse.machineElement(maxDepth: maxDepth)
             as Parser_Primitives.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
@@ -608,15 +522,6 @@ extension W3C_XML {
         )
     }
 
-    /// Parses an XML fragment (element only, no document wrapper) from a string.
-    ///
-    /// Uses the stack-safe Machine parser that handles arbitrary nesting depth.
-    ///
-    /// - Parameters:
-    ///   - string: The XML fragment string to parse.
-    ///   - maxDepth: Maximum nesting depth (default: 10000).
-    /// - Returns: The parsed element.
-    /// - Throws: `W3C_XML.Parse.Error` if parsing fails.
     public static func fragment(
         _ string: String,
         maxDepth: Int = 10000
