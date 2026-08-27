@@ -1,13 +1,13 @@
 public import Buffer_Linear_Primitive
-public import Buffer_Linear_Primitives
-public import Byte_Parser_Primitives
-public import Input_Primitives
+public import Buffer_Linear
+public import Byte_Parser
+public import Input
 public import Ownership_Shared_Primitive
-import Parser_Primitives
+import Parser
 
 extension W3C_XML {
 
-    public struct Parser<Input: Input_Primitives.Input.Streaming>: ~Copyable
+    public struct Parser<Input: Input.Input.Streaming>: ~Copyable
     where Input.Element == Byte {
 
         @usableFromInline

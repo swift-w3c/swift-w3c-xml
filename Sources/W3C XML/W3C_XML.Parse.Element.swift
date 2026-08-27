@@ -1,9 +1,9 @@
-public import Input_Primitives
-import Parser_Primitives
+public import Input
+import Parser
 
 extension W3C_XML.Parse {
 
-    public struct Attribute<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+    public struct Attribute<Input: Input.Input.Streaming>: Parser.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Attribute
@@ -65,7 +65,7 @@ extension W3C_XML.Parse {
 
 extension W3C_XML.Parse {
 
-    public struct Element<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+    public struct Element<Input: Input.Input.Streaming>: Parser.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Element
@@ -177,7 +177,7 @@ extension W3C_XML.Parse {
 
 extension W3C_XML.Parse {
 
-    public struct Content<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+    public struct Content<Input: Input.Input.Streaming>: Parser.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = [W3C_XML.Content]

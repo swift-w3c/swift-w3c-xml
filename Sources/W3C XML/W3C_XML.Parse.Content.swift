@@ -1,9 +1,9 @@
-public import Input_Primitives
-import Parser_Primitives
+public import Input
+import Parser
 
 extension W3C_XML.Parse {
 
-    public struct CharData<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+    public struct CharData<Input: Input.Input.Streaming>: Parser.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
@@ -49,7 +49,7 @@ extension W3C_XML.Parse {
         }
     }
 
-    public struct TextContent<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+    public struct TextContent<Input: Input.Input.Streaming>: Parser.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
@@ -82,7 +82,7 @@ extension W3C_XML.Parse {
 
 extension W3C_XML.Parse {
 
-    public struct Comment<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+    public struct Comment<Input: Input.Input.Streaming>: Parser.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
@@ -129,7 +129,7 @@ extension W3C_XML.Parse {
 
 extension W3C_XML.Parse {
 
-    public struct CDATASection<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+    public struct CDATASection<Input: Input.Input.Streaming>: Parser.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
@@ -178,7 +178,7 @@ extension W3C_XML.Parse {
 
 extension W3C_XML.Parse {
 
-    public struct ProcessingInstruction<Input: Input_Primitives.Input.Streaming>: Parser_Primitives
+    public struct ProcessingInstruction<Input: Input.Input.Streaming>: Parser
             .Parser.`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Instruction
@@ -237,7 +237,7 @@ extension W3C_XML.Parse {
 extension W3C_XML.Parse {
 
     @inlinable
-    package static func expectLiteral<Input: Input_Primitives.Input.Streaming>(
+    package static func expectLiteral<Input: Input.Input.Streaming>(
         _ input: inout Input,
         _ string: StaticString
     ) throws(W3C_XML.Parse.Error)

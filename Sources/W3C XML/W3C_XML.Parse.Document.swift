@@ -1,12 +1,12 @@
-import ASCII_Primitives
-public import Byte_Parser_Primitives
-public import Input_Primitives
-import Parser_Machine_Primitives
-import Parser_Primitives
+import ASCII
+public import Byte_Parser
+public import Input
+import Parser_Machine
+import Parser
 
 extension W3C_XML.Parse {
 
-    public struct XMLDeclaration<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+    public struct XMLDeclaration<Input: Input.Input.Streaming>: Parser.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Declaration
@@ -112,7 +112,7 @@ extension W3C_XML.Parse {
 
 extension W3C_XML.Parse {
 
-    public struct Doctype<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+    public struct Doctype<Input: Input.Input.Streaming>: Parser.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Doctype
@@ -227,7 +227,7 @@ extension W3C_XML.Parse {
 
 extension W3C_XML.Parse {
 
-    public struct Document<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+    public struct Document<Input: Input.Input.Streaming>: Parser.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Document
@@ -422,7 +422,7 @@ extension W3C_XML {
 
         let machineParser =
             Parse.machineElement(maxDepth: maxDepth)
-            as Parser_Primitives.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
+            as Parser.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
         let root = try machineParser.parse(&input)
 
         var epilogue: [Content] = []
@@ -510,7 +510,7 @@ extension W3C_XML {
 
         let machineParser =
             Parse.machineElement(maxDepth: maxDepth)
-            as Parser_Primitives.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
+            as Parser.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
         let root = try machineParser.parse(&input)
 
         return Document(
@@ -531,7 +531,7 @@ extension W3C_XML {
 
         let machineParser =
             Parse.machineElement(maxDepth: maxDepth)
-            as Parser_Primitives.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
+            as Parser.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
         return try machineParser.parse(&input)
     }
 }

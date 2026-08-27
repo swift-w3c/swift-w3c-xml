@@ -1,9 +1,9 @@
-public import Input_Primitives
-import Parser_Primitives
+public import Input
+import Parser
 
 extension W3C_XML {
 
-    public struct Lexer<Input: Input_Primitives.Input.Streaming>: ~Copyable
+    public struct Lexer<Input: Input.Input.Streaming>: ~Copyable
     where Input.Element == Byte {
 
         @usableFromInline

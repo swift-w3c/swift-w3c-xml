@@ -1,6 +1,6 @@
-public import Input_Primitives
+public import Input
 
-extension Input_Primitives.Input.Streaming where Self: Copyable, Element: Copyable {
+extension Input.Input.Streaming where Self: Copyable, Element: Copyable {
 
     @inlinable
     @_disfavoredOverload

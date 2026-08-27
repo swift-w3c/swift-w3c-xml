@@ -1,6 +1,6 @@
-public import Input_Primitives
-import Parser_Machine_Primitives
-import Parser_Primitives
+public import Input
+import Parser_Machine
+import Parser
 
 extension W3C_XML.Parse {
 
@@ -26,7 +26,7 @@ extension W3C_XML.Parse {
     }
 
     @usableFromInline
-    struct StartTag<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`,
+    struct StartTag<Input: Input.Input.Streaming>: Parser.Parser.`Protocol`,
         Sendable
     where Input: Sendable, Input.Element == Byte {
         @usableFromInline typealias Output = StartTagOutput
@@ -102,7 +102,7 @@ extension W3C_XML.Parse {
 extension W3C_XML.Parse {
 
     @usableFromInline
-    struct EndTagAny<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser.`Protocol`,
+    struct EndTagAny<Input: Input.Input.Streaming>: Parser.Parser.`Protocol`,
         Sendable
     where Input: Sendable, Input.Element == Byte {
         @usableFromInline typealias Output = W3C_XML.Name
@@ -154,42 +154,42 @@ extension W3C_XML.Parse {
         }
     }
 
-    static func machineElement<Input: Input_Primitives.Input.`Protocol`>(
+    static func machineElement<Input: Input.Input.`Protocol`>(
         maxDepth: Int = 10000
-    ) -> Parser_Primitives.Parser.Machine.Parser<Input, W3C_XML.Element, W3C_XML.Parse.Error>
+    ) -> Parser.Parser.Machine.Parser<Input, W3C_XML.Element, W3C_XML.Parse.Error>
     where Input: Sendable, Input.Element == Byte {
-        typealias Builder = Parser_Primitives.Parser.Machine.Builder<Input, W3C_XML.Parse.Error>
-        typealias Expr<T> = Parser_Primitives.Parser.Machine.Expression<
+        typealias Builder = Parser.Parser.Machine.Builder<Input, W3C_XML.Parse.Error>
+        typealias Expr<T> = Parser.Parser.Machine.Expression<
             Input, W3C_XML.Parse.Error, T
         >
-        typealias Ref<T> = Parser_Primitives.Parser.Machine.Reference<Input, W3C_XML.Parse.Error, T>
+        typealias Ref<T> = Parser.Parser.Machine.Reference<Input, W3C_XML.Parse.Error, T>
 
-        return Parser_Primitives.Parser.Machine.recursive(
+        return Parser.Parser.Machine.recursive(
             maxDepth: maxDepth,
             onDepthExceeded: { W3C_XML.Parse.Error.depthExceeded(limit: $0) },
             { (builder: inout Builder, elementRef: Ref<W3C_XML.Element>) -> Expr<W3C_XML.Element> in
 
-                let startTag: Expr<StartTagOutput> = Parser_Primitives.Parser.Machine.leaf(
+                let startTag: Expr<StartTagOutput> = Parser.Parser.Machine.leaf(
                     StartTag<Input>(),
                     in: &builder
                 )
 
-                let comment: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
+                let comment: Expr<W3C_XML.Content> = Parser.Parser.Machine.leaf(
                     Comment<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.comment($0) }, in: &builder)
 
-                let cdata: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
+                let cdata: Expr<W3C_XML.Content> = Parser.Parser.Machine.leaf(
                     CDATASection<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.cdata($0) }, in: &builder)
 
-                let pi: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
+                let pi: Expr<W3C_XML.Content> = Parser.Parser.Machine.leaf(
                     ProcessingInstruction<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.instruction($0) }, in: &builder)
 
-                let text: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.leaf(
+                let text: Expr<W3C_XML.Content> = Parser.Parser.Machine.leaf(
                     NonEmptyTextContent<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.text($0) }, in: &builder)
@@ -197,22 +197,22 @@ extension W3C_XML.Parse {
                 let elementContent: Expr<W3C_XML.Content> = elementRef.expression(in: &builder)
                     .map({ W3C_XML.Content.element($0) }, in: &builder)
 
-                let contentItem: Expr<W3C_XML.Content> = Parser_Primitives.Parser.Machine.oneOf(
+                let contentItem: Expr<W3C_XML.Content> = Parser.Parser.Machine.oneOf(
                     [elementContent, comment, cdata, pi, text],
                     in: &builder
                 )
 
-                let content: Expr<[W3C_XML.Content]> = Parser_Primitives.Parser.Machine.many(
+                let content: Expr<[W3C_XML.Content]> = Parser.Parser.Machine.many(
                     contentItem,
                     in: &builder
                 )
 
-                let endTagAny: Expr<W3C_XML.Name> = Parser_Primitives.Parser.Machine.leaf(
+                let endTagAny: Expr<W3C_XML.Name> = Parser.Parser.Machine.leaf(
                     EndTagAny<Input>(),
                     in: &builder
                 )
 
-                let contentAndEndTag: Expr<([W3C_XML.Content], W3C_XML.Name)> = Parser_Primitives
+                let contentAndEndTag: Expr<([W3C_XML.Content], W3C_XML.Name)> = Parser
                     .Parser.Machine.sequence(
                         content,
                         endTagAny,
@@ -246,7 +246,7 @@ extension W3C_XML.Parse {
                 )
 
                 let openWithContentEnd: Expr<(StartTagOutput, ([W3C_XML.Content], W3C_XML.Name))> =
-                    Parser_Primitives.Parser.Machine.sequence(
+                    Parser.Parser.Machine.sequence(
                         openTag,
                         contentAndEndTag,
                         combine: { ($0, $1) },
@@ -277,7 +277,7 @@ extension W3C_XML.Parse {
                     in: &builder
                 )
 
-                return Parser_Primitives.Parser.Machine.oneOf(
+                return Parser.Parser.Machine.oneOf(
                     [emptyElement, nonEmptyElement],
                     in: &builder
                 )
@@ -303,7 +303,7 @@ extension W3C_XML.Parse {
 extension W3C_XML.Parse {
 
     @usableFromInline
-    struct NonEmptyTextContent<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+    struct NonEmptyTextContent<Input: Input.Input.Streaming>: Parser.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         @usableFromInline typealias Output = String

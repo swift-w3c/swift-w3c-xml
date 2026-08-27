@@ -1,5 +1,5 @@
-public import Byte_Parser_Primitives
-import Parser_Primitives
+public import Byte_Parser
+import Parser
 
 extension W3C_XML {
 

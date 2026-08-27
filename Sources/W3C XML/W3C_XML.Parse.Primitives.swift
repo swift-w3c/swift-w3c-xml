@@ -1,12 +1,12 @@
-import ASCII_Decimal_Parser_Primitives
-import ASCII_Hexadecimal_Parser_Primitives
-public import Byte_Parser_Primitives
-public import Input_Primitives
-import Parser_Primitives
+import ASCII_Decimal_Parser
+import ASCII_Hexadecimal_Parser
+public import Byte_Parser
+public import Input
+import Parser
 
 extension W3C_XML.Parse {
 
-    public struct Whitespace<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+    public struct Whitespace<Input: Input.Input.Streaming>: Parser.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = Void
@@ -23,7 +23,7 @@ extension W3C_XML.Parse {
         }
     }
 
-    public struct RequiredWhitespace<Input: Input_Primitives.Input.Streaming>: Parser_Primitives
+    public struct RequiredWhitespace<Input: Input.Input.Streaming>: Parser
             .Parser.`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = Void
@@ -47,7 +47,7 @@ extension W3C_XML.Parse {
 
 extension W3C_XML.Parse {
 
-    public struct Name<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+    public struct Name<Input: Input.Input.Streaming>: Parser.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = W3C_XML.Name
@@ -161,7 +161,7 @@ extension W3C_XML.Parse {
 
 extension W3C_XML.Parse {
 
-    public struct Reference<Input: Input_Primitives.Input.Streaming>: Parser_Primitives.Parser
+    public struct Reference<Input: Input.Input.Streaming>: Parser.Parser
             .`Protocol`, Sendable
     where Input: Sendable, Input.Element == Byte {
         public typealias Output = String
