@@ -1,5 +1,8 @@
 import ASCII
-public import Byte_Parser
+import Byte
+import Byte_Standard_Library_Integration
+import Cursor
+import Cursor_Standard_Library_Integration
 public import Input
 import Parser_Machine
 import Parser
@@ -358,9 +361,9 @@ extension W3C_XML {
         _ string: String,
         maxDepth: Int = 10000
     ) throws(Parse.Error) -> Document {
-        var input = Byte.Input(Swift.Array(string.utf8))
+        var input = [Byte](utf8: String(string))[...]
 
-        Parse.Whitespace<Byte.Input>().parse(&input)
+        Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
 
         var declaration: Declaration?
         if let byte = input.first, byte == ASCII.Code.lessThanSign.byte {
@@ -369,7 +372,7 @@ extension W3C_XML {
             if let next = input.first, next == ASCII.Code.questionMark.byte {
                 input = saved
                 do {
-                    declaration = try Parse.XMLDeclaration<Byte.Input>().parse(&input)
+                    declaration = try Parse.XMLDeclaration<ArraySlice<Byte>>().parse(&input)
                 } catch {
 
                     input = saved
@@ -381,7 +384,7 @@ extension W3C_XML {
 
         var prologue: [Instruction] = []
         while true {
-            Parse.Whitespace<Byte.Input>().parse(&input)
+            Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
             guard let byte = input.first, byte == ASCII.Code.lessThanSign.byte else { break }
 
             let saved = input
@@ -395,7 +398,7 @@ extension W3C_XML {
 
                 input = saved
                 do {
-                    let pi = try Parse.ProcessingInstruction<Byte.Input>().parse(&input)
+                    let pi = try Parse.ProcessingInstruction<ArraySlice<Byte>>().parse(&input)
                     prologue.append(pi)
                     continue
                 } catch {
@@ -407,7 +410,7 @@ extension W3C_XML {
                 input = saved
 
                 do {
-                    _ = try Parse.Comment<Byte.Input>().parse(&input)
+                    _ = try Parse.Comment<ArraySlice<Byte>>().parse(&input)
                     continue
                 } catch {
                     input = saved
@@ -422,12 +425,12 @@ extension W3C_XML {
 
         let machineParser =
             Parse.machineElement(maxDepth: maxDepth)
-            as Parser.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
+            as Parser.Parser.Machine.Parser<ArraySlice<Byte>, Element, Parse.Error>
         let root = try machineParser.parse(&input)
 
         var epilogue: [Content] = []
         while true {
-            Parse.Whitespace<Byte.Input>().parse(&input)
+            Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
             guard let byte = input.first, byte == ASCII.Code.lessThanSign.byte else { break }
 
             let saved = input
@@ -441,7 +444,7 @@ extension W3C_XML {
 
                 input = saved
                 do {
-                    let pi = try Parse.ProcessingInstruction<Byte.Input>().parse(&input)
+                    let pi = try Parse.ProcessingInstruction<ArraySlice<Byte>>().parse(&input)
                     epilogue.append(.instruction(pi))
                     continue
                 } catch {
@@ -452,7 +455,7 @@ extension W3C_XML {
 
                 input = saved
                 do {
-                    let comment = try Parse.Comment<Byte.Input>().parse(&input)
+                    let comment = try Parse.Comment<ArraySlice<Byte>>().parse(&input)
                     epilogue.append(.comment(comment))
                     continue
                 } catch {
@@ -466,7 +469,7 @@ extension W3C_XML {
             }
         }
 
-        Parse.Whitespace<Byte.Input>().parse(&input)
+        Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
         if !input.isEmpty {
             throw Parse.Error.expected("end of input (multiple root elements not allowed)")
         }
@@ -485,9 +488,9 @@ extension W3C_XML {
         maxDepth: Int = 10000
     ) throws(Parse.Error) -> Document
     where Bytes: Swift.Collection<UInt8>, Bytes: Sendable {
-        var input = Byte.Input(Swift.Array(bytes))
+        var input = Array(bytes)[...]
 
-        Parse.Whitespace<Byte.Input>().parse(&input)
+        Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
 
         var declaration: Declaration?
         if let byte = input.first, byte == ASCII.Code.lessThanSign.byte {
@@ -496,7 +499,7 @@ extension W3C_XML {
             if let next = input.first, next == ASCII.Code.questionMark.byte {
                 input = saved
                 do {
-                    declaration = try Parse.XMLDeclaration<Byte.Input>().parse(&input)
+                    declaration = try Parse.XMLDeclaration<ArraySlice<Byte>>().parse(&input)
                 } catch {
 
                     input = saved
@@ -506,11 +509,11 @@ extension W3C_XML {
             }
         }
 
-        Parse.Whitespace<Byte.Input>().parse(&input)
+        Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
 
         let machineParser =
             Parse.machineElement(maxDepth: maxDepth)
-            as Parser.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
+            as Parser.Parser.Machine.Parser<ArraySlice<Byte>, Element, Parse.Error>
         let root = try machineParser.parse(&input)
 
         return Document(
@@ -526,12 +529,12 @@ extension W3C_XML {
         _ string: String,
         maxDepth: Int = 10000
     ) throws(Parse.Error) -> Element {
-        var input = Byte.Input(Swift.Array(string.utf8))
-        Parse.Whitespace<Byte.Input>().parse(&input)
+        var input = [Byte](utf8: String(string))[...]
+        Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
 
         let machineParser =
             Parse.machineElement(maxDepth: maxDepth)
-            as Parser.Parser.Machine.Parser<Byte.Input, Element, Parse.Error>
+            as Parser.Parser.Machine.Parser<ArraySlice<Byte>, Element, Parse.Error>
         return try machineParser.parse(&input)
     }
 }

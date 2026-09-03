@@ -15,6 +15,8 @@ let package = Package(
         .library(name: "W3C XML", targets: ["W3C XML"])
     ],
     dependencies: [
+        .package(url: "https://github.com/swift-atoms/swift-byte.git", branch: "main"),
+        .package(url: "https://github.com/swift-atoms/swift-cursor.git", branch: "main"),
         .package(
             url: "https://github.com/swift-atoms/swift-standard-library-extensions.git",
             branch: "main"
@@ -37,10 +39,6 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/swift-molecules/swift-ascii-parser.git",
-            branch: "main"
-        ),
-        .package(
-            url: "https://github.com/swift-molecules/swift-byte-parser.git",
             branch: "main"
         ),
     ],
@@ -67,7 +65,10 @@ let package = Package(
                     name: "ASCII Hexadecimal Parser",
                     package: "swift-ascii-parser"
                 ),
-                .product(name: "Byte Parser", package: "swift-byte-parser"),
+                .product(name: "Byte", package: "swift-byte"),
+                .product(name: "Byte Standard Library Integration", package: "swift-byte"),
+                .product(name: "Cursor", package: "swift-cursor"),
+                .product(name: "Cursor Standard Library Integration", package: "swift-cursor"),
             ]
         ),
         .testTarget(

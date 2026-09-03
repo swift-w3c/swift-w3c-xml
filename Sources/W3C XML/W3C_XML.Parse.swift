@@ -1,4 +1,7 @@
-public import Byte_Parser
+import Byte
+import Byte_Standard_Library_Integration
+import Cursor
+import Cursor_Standard_Library_Integration
 import Parser
 
 extension W3C_XML {
@@ -99,5 +102,5 @@ extension W3C_XML.Parse.Error: CustomStringConvertible {
 
 extension W3C_XML.Parse {
 
-    public typealias ByteInput = Byte.Input
+    public typealias ByteInput = ArraySlice<Byte>
 }

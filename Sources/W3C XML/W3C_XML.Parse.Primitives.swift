@@ -1,6 +1,9 @@
 import ASCII_Decimal_Parser
 import ASCII_Hexadecimal_Parser
-public import Byte_Parser
+import Byte
+import Byte_Standard_Library_Integration
+import Cursor
+import Cursor_Standard_Library_Integration
 public import Input
 import Parser
 
@@ -211,13 +214,13 @@ extension W3C_XML.Parse {
                 throw .invalidCharacterReference(isHex ? "&#x;" : "&#;")
             }
 
-            var slice = Byte.Input(digits)
+            var slice = digits[...]
             let value: UInt32
             do {
                 if isHex {
-                    value = try ASCII.Hexadecimal.Parser<Byte.Input, UInt32>().parse(&slice)
+                    value = try ASCII.Hexadecimal.Parser<ArraySlice<Byte>, UInt32>().parse(&slice)
                 } else {
-                    value = try ASCII.Decimal.Parser<Byte.Input, UInt32>().parse(&slice)
+                    value = try ASCII.Decimal.Parser<ArraySlice<Byte>, UInt32>().parse(&slice)
                 }
             } catch {
 

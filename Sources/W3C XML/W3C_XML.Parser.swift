@@ -1,6 +1,9 @@
 public import Buffer_Linear_Primitive
 public import Buffer_Linear
-public import Byte_Parser
+import Byte
+import Byte_Standard_Library_Integration
+import Cursor
+import Cursor_Standard_Library_Integration
 public import Input
 public import Ownership_Shared_Primitive
 import Parser
@@ -342,8 +345,8 @@ extension W3C_XML.Parser {
 extension W3C_XML {
 
     @inlinable
-    public static func fragment(_ string: String) throws(Parser<Byte.Input>.Error) -> Element {
-        let input = Byte.Input(Swift.Array(string.utf8))
+    public static func fragment(_ string: String) throws(Parser<ArraySlice<Byte>>.Error) -> Element {
+        let input = [Byte](utf8: String(string))[...]
         var parser = Parser(consume input)
         return try parser.parseFragment()
     }
