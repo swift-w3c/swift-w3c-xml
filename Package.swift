@@ -23,7 +23,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/swift-atoms/swift-parser.git",
-            branch: "main", traits: ["Append", "CollectionLeaves", "IteratorLeaves", "Map", "Product", "Skip"]
+            branch: "main", traits: ["Append", "CollectionLeaves", "IteratorLeaves", "Map", "Product", "Skip", "Collection", "Either", "Iterator"]
         ),
         .package(
             url: "https://github.com/swift-molecules/swift-parser-machine.git",
