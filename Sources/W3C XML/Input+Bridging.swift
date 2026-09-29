@@ -1,27 +1,20 @@
-public import Input
+public import Cursor
 
-extension Input.Input.Streaming where Self: Copyable, Element: Copyable {
-
+extension Cursor.`Protocol` where Element: Copyable & Escapable, Failure == Never {
+    /// Peek through the actual cursor checkpoint rather than copying an Input facade.
     @inlinable
-    @_disfavoredOverload
-    package var first: Element? {
-        guard !isEmpty else { return nil }
-        var copy = self
-        do {
-            return try copy.advance()
-        } catch {
-            return nil
-        }
+    package mutating func xmlPeek() -> Element? {
+        let saved = checkpoint
+        let element = next()
+        seek(to: saved)
+        return element
     }
 
     @inlinable
-    @_disfavoredOverload
-    @discardableResult
-    package mutating func removeFirst() -> Element {
-        do {
-            return try advance()
-        } catch {
-            preconditionFailure("removeFirst() on empty input — peek `first` before consuming")
+    package mutating func xmlTake(expected: String) throws(W3C_XML.Parse.Error) -> Element {
+        guard let element = next() else {
+            throw .unexpectedEndOfInput(expected: expected)
         }
+        return element
     }
 }

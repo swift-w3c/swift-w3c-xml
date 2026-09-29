@@ -1,17 +1,13 @@
-import ASCII_Decimal_Parser
-import ASCII_Hexadecimal_Parser
+import ASCII
 import Byte
-import Byte_Standard_Library_Integration
 import Cursor
-import Cursor_Standard_Library_Integration
-public import Input
+public import Cursor
 import Parser
 
 extension W3C_XML.Parse {
 
-    public struct Whitespace<Input: Input.Input.Streaming>: Parser.Parser
-            .`Protocol`, Sendable
-    where Input: Sendable, Input.Element == Byte {
+    public struct Whitespace<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
         public typealias Output = Void
         public typealias Failure = Never
 
@@ -20,15 +16,14 @@ extension W3C_XML.Parse {
 
         @inlinable
         public func parse(_ input: inout Input) {
-            while let byte = input.first, W3C_XML.isWhitespace(byte) {
-                _ = input.removeFirst()
+            while let byte = input.xmlPeek(), W3C_XML.isWhitespace(byte) {
+                _ = input.next()
             }
         }
     }
 
-    public struct RequiredWhitespace<Input: Input.Input.Streaming>: Parser
-            .Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == Byte {
+    public struct RequiredWhitespace<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
         public typealias Output = Void
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -37,12 +32,12 @@ extension W3C_XML.Parse {
 
         @inlinable
         public func parse(_ input: inout Input) throws(Failure) {
-            guard let byte = input.first, W3C_XML.isWhitespace(byte) else {
+            guard let byte = input.xmlPeek(), W3C_XML.isWhitespace(byte) else {
                 throw .expected("whitespace")
             }
-            _ = input.removeFirst()
-            while let byte = input.first, W3C_XML.isWhitespace(byte) {
-                _ = input.removeFirst()
+            _ = input.next()
+            while let byte = input.xmlPeek(), W3C_XML.isWhitespace(byte) {
+                _ = input.next()
             }
         }
     }
@@ -50,9 +45,8 @@ extension W3C_XML.Parse {
 
 extension W3C_XML.Parse {
 
-    public struct Name<Input: Input.Input.Streaming>: Parser.Parser
-            .`Protocol`, Sendable
-    where Input: Sendable, Input.Element == Byte {
+    public struct Name<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
         public typealias Output = W3C_XML.Name
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -63,12 +57,12 @@ extension W3C_XML.Parse {
         public func parse(_ input: inout Input) throws(Failure) -> Output {
             var bytes: [Byte] = []
 
-            guard let first = input.first else {
+            guard let first = input.xmlPeek() else {
                 throw .unexpectedEndOfInput(expected: "name")
             }
 
             if W3C_XML.isASCIINameStartChar(first) {
-                bytes.append(input.removeFirst())
+                bytes.append(try input.xmlTake(expected: "character"))
             } else {
 
                 let scalar = try consumeUTF8Scalar(&input, bytes: &bytes, checkStart: true)
@@ -77,22 +71,22 @@ extension W3C_XML.Parse {
                 }
             }
 
-            while let byte = input.first {
+            while let byte = input.xmlPeek() {
                 if W3C_XML.isASCIINameChar(byte) {
-                    bytes.append(input.removeFirst())
+                    bytes.append(try input.xmlTake(expected: "character"))
                 } else if byte >= 0x80 {
 
-                    let savedInput = input
+                    let savedInput = input.checkpoint
                     let savedBytes = bytes
                     do throws(Failure) {
                         let scalar = try consumeUTF8Scalar(&input, bytes: &bytes, checkStart: false)
                         guard W3C_XML.isNameChar(scalar) else {
-                            input = savedInput
+                            input.seek(to: savedInput)
                             bytes = savedBytes
                             break
                         }
                     } catch {
-                        input = savedInput
+                        input.seek(to: savedInput)
                         bytes = savedBytes
                         break
                     }
@@ -115,7 +109,7 @@ extension W3C_XML.Parse {
             bytes: inout [Byte],
             checkStart: Bool
         ) throws(Failure) -> Unicode.Scalar {
-            guard let first = input.first else {
+            guard let first = input.xmlPeek() else {
                 throw .unexpectedEndOfInput(expected: "character")
             }
 
@@ -124,7 +118,7 @@ extension W3C_XML.Parse {
 
             if first < 0x80 {
 
-                bytes.append(input.removeFirst())
+                bytes.append(try input.xmlTake(expected: "character"))
                 return Unicode.Scalar(first)
             } else if first & 0xE0 == 0xC0 {
 
@@ -142,15 +136,15 @@ extension W3C_XML.Parse {
                 throw .invalidName
             }
 
-            bytes.append(input.removeFirst())
+            bytes.append(try input.xmlTake(expected: "character"))
             var scalarValue = value
 
             for _ in 1..<byteCount {
-                guard let cont = input.first, cont & 0xC0 == 0x80 else {
+                guard let cont = input.xmlPeek(), cont & 0xC0 == 0x80 else {
                     throw .invalidName
                 }
                 scalarValue = (scalarValue << 6) | UInt32(cont & 0x3F)
-                bytes.append(input.removeFirst())
+                bytes.append(try input.xmlTake(expected: "character"))
             }
 
             guard let scalar = Unicode.Scalar(scalarValue) else {
@@ -164,9 +158,8 @@ extension W3C_XML.Parse {
 
 extension W3C_XML.Parse {
 
-    public struct Reference<Input: Input.Input.Streaming>: Parser.Parser
-            .`Protocol`, Sendable
-    where Input: Sendable, Input.Element == Byte {
+    public struct Reference<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -176,18 +169,18 @@ extension W3C_XML.Parse {
         @inlinable
         public func parse(_ input: inout Input) throws(Failure) -> Output {
 
-            guard input.first == ASCII.Code.ampersand.byte else {
+            guard input.xmlPeek() == ASCII.Code.ampersand.byte else {
                 throw .expected("&")
             }
-            _ = input.removeFirst()
+            _ = input.next()
 
-            guard let next = input.first else {
+            guard let next = input.xmlPeek() else {
                 throw .unexpectedEndOfInput(expected: "entity or character reference")
             }
 
             if next == ASCII.Code.numberSign.byte {
 
-                _ = input.removeFirst()
+                _ = input.next()
                 return try parseCharRef(&input)
             } else {
 
@@ -199,15 +192,15 @@ extension W3C_XML.Parse {
         func parseCharRef(_ input: inout Input) throws(Failure) -> String {
             var isHex = false
 
-            if input.first == ASCII.Code.x.byte || input.first == ASCII.Code.X.byte {
+            if input.xmlPeek() == ASCII.Code.x.byte || input.xmlPeek() == ASCII.Code.X.byte {
                 isHex = true
-                _ = input.removeFirst()
+                _ = input.next()
             }
 
             var digits: [Byte] = []
-            while let byte = input.first, byte != ASCII.Code.semicolon.byte {
+            while let byte = input.xmlPeek(), byte != ASCII.Code.semicolon.byte {
                 digits.append(byte)
-                _ = input.removeFirst()
+                _ = input.next()
             }
 
             guard !digits.isEmpty else {
@@ -231,10 +224,10 @@ extension W3C_XML.Parse {
                 throw .invalidCharacterReference(isHex ? "&#x..." : "&#...")
             }
 
-            guard input.first == ASCII.Code.semicolon.byte else {
+            guard input.xmlPeek() == ASCII.Code.semicolon.byte else {
                 throw .expected(";")
             }
-            _ = input.removeFirst()
+            _ = input.next()
 
             guard let scalar = Unicode.Scalar(value), W3C_XML.isChar(scalar) else {
                 throw .invalidCharacterReference("&#\(isHex ? "x" : "")\(value);")
@@ -248,10 +241,10 @@ extension W3C_XML.Parse {
 
             let name = try Name<Input>().parse(&input)
 
-            guard input.first == ASCII.Code.semicolon.byte else {
+            guard input.xmlPeek() == ASCII.Code.semicolon.byte else {
                 throw .expected(";")
             }
-            _ = input.removeFirst()
+            _ = input.next()
 
             switch name.qualified {
             case "lt": return "<"

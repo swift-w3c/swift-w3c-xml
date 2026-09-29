@@ -1,17 +1,17 @@
 public import Buffer_Linear_Primitive
 public import Buffer_Linear
 import Byte
-import Byte_Standard_Library_Integration
+import Byte
 import Cursor
-import Cursor_Standard_Library_Integration
-public import Input
+import Cursor
+public import Cursor
 public import Ownership_Shared_Primitive
 import Parser
 
 extension W3C_XML {
 
-    public struct Parser<Input: Input.Input.Streaming>: ~Copyable
-    where Input.Element == Byte {
+    public struct Parser<Input: Cursor.`Protocol`>: ~Copyable
+    where Input.Element == Byte, Input.Failure == Never {
 
         @usableFromInline
         internal var lexer: Lexer<Input>

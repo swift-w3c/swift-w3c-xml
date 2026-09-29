@@ -16,13 +16,13 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/swift-atoms/swift-byte.git", branch: "main"),
-        .package(url: "https://github.com/swift-atoms/swift-cursor.git", branch: "main"),
+        .package(url: "https://github.com/swift-atoms/swift-cursor.git", branch: "main", traits: ["Collection"]),
         .package(
             url: "https://github.com/swift-atoms/swift-standard-library-extensions.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-molecules/swift-parser.git",
+            url: "https://github.com/swift-atoms/swift-parser.git",
             branch: "main"
         ),
         .package(
@@ -30,17 +30,12 @@ let package = Package(
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-molecules/swift-binary.git",
+            url: "https://github.com/swift-atoms/swift-binary.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-molecules/swift-ascii.git",
-            branch: "main"
-        ),
-        .package(
-            url: "https://github.com/swift-molecules/swift-ascii-parser.git",
-            branch: "main"
-        ),
+            url: "https://github.com/swift-atoms/swift-ascii.git",
+            branch: "main", traits: ["Parser"]),
     ],
     targets: [
         .target(
@@ -57,18 +52,10 @@ let package = Package(
                 ),
                 .product(name: "Binary", package: "swift-binary"),
                 .product(name: "ASCII", package: "swift-ascii"),
-                .product(
-                    name: "ASCII Decimal Parser",
-                    package: "swift-ascii-parser"
-                ),
-                .product(
-                    name: "ASCII Hexadecimal Parser",
-                    package: "swift-ascii-parser"
-                ),
                 .product(name: "Byte", package: "swift-byte"),
-                .product(name: "Byte Standard Library Integration", package: "swift-byte"),
+                .product(name: "Byte", package: "swift-byte"),
                 .product(name: "Cursor", package: "swift-cursor"),
-                .product(name: "Cursor Standard Library Integration", package: "swift-cursor"),
+                .product(name: "Cursor", package: "swift-cursor"),
             ]
         ),
         .testTarget(

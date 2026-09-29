@@ -1,11 +1,10 @@
-public import Input
+public import Cursor
 import Parser
 
 extension W3C_XML.Parse {
 
-    public struct CharData<Input: Input.Input.Streaming>: Parser.Parser
-            .`Protocol`, Sendable
-    where Input: Sendable, Input.Element == Byte {
+    public struct CharData<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
         public typealias Output = String
         public typealias Failure = Never
 
@@ -16,7 +15,7 @@ extension W3C_XML.Parse {
         public func parse(_ input: inout Input) -> Output {
             var bytes: [Byte] = []
 
-            while let byte = input.first {
+            while let byte = input.xmlPeek() {
 
                 if byte == ASCII.Code.lessThanSign.byte || byte == ASCII.Code.ampersand.byte {
                     break
@@ -24,13 +23,13 @@ extension W3C_XML.Parse {
 
                 if byte == ASCII.Code.rightBracket.byte {
 
-                    let saved = input
-                    _ = input.removeFirst()
-                    if input.first == ASCII.Code.rightBracket.byte {
-                        _ = input.removeFirst()
-                        if input.first == ASCII.Code.greaterThanSign.byte {
+                    let saved = input.checkpoint
+                    _ = input.next()
+                    if input.xmlPeek() == ASCII.Code.rightBracket.byte {
+                        _ = input.next()
+                        if input.xmlPeek() == ASCII.Code.greaterThanSign.byte {
 
-                            input = saved
+                            input.seek(to: saved)
                             break
                         }
 
@@ -42,16 +41,15 @@ extension W3C_XML.Parse {
                     bytes.append(ASCII.Code.rightBracket.byte)
                     continue
                 }
-                bytes.append(input.removeFirst())
+                bytes.append(try input.xmlTake(expected: "character"))
             }
 
             return String(decoding: bytes, as: UTF8.self)
         }
     }
 
-    public struct TextContent<Input: Input.Input.Streaming>: Parser.Parser
-            .`Protocol`, Sendable
-    where Input: Sendable, Input.Element == Byte {
+    public struct TextContent<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -62,7 +60,7 @@ extension W3C_XML.Parse {
         public func parse(_ input: inout Input) throws(Failure) -> Output {
             var result = ""
 
-            while let byte = input.first {
+            while let byte = input.xmlPeek() {
                 if byte == ASCII.Code.lessThanSign.byte {
                     break
                 } else if byte == ASCII.Code.ampersand.byte {
@@ -71,7 +69,7 @@ extension W3C_XML.Parse {
                     result += resolved
                 } else {
 
-                    result.append(Character(UnicodeScalar(input.removeFirst())))
+                    result.append(Character(UnicodeScalar(try input.xmlTake(expected: "character"))))
                 }
             }
 
@@ -82,9 +80,8 @@ extension W3C_XML.Parse {
 
 extension W3C_XML.Parse {
 
-    public struct Comment<Input: Input.Input.Streaming>: Parser.Parser
-            .`Protocol`, Sendable
-    where Input: Sendable, Input.Element == Byte {
+    public struct Comment<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -99,29 +96,29 @@ extension W3C_XML.Parse {
             var bytes: [Byte] = []
 
             while true {
-                guard let byte = input.first else {
+                guard let byte = input.xmlPeek() else {
                     throw .unexpectedEndOfInput(expected: "-->")
                 }
 
                 if byte == ASCII.Code.hyphen.byte {
-                    _ = input.removeFirst()
-                    guard let next = input.first else {
+                    _ = input.next()
+                    guard let next = input.xmlPeek() else {
                         throw .unexpectedEndOfInput(expected: "-->")
                     }
                     if next == ASCII.Code.hyphen.byte {
-                        _ = input.removeFirst()
+                        _ = input.next()
 
-                        guard input.first == ASCII.Code.greaterThanSign.byte else {
+                        guard input.xmlPeek() == ASCII.Code.greaterThanSign.byte else {
                             throw .expected("> after --")
                         }
-                        _ = input.removeFirst()
+                        _ = input.next()
                         return String(decoding: bytes, as: UTF8.self)
                     }
 
                     bytes.append(ASCII.Code.hyphen.byte)
                     continue
                 }
-                bytes.append(input.removeFirst())
+                bytes.append(try input.xmlTake(expected: "character"))
             }
         }
     }
@@ -129,9 +126,8 @@ extension W3C_XML.Parse {
 
 extension W3C_XML.Parse {
 
-    public struct CDATASection<Input: Input.Input.Streaming>: Parser.Parser
-            .`Protocol`, Sendable
-    where Input: Sendable, Input.Element == Byte {
+    public struct CDATASection<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
         public typealias Output = String
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -146,19 +142,19 @@ extension W3C_XML.Parse {
             var bytes: [Byte] = []
 
             while true {
-                guard let byte = input.first else {
+                guard let byte = input.xmlPeek() else {
                     throw .unexpectedEndOfInput(expected: "]]>")
                 }
 
                 if byte == ASCII.Code.rightBracket.byte {
-                    _ = input.removeFirst()
-                    guard let next = input.first else {
+                    _ = input.next()
+                    guard let next = input.xmlPeek() else {
                         throw .unexpectedEndOfInput(expected: "]]>")
                     }
                     if next == ASCII.Code.rightBracket.byte {
-                        _ = input.removeFirst()
-                        if input.first == ASCII.Code.greaterThanSign.byte {
-                            _ = input.removeFirst()
+                        _ = input.next()
+                        if input.xmlPeek() == ASCII.Code.greaterThanSign.byte {
+                            _ = input.next()
                             return String(decoding: bytes, as: UTF8.self)
                         }
 
@@ -170,7 +166,7 @@ extension W3C_XML.Parse {
                     bytes.append(ASCII.Code.rightBracket.byte)
                     continue
                 }
-                bytes.append(input.removeFirst())
+                bytes.append(try input.xmlTake(expected: "character"))
             }
         }
     }
@@ -178,9 +174,8 @@ extension W3C_XML.Parse {
 
 extension W3C_XML.Parse {
 
-    public struct ProcessingInstruction<Input: Input.Input.Streaming>: Parser
-            .Parser.`Protocol`, Sendable
-    where Input: Sendable, Input.Element == Byte {
+    public struct ProcessingInstruction<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
         public typealias Output = W3C_XML.Instruction
         public typealias Failure = W3C_XML.Parse.Error
 
@@ -200,20 +195,20 @@ extension W3C_XML.Parse {
 
             var data: String? = nil
 
-            if let byte = input.first, W3C_XML.isWhitespace(byte) {
+            if let byte = input.xmlPeek(), W3C_XML.isWhitespace(byte) {
                 Whitespace<Input>().parse(&input)
 
                 var bytes: [Byte] = []
 
                 while true {
-                    guard let byte = input.first else {
+                    guard let byte = input.xmlPeek() else {
                         throw .unexpectedEndOfInput(expected: "?>")
                     }
 
                     if byte == ASCII.Code.questionMark.byte {
-                        _ = input.removeFirst()
-                        if input.first == ASCII.Code.greaterThanSign.byte {
-                            _ = input.removeFirst()
+                        _ = input.next()
+                        if input.xmlPeek() == ASCII.Code.greaterThanSign.byte {
+                            _ = input.next()
                             if !bytes.isEmpty {
                                 data = String(decoding: bytes, as: UTF8.self)
                             }
@@ -223,7 +218,7 @@ extension W3C_XML.Parse {
                         bytes.append(ASCII.Code.questionMark.byte)
                         continue
                     }
-                    bytes.append(input.removeFirst())
+                    bytes.append(try input.xmlTake(expected: "character"))
                 }
             }
 
@@ -237,22 +232,22 @@ extension W3C_XML.Parse {
 extension W3C_XML.Parse {
 
     @inlinable
-    package static func expectLiteral<Input: Input.Input.Streaming>(
+    package static func expectLiteral<Input: Cursor.`Protocol`>(
         _ input: inout Input,
         _ string: StaticString
     ) throws(W3C_XML.Parse.Error)
-    where Input.Element == Byte {
+    where Input.Element == Byte, Input.Failure == Never {
         let bytes = string.withUTF8Buffer { unsafe Swift.Array($0) }
         let expectedString = String(decoding: bytes, as: UTF8.self)
 
         for expected in bytes {
-            guard let actual = input.first else {
+            guard let actual = input.xmlPeek() else {
                 throw .unexpectedEndOfInput(expected: expectedString)
             }
             guard actual.underlying == expected else {
                 throw .expected(expectedString)
             }
-            _ = input.removeFirst()
+            _ = input.next()
         }
     }
 }

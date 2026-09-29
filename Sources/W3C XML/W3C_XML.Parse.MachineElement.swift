@@ -1,4 +1,4 @@
-public import Input
+public import Cursor
 import Parser_Machine
 import Parser
 
@@ -26,9 +26,9 @@ extension W3C_XML.Parse {
     }
 
     @usableFromInline
-    struct StartTag<Input: Input.Input.Streaming>: Parser.Parser.`Protocol`,
+    struct StartTag<Input: Cursor.`Protocol`>: Parser::Parsing,
         Sendable
-    where Input: Sendable, Input.Element == Byte {
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
         @usableFromInline typealias Output = StartTagOutput
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
 
@@ -38,10 +38,10 @@ extension W3C_XML.Parse {
         @usableFromInline
         func parse(_ input: inout Input) throws(Failure) -> Output {
 
-            guard input.first == ASCII.Code.lessThanSign.byte else {
+            guard input.xmlPeek() == ASCII.Code.lessThanSign.byte else {
                 throw .expected("<")
             }
-            _ = input.removeFirst()
+            _ = input.next()
 
             let name = try Name<Input>().parse(&input)
 
@@ -52,12 +52,12 @@ extension W3C_XML.Parse {
             while true {
                 Whitespace<Input>().parse(&input)
 
-                guard let byte = input.first else {
+                guard let byte = input.xmlPeek() else {
                     throw .unexpectedEndOfInput(expected: "> or />")
                 }
 
                 if byte == ASCII.Code.greaterThanSign.byte {
-                    _ = input.removeFirst()
+                    _ = input.next()
                     return StartTagOutput(
                         name: name,
                         attributes: attributes,
@@ -67,11 +67,11 @@ extension W3C_XML.Parse {
                 }
 
                 if byte == ASCII.Code.solidus.byte {
-                    _ = input.removeFirst()
-                    guard input.first == ASCII.Code.greaterThanSign.byte else {
+                    _ = input.next()
+                    guard input.xmlPeek() == ASCII.Code.greaterThanSign.byte else {
                         throw .expected(">")
                     }
-                    _ = input.removeFirst()
+                    _ = input.next()
                     return StartTagOutput(
                         name: name,
                         attributes: attributes,
@@ -102,9 +102,9 @@ extension W3C_XML.Parse {
 extension W3C_XML.Parse {
 
     @usableFromInline
-    struct EndTagAny<Input: Input.Input.Streaming>: Parser.Parser.`Protocol`,
+    struct EndTagAny<Input: Cursor.`Protocol`>: Parser::Parsing,
         Sendable
-    where Input: Sendable, Input.Element == Byte {
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
         @usableFromInline typealias Output = W3C_XML.Name
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
 
@@ -114,24 +114,24 @@ extension W3C_XML.Parse {
         @usableFromInline
         func parse(_ input: inout Input) throws(Failure) -> W3C_XML.Name {
 
-            guard input.first == ASCII.Code.lessThanSign.byte else {
+            guard input.xmlPeek() == ASCII.Code.lessThanSign.byte else {
                 throw .expected("</")
             }
-            _ = input.removeFirst()
+            _ = input.next()
 
-            guard input.first == ASCII.Code.solidus.byte else {
+            guard input.xmlPeek() == ASCII.Code.solidus.byte else {
                 throw .expected("</")
             }
-            _ = input.removeFirst()
+            _ = input.next()
 
             let endName = try Name<Input>().parse(&input)
 
             Whitespace<Input>().parse(&input)
 
-            guard input.first == ASCII.Code.greaterThanSign.byte else {
+            guard input.xmlPeek() == ASCII.Code.greaterThanSign.byte else {
                 throw .expected(">")
             }
-            _ = input.removeFirst()
+            _ = input.next()
 
             return endName
         }
@@ -154,42 +154,42 @@ extension W3C_XML.Parse {
         }
     }
 
-    static func machineElement<Input: Input.Input.`Protocol`>(
+    static func machineElement<Input: Cursor.`Protocol`>(
         maxDepth: Int = 10000
-    ) -> Parser.Parser.Machine.Parser<Input, W3C_XML.Element, W3C_XML.Parse.Error>
-    where Input: Sendable, Input.Element == Byte {
-        typealias Builder = Parser.Parser.Machine.Builder<Input, W3C_XML.Parse.Error>
-        typealias Expr<T> = Parser.Parser.Machine.Expression<
+    ) -> Parser::Parser.Machine.Parser<Input, W3C_XML.Element, W3C_XML.Parse.Error>
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
+        typealias Builder = Parser::Parser.Machine.Builder<Input, W3C_XML.Parse.Error>
+        typealias Expr<T> = Parser::Parser.Machine.Expression<
             Input, W3C_XML.Parse.Error, T
         >
-        typealias Ref<T> = Parser.Parser.Machine.Reference<Input, W3C_XML.Parse.Error, T>
+        typealias Ref<T> = Parser::Parser.Machine.Reference<Input, W3C_XML.Parse.Error, T>
 
-        return Parser.Parser.Machine.recursive(
+        return Parser::Parser.Machine.recursive(
             maxDepth: maxDepth,
             onDepthExceeded: { W3C_XML.Parse.Error.depthExceeded(limit: $0) },
             { (builder: inout Builder, elementRef: Ref<W3C_XML.Element>) -> Expr<W3C_XML.Element> in
 
-                let startTag: Expr<StartTagOutput> = Parser.Parser.Machine.leaf(
+                let startTag: Expr<StartTagOutput> = Parser::Parser.Machine.leaf(
                     StartTag<Input>(),
                     in: &builder
                 )
 
-                let comment: Expr<W3C_XML.Content> = Parser.Parser.Machine.leaf(
+                let comment: Expr<W3C_XML.Content> = Parser::Parser.Machine.leaf(
                     Comment<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.comment($0) }, in: &builder)
 
-                let cdata: Expr<W3C_XML.Content> = Parser.Parser.Machine.leaf(
+                let cdata: Expr<W3C_XML.Content> = Parser::Parser.Machine.leaf(
                     CDATASection<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.cdata($0) }, in: &builder)
 
-                let pi: Expr<W3C_XML.Content> = Parser.Parser.Machine.leaf(
+                let pi: Expr<W3C_XML.Content> = Parser::Parser.Machine.leaf(
                     ProcessingInstruction<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.instruction($0) }, in: &builder)
 
-                let text: Expr<W3C_XML.Content> = Parser.Parser.Machine.leaf(
+                let text: Expr<W3C_XML.Content> = Parser::Parser.Machine.leaf(
                     NonEmptyTextContent<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.text($0) }, in: &builder)
@@ -197,23 +197,22 @@ extension W3C_XML.Parse {
                 let elementContent: Expr<W3C_XML.Content> = elementRef.expression(in: &builder)
                     .map({ W3C_XML.Content.element($0) }, in: &builder)
 
-                let contentItem: Expr<W3C_XML.Content> = Parser.Parser.Machine.oneOf(
+                let contentItem: Expr<W3C_XML.Content> = Parser::Parser.Machine.oneOf(
                     [elementContent, comment, cdata, pi, text],
                     in: &builder
                 )
 
-                let content: Expr<[W3C_XML.Content]> = Parser.Parser.Machine.many(
+                let content: Expr<[W3C_XML.Content]> = Parser::Parser.Machine.many(
                     contentItem,
                     in: &builder
                 )
 
-                let endTagAny: Expr<W3C_XML.Name> = Parser.Parser.Machine.leaf(
+                let endTagAny: Expr<W3C_XML.Name> = Parser::Parser.Machine.leaf(
                     EndTagAny<Input>(),
                     in: &builder
                 )
 
-                let contentAndEndTag: Expr<([W3C_XML.Content], W3C_XML.Name)> = Parser
-                    .Parser.Machine.sequence(
+                let contentAndEndTag: Expr<([W3C_XML.Content], W3C_XML.Name)> = Parser::Parser.Machine.sequence(
                         content,
                         endTagAny,
                         combine: { ($0, $1) },
@@ -246,7 +245,7 @@ extension W3C_XML.Parse {
                 )
 
                 let openWithContentEnd: Expr<(StartTagOutput, ([W3C_XML.Content], W3C_XML.Name))> =
-                    Parser.Parser.Machine.sequence(
+                    Parser::Parser.Machine.sequence(
                         openTag,
                         contentAndEndTag,
                         combine: { ($0, $1) },
@@ -277,7 +276,7 @@ extension W3C_XML.Parse {
                     in: &builder
                 )
 
-                return Parser.Parser.Machine.oneOf(
+                return Parser::Parser.Machine.oneOf(
                     [emptyElement, nonEmptyElement],
                     in: &builder
                 )
@@ -303,9 +302,8 @@ extension W3C_XML.Parse {
 extension W3C_XML.Parse {
 
     @usableFromInline
-    struct NonEmptyTextContent<Input: Input.Input.Streaming>: Parser.Parser
-            .`Protocol`, Sendable
-    where Input: Sendable, Input.Element == Byte {
+    struct NonEmptyTextContent<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
         @usableFromInline typealias Output = String
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
 
@@ -318,7 +316,7 @@ extension W3C_XML.Parse {
             var iterationCount = 0
             let maxIterations = 1_000_000
 
-            while let byte = input.first {
+            while let byte = input.xmlPeek() {
                 iterationCount += 1
                 precondition(
                     iterationCount < maxIterations,

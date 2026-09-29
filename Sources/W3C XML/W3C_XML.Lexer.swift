@@ -1,10 +1,10 @@
-public import Input
+public import Cursor
 import Parser
 
 extension W3C_XML {
 
-    public struct Lexer<Input: Input.Input.Streaming>: ~Copyable
-    where Input.Element == Byte {
+    public struct Lexer<Input: Cursor.`Protocol`>: ~Copyable
+    where Input.Element == Byte, Input.Failure == Never {
 
         @usableFromInline
         internal var input: Input
@@ -67,7 +67,7 @@ extension W3C_XML.Lexer {
 
     @inlinable
     package mutating func lexContent() throws(Error) -> W3C_XML.Token? {
-        guard let byte = input.first else {
+        guard let byte = input.xmlPeek() else {
             return nil
         }
 
@@ -85,7 +85,7 @@ extension W3C_XML.Lexer {
         let startPos = position
         advance()
 
-        guard let byte = input.first else {
+        guard let byte = input.xmlPeek() else {
             throw .unexpectedEndOfInput(expected: "tag name or markup", at: startPos)
         }
 
@@ -125,7 +125,7 @@ extension W3C_XML.Lexer {
     package mutating func lexInStartTag() throws(Error) -> W3C_XML.Token? {
         skipWhitespace()
 
-        guard let byte = input.first else {
+        guard let byte = input.xmlPeek() else {
             throw .unexpectedEndOfInput(expected: "'>' or '/>'", at: position)
         }
 
@@ -137,7 +137,7 @@ extension W3C_XML.Lexer {
 
         case ASCII.Code.solidus.byte:
             advance()
-            guard input.first == ASCII.Code.greaterThanSign.byte else {
+            guard input.xmlPeek() == ASCII.Code.greaterThanSign.byte else {
                 throw .unexpectedEndOfInput(expected: "'>'", at: position)
             }
             advance()
@@ -164,10 +164,10 @@ extension W3C_XML.Lexer {
     @inlinable
     package mutating func lexAttributeValue() throws(Error) -> W3C_XML.Token {
         let startPos = position
-        guard let quote = input.first else {
+        guard let quote = input.xmlPeek() else {
             throw .unexpectedEndOfInput(expected: "attribute value", at: position)
         }
-        input.removeFirst()
+        _ = input.next()
         position = W3C_XML.Position(
             offset: position.offset + 1,
             line: position.line,
@@ -176,7 +176,7 @@ extension W3C_XML.Lexer {
 
         var value = ""
 
-        while let byte = input.first {
+        while let byte = input.xmlPeek() {
             if byte == quote {
                 advance()
                 return .attributeValue(value)
@@ -213,7 +213,7 @@ extension W3C_XML.Lexer {
     package mutating func lexInEndTag() throws(Error) -> W3C_XML.Token? {
         skipWhitespace()
 
-        guard let byte = input.first else {
+        guard let byte = input.xmlPeek() else {
             throw .unexpectedEndOfInput(expected: "'>'", at: position)
         }
 
@@ -231,7 +231,7 @@ extension W3C_XML.Lexer {
 
     @inlinable
     package mutating func lexBangMarkup(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
-        guard let byte = input.first else {
+        guard let byte = input.xmlPeek() else {
             throw .unexpectedEndOfInput(expected: "comment, CDATA, or DOCTYPE", at: startPos)
         }
 
@@ -254,21 +254,21 @@ extension W3C_XML.Lexer {
     package mutating func lexComment(startPos: W3C_XML.Position) throws(Error) -> W3C_XML.Token {
 
         advance()
-        guard input.first == ASCII.Code.hyphen.byte else {
+        guard input.xmlPeek() == ASCII.Code.hyphen.byte else {
             throw .unexpectedEndOfInput(expected: "'--' for comment", at: position)
         }
         advance()
 
         var text = ""
 
-        while !input.isEmpty {
-            if input.first == ASCII.Code.hyphen.byte {
+        while !(input.xmlPeek() == nil) {
+            if input.xmlPeek() == ASCII.Code.hyphen.byte {
                 advance()
-                if input.first == ASCII.Code.hyphen.byte {
+                if input.xmlPeek() == ASCII.Code.hyphen.byte {
                     advance()
-                    guard input.first == ASCII.Code.greaterThanSign.byte else {
+                    guard input.xmlPeek() == ASCII.Code.greaterThanSign.byte else {
                         throw .invalidCharacter(
-                            Unicode.Scalar(UInt32(input.first ?? 0))!,
+                            Unicode.Scalar(UInt32(input.xmlPeek() ?? 0))!,
                             at: position
                         )
                     }
@@ -296,12 +296,12 @@ extension W3C_XML.Lexer {
 
         var text = ""
 
-        while !input.isEmpty {
-            if input.first == ASCII.Code.rightBracket.byte {
+        while !(input.xmlPeek() == nil) {
+            if input.xmlPeek() == ASCII.Code.rightBracket.byte {
                 advance()
-                if input.first == ASCII.Code.rightBracket.byte {
+                if input.xmlPeek() == ASCII.Code.rightBracket.byte {
                     advance()
-                    if input.first == ASCII.Code.greaterThanSign.byte {
+                    if input.xmlPeek() == ASCII.Code.greaterThanSign.byte {
                         advance()
                         return .cdata(text)
                     }
@@ -334,7 +334,7 @@ extension W3C_XML.Lexer {
         var systemID: String?
         var internalSubset: String?
 
-        if input.first == ASCII.Code.P.byte {
+        if input.xmlPeek() == ASCII.Code.P.byte {
 
             try expectLiteral([
                 ASCII.Code.P.byte, ASCII.Code.U.byte, ASCII.Code.B.byte, ASCII.Code.L.byte,
@@ -344,7 +344,7 @@ extension W3C_XML.Lexer {
             publicID = try lexQuotedString()
             skipWhitespace()
             systemID = try lexQuotedString()
-        } else if input.first == ASCII.Code.S.byte {
+        } else if input.xmlPeek() == ASCII.Code.S.byte {
 
             try expectLiteral([
                 ASCII.Code.S.byte, ASCII.Code.Y.byte, ASCII.Code.S.byte, ASCII.Code.T.byte,
@@ -356,13 +356,13 @@ extension W3C_XML.Lexer {
 
         skipWhitespace()
 
-        if input.first == ASCII.Code.leftBracket.byte {
+        if input.xmlPeek() == ASCII.Code.leftBracket.byte {
             advance()
             internalSubset = try lexInternalSubset()
             skipWhitespace()
         }
 
-        guard input.first == ASCII.Code.greaterThanSign.byte else {
+        guard input.xmlPeek() == ASCII.Code.greaterThanSign.byte else {
             throw .unexpectedEndOfInput(expected: "'>'", at: position)
         }
         advance()
@@ -383,8 +383,8 @@ extension W3C_XML.Lexer {
         var text = ""
         var depth = 1
 
-        while !input.isEmpty && depth > 0 {
-            let byte = input.first!
+        while !(input.xmlPeek() == nil) && depth > 0 {
+            let byte = input.xmlPeek()!
 
             if byte == ASCII.Code.leftBracket.byte {
                 depth += 1
@@ -424,14 +424,14 @@ extension W3C_XML.Lexer {
 
         var data: String?
 
-        if input.first?.isXMLWhitespace == true {
+        if input.xmlPeek()?.isXMLWhitespace == true {
             skipWhitespace()
 
             var text = ""
-            while !input.isEmpty {
-                if input.first == ASCII.Code.questionMark.byte {
+            while !(input.xmlPeek() == nil) {
+                if input.xmlPeek() == ASCII.Code.questionMark.byte {
                     advance()
-                    if input.first == ASCII.Code.greaterThanSign.byte {
+                    if input.xmlPeek() == ASCII.Code.greaterThanSign.byte {
                         advance()
                         data = text.isEmpty ? nil : text
                         return .instruction(W3C_XML.Instruction(target: target, data: data))
@@ -446,11 +446,11 @@ extension W3C_XML.Lexer {
             throw .unterminated(construct: "processing instruction", at: startPos)
         }
 
-        guard input.first == ASCII.Code.questionMark.byte else {
+        guard input.xmlPeek() == ASCII.Code.questionMark.byte else {
             throw .unexpectedEndOfInput(expected: "'?>'", at: position)
         }
         advance()
-        guard input.first == ASCII.Code.greaterThanSign.byte else {
+        guard input.xmlPeek() == ASCII.Code.greaterThanSign.byte else {
             throw .unexpectedEndOfInput(expected: "'>'", at: position)
         }
         advance()
@@ -510,11 +510,11 @@ extension W3C_XML.Lexer {
             skipWhitespace()
         }
 
-        guard input.first == ASCII.Code.questionMark.byte else {
+        guard input.xmlPeek() == ASCII.Code.questionMark.byte else {
             throw .unexpectedEndOfInput(expected: "'?>'", at: position)
         }
         advance()
-        guard input.first == ASCII.Code.greaterThanSign.byte else {
+        guard input.xmlPeek() == ASCII.Code.greaterThanSign.byte else {
             throw .unexpectedEndOfInput(expected: "'>'", at: position)
         }
         advance()
@@ -535,7 +535,7 @@ extension W3C_XML.Lexer {
     package mutating func lexText() throws(Error) -> W3C_XML.Token {
         var text = ""
 
-        while let byte = input.first {
+        while let byte = input.xmlPeek() {
             if byte == ASCII.Code.lessThanSign.byte {
 
                 break
@@ -561,7 +561,7 @@ extension W3C_XML.Lexer {
         let startPos = position
         advance()
 
-        guard let firstByte = input.first else {
+        guard let firstByte = input.xmlPeek() else {
             throw .unexpectedEndOfInput(expected: "entity name", at: startPos)
         }
 
@@ -572,7 +572,7 @@ extension W3C_XML.Lexer {
         }
 
         var name = ""
-        while let byte = input.first, byte != ASCII.Code.semicolon.byte {
+        while let byte = input.xmlPeek(), byte != ASCII.Code.semicolon.byte {
             guard W3C_XML.isASCIINameChar(byte) else {
                 throw .invalidEntity(name, at: startPos)
             }
@@ -580,7 +580,7 @@ extension W3C_XML.Lexer {
             advance()
         }
 
-        guard input.first == ASCII.Code.semicolon.byte else {
+        guard input.xmlPeek() == ASCII.Code.semicolon.byte else {
             throw .unterminated(construct: "entity reference", at: startPos)
         }
         advance()
@@ -598,12 +598,12 @@ extension W3C_XML.Lexer {
     ) throws(Error) -> Unicode.Scalar {
         var refString = ""
 
-        if input.first == ASCII.Code.x.byte || input.first == ASCII.Code.X.byte {
-            refString.append(Character(UnicodeScalar(input.first!.underlying)))
+        if input.xmlPeek() == ASCII.Code.x.byte || input.xmlPeek() == ASCII.Code.X.byte {
+            refString.append(Character(UnicodeScalar(input.xmlPeek()!.underlying)))
             advance()
         }
 
-        while let byte = input.first, byte != ASCII.Code.semicolon.byte {
+        while let byte = input.xmlPeek(), byte != ASCII.Code.semicolon.byte {
 
             guard byte.underlying < 0x80, ASCII.Code(unchecked: byte).isHexDigit else {
                 throw .invalidEntity(refString, at: startPos)
@@ -612,7 +612,7 @@ extension W3C_XML.Lexer {
             advance()
         }
 
-        guard input.first == ASCII.Code.semicolon.byte else {
+        guard input.xmlPeek() == ASCII.Code.semicolon.byte else {
             throw .unterminated(construct: "character reference", at: startPos)
         }
         advance()
@@ -635,7 +635,7 @@ extension W3C_XML.Lexer {
 
     @inlinable
     package mutating func lexNameString() throws(Error) -> String {
-        guard let firstByte = input.first else {
+        guard let firstByte = input.xmlPeek() else {
             throw .invalidName(at: position)
         }
 
@@ -651,7 +651,7 @@ extension W3C_XML.Lexer {
         }
         name.append(Character(firstScalar))
 
-        while let byte = input.first {
+        while let byte = input.xmlPeek() {
             if W3C_XML.isASCIINameChar(byte) {
                 name.append(Character(UnicodeScalar(byte)))
                 advance()
@@ -677,15 +677,14 @@ extension W3C_XML.Lexer {
 
     @inlinable
     package mutating func skipWhitespace() {
-        while let byte = input.first, W3C_XML.isWhitespace(byte) {
+        while let byte = input.xmlPeek(), W3C_XML.isWhitespace(byte) {
             advance()
         }
     }
 
     @inlinable
     package mutating func advance() {
-        guard !input.isEmpty else { return }
-        let byte = input.removeFirst()
+        guard let byte = input.next() else { return }
         let isNewline = byte == ASCII.Code.lf.byte
         position = W3C_XML.Position(
             offset: position.offset + 1,
@@ -696,7 +695,7 @@ extension W3C_XML.Lexer {
 
     @inlinable
     package mutating func consumeUTF8Scalar() throws(Error) -> Unicode.Scalar {
-        guard let firstByte = input.first else {
+        guard let firstByte = input.xmlPeek() else {
             throw .unexpectedEndOfInput(expected: "character", at: position)
         }
 
@@ -728,7 +727,7 @@ extension W3C_XML.Lexer {
         advance()
 
         for _ in 1..<length {
-            guard let byte = input.first else {
+            guard let byte = input.xmlPeek() else {
                 throw .unexpectedEndOfInput(expected: "continuation byte", at: position)
             }
             guard byte.underlying & 0xC0 == 0x80 else {
@@ -749,7 +748,7 @@ extension W3C_XML.Lexer {
     package mutating func expectLiteral(_ expected: [Byte]) throws(Error) {
         let startPos = position
         for expectedByte in expected {
-            guard let byte = input.first else {
+            guard let byte = input.xmlPeek() else {
                 throw .unexpectedEndOfInput(expected: "literal", at: startPos)
             }
             guard byte == expectedByte else {
@@ -761,13 +760,13 @@ extension W3C_XML.Lexer {
 
     @inlinable
     package func peekByte() -> Byte? {
-        input.first
+        input.xmlPeek()
     }
 
     @inlinable
     package mutating func matchLiteral(_ expected: [Byte]) -> Bool {
         guard let first = expected.first else { return true }
-        guard input.first == first else { return false }
+        guard input.xmlPeek() == first else { return false }
 
         for _ in expected {
             advance()
@@ -777,7 +776,7 @@ extension W3C_XML.Lexer {
 
     @inlinable
     package mutating func expectByte(_ expected: Byte) throws(Error) {
-        guard let byte = input.first else {
+        guard let byte = input.xmlPeek() else {
             throw .unexpectedEndOfInput(
                 expected: "'\(Character(UnicodeScalar(expected)))'",
                 at: position
@@ -805,7 +804,7 @@ extension W3C_XML.Lexer {
     package mutating func lexQuotedString() throws(Error) -> String {
         let startPos = position
 
-        guard let quote = input.first,
+        guard let quote = input.xmlPeek(),
             quote == ASCII.Code.quotationMark.byte || quote == ASCII.Code.apostrophe.byte
         else {
             throw .unexpectedEndOfInput(expected: "quoted string", at: position)
@@ -813,7 +812,7 @@ extension W3C_XML.Lexer {
         advance()
 
         var result = ""
-        while let byte = input.first {
+        while let byte = input.xmlPeek() {
             if byte == quote {
                 advance()
                 return result
