@@ -41,7 +41,8 @@ extension W3C_XML.Parse {
                     bytes.append(ASCII.Code.rightBracket.byte)
                     continue
                 }
-                bytes.append(try input.xmlTake(expected: "character"))
+                bytes.append(byte)
+                _ = input.next()
             }
 
             return String(decoding: bytes, as: UTF8.self)
@@ -69,7 +70,7 @@ extension W3C_XML.Parse {
                     result += resolved
                 } else {
 
-                    result.append(Character(UnicodeScalar(try input.xmlTake(expected: "character"))))
+                    result.append(Character(UnicodeScalar(try input.xmlTake(expected: "character").bitPattern)))
                 }
             }
 
