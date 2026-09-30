@@ -104,7 +104,7 @@ extension W3C_XML.Lexer {
 
         default:
 
-            guard W3C_XML.isASCIINameStartChar(byte) || byte >= 0x80 else {
+            guard W3C_XML.isASCIINameStartChar(byte) || byte.bitPattern >= 0x80 else {
                 throw .invalidName(at: position)
             }
             return try lexStartTag()
@@ -153,7 +153,7 @@ extension W3C_XML.Lexer {
 
         default:
 
-            guard W3C_XML.isASCIINameStartChar(byte) || byte >= 0x80 else {
+            guard W3C_XML.isASCIINameStartChar(byte) || byte.bitPattern >= 0x80 else {
                 throw .invalidName(at: position)
             }
             let name = try lexName()
@@ -183,7 +183,7 @@ extension W3C_XML.Lexer {
             }
 
             if byte == ASCII.Code.lessThanSign.byte {
-                throw .invalidCharacter(Unicode.Scalar(UInt32(byte))!, at: position)
+                throw .invalidCharacter(Unicode.Scalar(UInt32(byte.bitPattern))!, at: position)
             }
 
             if byte == ASCII.Code.ampersand.byte {
@@ -218,7 +218,7 @@ extension W3C_XML.Lexer {
         }
 
         guard byte == ASCII.Code.greaterThanSign.byte else {
-            throw .invalidCharacter(Unicode.Scalar(UInt32(byte))!, at: position)
+            throw .invalidCharacter(Unicode.Scalar(UInt32(byte.bitPattern))!, at: position)
         }
 
         advance()
@@ -246,7 +246,7 @@ extension W3C_XML.Lexer {
             return try lexDoctype(startPos: startPos)
 
         default:
-            throw .invalidCharacter(Unicode.Scalar(UInt32(byte))!, at: position)
+            throw .invalidCharacter(Unicode.Scalar(UInt32(byte.bitPattern))!, at: position)
         }
     }
 
@@ -268,7 +268,7 @@ extension W3C_XML.Lexer {
                     advance()
                     guard input.xmlPeek() == ASCII.Code.greaterThanSign.byte else {
                         throw .invalidCharacter(
-                            Unicode.Scalar(UInt32(input.xmlPeek() ?? 0))!,
+                            Unicode.Scalar(UInt32(input.xmlPeek()?.bitPattern ?? 0))!,
                             at: position
                         )
                     }
@@ -576,7 +576,7 @@ extension W3C_XML.Lexer {
             guard W3C_XML.isASCIINameChar(byte) else {
                 throw .invalidEntity(name, at: startPos)
             }
-            name.append(Character(UnicodeScalar(byte)))
+            name.append(Character(UnicodeScalar(byte.bitPattern)))
             advance()
         }
 
@@ -639,7 +639,7 @@ extension W3C_XML.Lexer {
             throw .invalidName(at: position)
         }
 
-        guard W3C_XML.isASCIINameStartChar(firstByte) || firstByte >= 0x80 else {
+        guard W3C_XML.isASCIINameStartChar(firstByte) || firstByte.bitPattern >= 0x80 else {
             throw .invalidName(at: position)
         }
 
@@ -653,9 +653,9 @@ extension W3C_XML.Lexer {
 
         while let byte = input.xmlPeek() {
             if W3C_XML.isASCIINameChar(byte) {
-                name.append(Character(UnicodeScalar(byte)))
+                name.append(Character(UnicodeScalar(byte.bitPattern)))
                 advance()
-            } else if byte >= 0x80 {
+            } else if byte.bitPattern >= 0x80 {
 
                 let scalar = try consumeUTF8Scalar()
                 if W3C_XML.isNameChar(scalar) {
@@ -701,22 +701,22 @@ extension W3C_XML.Lexer {
 
         let startPos = position
 
-        if firstByte < 0x80 {
+        if firstByte.bitPattern < 0x80 {
 
             advance()
-            return Unicode.Scalar(firstByte)
+            return Unicode.Scalar(firstByte.bitPattern)
         }
 
         let length: Int
         let mask: UInt8
 
-        if firstByte & 0xE0 == 0xC0 {
+        if firstByte.bitPattern & 0xE0 == 0xC0 {
             length = 2
             mask = 0x1F
-        } else if firstByte & 0xF0 == 0xE0 {
+        } else if firstByte.bitPattern & 0xF0 == 0xE0 {
             length = 3
             mask = 0x0F
-        } else if firstByte & 0xF8 == 0xF0 {
+        } else if firstByte.bitPattern & 0xF8 == 0xF0 {
             length = 4
             mask = 0x07
         } else {
@@ -752,7 +752,7 @@ extension W3C_XML.Lexer {
                 throw .unexpectedEndOfInput(expected: "literal", at: startPos)
             }
             guard byte == expectedByte else {
-                throw .invalidCharacter(Unicode.Scalar(byte), at: position)
+                throw .invalidCharacter(Unicode.Scalar(byte.bitPattern), at: position)
             }
             advance()
         }
@@ -778,25 +778,25 @@ extension W3C_XML.Lexer {
     package mutating func expectByte(_ expected: Byte) throws(Error) {
         guard let byte = input.xmlPeek() else {
             throw .unexpectedEndOfInput(
-                expected: "'\(Character(UnicodeScalar(expected)))'",
+                expected: "'\(Character(UnicodeScalar(expected.bitPattern)))'",
                 at: position
             )
         }
         guard byte == expected else {
-            throw .invalidCharacter(Unicode.Scalar(byte), at: position)
+            throw .invalidCharacter(Unicode.Scalar(byte.bitPattern), at: position)
         }
         advance()
     }
 
     @inlinable
     package mutating func expectAttributeName(_ name: String) throws(Error) {
-        let nameBytes = name.utf8.map(Byte.init)
+        let nameBytes = name.utf8.map(Byte.init(bitPattern:))
         try expectLiteral(nameBytes)
     }
 
     @inlinable
     package mutating func matchAttributeName(_ name: String) -> Bool {
-        let nameBytes = name.utf8.map(Byte.init)
+        let nameBytes = name.utf8.map(Byte.init(bitPattern:))
         return matchLiteral(nameBytes)
     }
 
@@ -817,7 +817,7 @@ extension W3C_XML.Lexer {
                 advance()
                 return result
             }
-            result.append(Character(UnicodeScalar(byte)))
+            result.append(Character(UnicodeScalar(byte.bitPattern)))
             advance()
         }
 
