@@ -48,15 +48,17 @@ extension W3C_XML {
 
     @inlinable
     public static func isASCIINameStartChar(_ byte: Byte) -> Bool {
-        byte == ASCII.Code.colon.byte || (byte >= ASCII.Code.A.byte && byte <= ASCII.Code.Z.byte)
+        byte == ASCII.Code.colon.byte
+            || (ASCII.Code.A.byte.bitPattern...ASCII.Code.Z.byte.bitPattern).contains(byte.bitPattern)
             || byte == ASCII.Code.underline.byte
-            || (byte >= ASCII.Code.a.byte && byte <= ASCII.Code.z.byte)
+            || (ASCII.Code.a.byte.bitPattern...ASCII.Code.z.byte.bitPattern).contains(byte.bitPattern)
     }
 
     @inlinable
     public static func isASCIINameChar(_ byte: Byte) -> Bool {
         isASCIINameStartChar(byte) || byte == ASCII.Code.hyphen.byte
-            || byte == ASCII.Code.period.byte || (byte >= .ascii.`0` && byte <= .ascii.`9`)
+            || byte == ASCII.Code.period.byte
+            || (ASCII.Code.`0`.byte.bitPattern...ASCII.Code.`9`.byte.bitPattern).contains(byte.bitPattern)
     }
 }
 
