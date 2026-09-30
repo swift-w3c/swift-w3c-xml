@@ -760,7 +760,8 @@ extension W3C_XML.Lexer {
 
     @inlinable
     package func peekByte() -> Byte? {
-        input.xmlPeek()
+        var lookahead = input
+        return lookahead.xmlPeek()
     }
 
     @inlinable
