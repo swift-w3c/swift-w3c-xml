@@ -1,3 +1,4 @@
+import Byte
 import Testing
 
 @testable import W3C_XML
@@ -528,11 +529,11 @@ extension W3C_XML {
     struct Test {
         @Test
         func `isWhitespace`() {
-            #expect(W3C_XML.isWhitespace(0x20))
-            #expect(W3C_XML.isWhitespace(0x09))
-            #expect(W3C_XML.isWhitespace(0x0A))
-            #expect(W3C_XML.isWhitespace(0x0D))
-            #expect(!W3C_XML.isWhitespace(0x41))
+            #expect(W3C_XML.isWhitespace(Byte(bitPattern: 0x20)))
+            #expect(W3C_XML.isWhitespace(Byte(bitPattern: 0x09)))
+            #expect(W3C_XML.isWhitespace(Byte(bitPattern: 0x0A)))
+            #expect(W3C_XML.isWhitespace(Byte(bitPattern: 0x0D)))
+            #expect(!W3C_XML.isWhitespace(Byte(bitPattern: 0x41)))
         }
 
         @Test
