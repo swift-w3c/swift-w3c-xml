@@ -89,7 +89,7 @@ extension W3C_XML.Parse {
             }
 
             guard input.xmlPeek() == quote else {
-                throw .unexpectedEndOfInput(expected: String(UnicodeScalar(quote)))
+                throw .unexpectedEndOfInput(expected: String(UnicodeScalar(quote.bitPattern)))
             }
             _ = input.next()
 
@@ -203,7 +203,7 @@ extension W3C_XML.Parse {
             }
 
             guard input.xmlPeek() == quote else {
-                throw .unexpectedEndOfInput(expected: String(UnicodeScalar(quote)))
+                throw .unexpectedEndOfInput(expected: String(UnicodeScalar(quote.bitPattern)))
             }
             _ = input.next()
 

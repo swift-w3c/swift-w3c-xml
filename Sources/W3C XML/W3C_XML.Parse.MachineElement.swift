@@ -330,14 +330,14 @@ extension W3C_XML.Parse {
                 } else if byte == ASCII.Code.ampersand.byte {
 
                     let resolved = try Reference<Input>().parse(&input)
-                    result.append(contentsOf: resolved.utf8)
+                    result.append(contentsOf: resolved.utf8.map(Byte.init(bitPattern:)))
                 } else {
 
                     let text = CharData<Input>().parse(&input)
                     if text.isEmpty {
                         break
                     }
-                    result.append(contentsOf: text.utf8)
+                    result.append(contentsOf: text.utf8.map(Byte.init(bitPattern:)))
                 }
             }
 

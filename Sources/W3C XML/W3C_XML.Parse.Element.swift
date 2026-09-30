@@ -53,11 +53,11 @@ extension W3C_XML.Parse {
 
                     throw .expected("valid attribute character (not <)")
                 } else {
-                    result.append(Character(UnicodeScalar(try input.xmlTake(expected: "character"))))
+                    result.append(Character(UnicodeScalar(try input.xmlTake(expected: "character").bitPattern)))
                 }
             }
 
-            throw .unexpectedEndOfInput(expected: String(UnicodeScalar(quote)))
+            throw .unexpectedEndOfInput(expected: String(UnicodeScalar(quote.bitPattern)))
         }
     }
 }
