@@ -32,7 +32,7 @@ extension __W3CXMLLexerError: CustomStringConvertible {
             return "Invalid name at \(pos)"
 
         case .invalidUTF8(let byte, let pos):
-            return "Invalid UTF-8 byte 0x\(String(byte, radix: 16)) at \(pos)"
+            return "Invalid UTF-8 byte 0x\(String(byte.bitPattern, radix: 16)) at \(pos)"
 
         case .unterminated(let construct, let pos):
             return "Unterminated \(construct) at \(pos)"

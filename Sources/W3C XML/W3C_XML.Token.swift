@@ -66,7 +66,7 @@ extension W3C_XML.TokenKind: CustomStringConvertible {
         case .instruction: return "processing instruction"
         case .xmlDeclaration: return "XML declaration"
         case .doctype: return "DOCTYPE"
-        case .unknown(let byte): return "0x\(String(byte, radix: 16))"
+        case .unknown(let byte): return "0x\(String(byte.bitPattern, radix: 16))"
         }
     }
 }
