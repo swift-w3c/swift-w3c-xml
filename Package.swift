@@ -15,6 +15,7 @@ let package = Package(
         .library(name: "W3C XML", targets: ["W3C XML"])
     ],
     dependencies: [
+        .package(url: "https://github.com/swift-molecules/swift-machine.git", branch: "main"),
         .package(url: "https://github.com/swift-atoms/swift-byte.git", branch: "main"),
         .package(url: "https://github.com/swift-atoms/swift-cursor.git", branch: "main", traits: ["Collection"]),
         .package(
@@ -41,6 +42,7 @@ let package = Package(
         .target(
             name: "W3C XML",
             dependencies: [
+                .product(name: "Machine", package: "swift-machine"),
                 .product(
                     name: "Standard Library Extensions",
                     package: "swift-standard-library-extensions"

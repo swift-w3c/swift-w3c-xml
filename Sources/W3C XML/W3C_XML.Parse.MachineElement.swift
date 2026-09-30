@@ -1,3 +1,4 @@
+public import Machine
 public import Cursor
 import Parser_Machine
 import Parser
@@ -156,40 +157,40 @@ extension W3C_XML.Parse {
 
     static func machineElement<Input: Cursor.`Protocol`>(
         maxDepth: Int = 10000
-    ) -> Parser::Parser.Machine.Parser<Input, W3C_XML.Element, W3C_XML.Parse.Error>
+    ) -> Machine::Machine.Parser.Parser<Input, W3C_XML.Element, W3C_XML.Parse.Error>
     where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
-        typealias Builder = Parser::Parser.Machine.Builder<Input, W3C_XML.Parse.Error>
-        typealias Expr<T> = Parser::Parser.Machine.Expression<
+        typealias Builder = Machine::Machine.Parser.Builder<Input, W3C_XML.Parse.Error>
+        typealias Expr<T> = Machine::Machine.Parser.Expression<
             Input, W3C_XML.Parse.Error, T
         >
-        typealias Ref<T> = Parser::Parser.Machine.Reference<Input, W3C_XML.Parse.Error, T>
+        typealias Ref<T> = Machine::Machine.Parser.Reference<Input, W3C_XML.Parse.Error, T>
 
-        return Parser::Parser.Machine.recursive(
+        return Machine::Machine.Parser.recursive(
             maxDepth: maxDepth,
             onDepthExceeded: { W3C_XML.Parse.Error.depthExceeded(limit: $0) },
             { (builder: inout Builder, elementRef: Ref<W3C_XML.Element>) -> Expr<W3C_XML.Element> in
 
-                let startTag: Expr<StartTagOutput> = Parser::Parser.Machine.leaf(
+                let startTag: Expr<StartTagOutput> = Machine::Machine.Parser.leaf(
                     StartTag<Input>(),
                     in: &builder
                 )
 
-                let comment: Expr<W3C_XML.Content> = Parser::Parser.Machine.leaf(
+                let comment: Expr<W3C_XML.Content> = Machine::Machine.Parser.leaf(
                     Comment<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.comment($0) }, in: &builder)
 
-                let cdata: Expr<W3C_XML.Content> = Parser::Parser.Machine.leaf(
+                let cdata: Expr<W3C_XML.Content> = Machine::Machine.Parser.leaf(
                     CDATASection<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.cdata($0) }, in: &builder)
 
-                let pi: Expr<W3C_XML.Content> = Parser::Parser.Machine.leaf(
+                let pi: Expr<W3C_XML.Content> = Machine::Machine.Parser.leaf(
                     ProcessingInstruction<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.instruction($0) }, in: &builder)
 
-                let text: Expr<W3C_XML.Content> = Parser::Parser.Machine.leaf(
+                let text: Expr<W3C_XML.Content> = Machine::Machine.Parser.leaf(
                     NonEmptyTextContent<Input>(),
                     in: &builder
                 ).map({ W3C_XML.Content.text($0) }, in: &builder)
@@ -197,22 +198,22 @@ extension W3C_XML.Parse {
                 let elementContent: Expr<W3C_XML.Content> = elementRef.expression(in: &builder)
                     .map({ W3C_XML.Content.element($0) }, in: &builder)
 
-                let contentItem: Expr<W3C_XML.Content> = Parser::Parser.Machine.oneOf(
+                let contentItem: Expr<W3C_XML.Content> = Machine::Machine.Parser.oneOf(
                     [elementContent, comment, cdata, pi, text],
                     in: &builder
                 )
 
-                let content: Expr<[W3C_XML.Content]> = Parser::Parser.Machine.many(
+                let content: Expr<[W3C_XML.Content]> = Machine::Machine.Parser.many(
                     contentItem,
                     in: &builder
                 )
 
-                let endTagAny: Expr<W3C_XML.Name> = Parser::Parser.Machine.leaf(
+                let endTagAny: Expr<W3C_XML.Name> = Machine::Machine.Parser.leaf(
                     EndTagAny<Input>(),
                     in: &builder
                 )
 
-                let contentAndEndTag: Expr<([W3C_XML.Content], W3C_XML.Name)> = Parser::Parser.Machine.sequence(
+                let contentAndEndTag: Expr<([W3C_XML.Content], W3C_XML.Name)> = Machine::Machine.Parser.sequence(
                         content,
                         endTagAny,
                         combine: { ($0, $1) },
@@ -245,7 +246,7 @@ extension W3C_XML.Parse {
                 )
 
                 let openWithContentEnd: Expr<(StartTagOutput, ([W3C_XML.Content], W3C_XML.Name))> =
-                    Parser::Parser.Machine.sequence(
+                    Machine::Machine.Parser.sequence(
                         openTag,
                         contentAndEndTag,
                         combine: { ($0, $1) },
@@ -276,7 +277,7 @@ extension W3C_XML.Parse {
                     in: &builder
                 )
 
-                return Parser::Parser.Machine.oneOf(
+                return Machine::Machine.Parser.oneOf(
                     [emptyElement, nonEmptyElement],
                     in: &builder
                 )

@@ -1,3 +1,4 @@
+public import Machine
 import ASCII
 import Byte
 import Byte
@@ -422,7 +423,7 @@ extension W3C_XML {
 
         let machineParser =
             Parse.machineElement(maxDepth: maxDepth)
-            as Parser::Parser.Machine.Parser<ArraySlice<Byte>, Element, Parse.Error>
+            as Machine::Machine.Parser.Parser<ArraySlice<Byte>, Element, Parse.Error>
         let root = try machineParser.parse(&input)
 
         var epilogue: [Content] = []
@@ -485,7 +486,7 @@ extension W3C_XML {
         maxDepth: Int = 10000
     ) throws(Parse.Error) -> Document
     where Bytes: Swift.Collection<UInt8>, Bytes: Sendable {
-        var input = Array(bytes)[...]
+        var input = bytes.map(Byte.init(bitPattern:))[...]
 
         Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
 
@@ -510,7 +511,7 @@ extension W3C_XML {
 
         let machineParser =
             Parse.machineElement(maxDepth: maxDepth)
-            as Parser::Parser.Machine.Parser<ArraySlice<Byte>, Element, Parse.Error>
+            as Machine::Machine.Parser.Parser<ArraySlice<Byte>, Element, Parse.Error>
         let root = try machineParser.parse(&input)
 
         return Document(
@@ -531,7 +532,7 @@ extension W3C_XML {
 
         let machineParser =
             Parse.machineElement(maxDepth: maxDepth)
-            as Parser::Parser.Machine.Parser<ArraySlice<Byte>, Element, Parse.Error>
+            as Machine::Machine.Parser.Parser<ArraySlice<Byte>, Element, Parse.Error>
         return try machineParser.parse(&input)
     }
 }
