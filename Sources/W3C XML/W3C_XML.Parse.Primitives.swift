@@ -74,7 +74,7 @@ extension W3C_XML.Parse {
             while let byte = input.xmlPeek() {
                 if W3C_XML.isASCIINameChar(byte) {
                     bytes.append(try input.xmlTake(expected: "character"))
-                } else if byte >= 0x80 {
+                } else if byte.bitPattern >= 0x80 {
 
                     let savedInput = input.checkpoint
                     let savedBytes = bytes
@@ -116,22 +116,22 @@ extension W3C_XML.Parse {
             let byteCount: Int
             let value: UInt32
 
-            if first < 0x80 {
+            if first.bitPattern < 0x80 {
 
                 bytes.append(try input.xmlTake(expected: "character"))
-                return Unicode.Scalar(first)
-            } else if first & 0xE0 == 0xC0 {
+                return Unicode.Scalar(first.bitPattern)
+            } else if first.bitPattern & 0xE0 == 0xC0 {
 
                 byteCount = 2
-                value = UInt32(first & 0x1F)
-            } else if first & 0xF0 == 0xE0 {
+                value = UInt32(first.bitPattern & 0x1F)
+            } else if first.bitPattern & 0xF0 == 0xE0 {
 
                 byteCount = 3
-                value = UInt32(first & 0x0F)
-            } else if first & 0xF8 == 0xF0 {
+                value = UInt32(first.bitPattern & 0x0F)
+            } else if first.bitPattern & 0xF8 == 0xF0 {
 
                 byteCount = 4
-                value = UInt32(first & 0x07)
+                value = UInt32(first.bitPattern & 0x07)
             } else {
                 throw .invalidName
             }
@@ -140,10 +140,10 @@ extension W3C_XML.Parse {
             var scalarValue = value
 
             for _ in 1..<byteCount {
-                guard let cont = input.xmlPeek(), cont & 0xC0 == 0x80 else {
+                guard let cont = input.xmlPeek(), cont.bitPattern & 0xC0 == 0x80 else {
                     throw .invalidName
                 }
-                scalarValue = (scalarValue << 6) | UInt32(cont & 0x3F)
+                scalarValue = (scalarValue << 6) | UInt32(cont.bitPattern & 0x3F)
                 bytes.append(try input.xmlTake(expected: "character"))
             }
 
