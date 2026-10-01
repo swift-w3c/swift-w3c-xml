@@ -23,12 +23,14 @@ extension W3C_XML.Entity {
 
         let codePoint: UInt32?
 
-        if reference.hasPrefix("x") || reference.hasPrefix("X") {
+        if reference.hasPrefix("x") {
 
             let hex = String(reference.dropFirst())
+            guard hex.unicodeScalars.allSatisfy(\.properties.isASCIIHexDigit) else { return nil }
             codePoint = UInt32(hex, radix: 16)
         } else {
 
+            guard reference.unicodeScalars.allSatisfy({ ("0"..."9").contains($0) }) else { return nil }
             codePoint = UInt32(reference, radix: 10)
         }
 
