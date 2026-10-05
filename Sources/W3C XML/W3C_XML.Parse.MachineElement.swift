@@ -30,6 +30,12 @@ extension W3C_XML.Parse {
     struct StartTag<Input: Cursor.`Protocol`>: Parser::Parsing,
         Sendable
     where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
+        @usableFromInline var body: Never {
+            borrowing get {
+                return fatalError("\(Self.self) is a leaf: implement its conformance requirements directly")
+            }
+        }
+
         @usableFromInline typealias Output = StartTagOutput
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
 
@@ -106,6 +112,12 @@ extension W3C_XML.Parse {
     struct EndTagAny<Input: Cursor.`Protocol`>: Parser::Parsing,
         Sendable
     where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
+        @usableFromInline var body: Never {
+            borrowing get {
+                return fatalError("\(Self.self) is a leaf: implement its conformance requirements directly")
+            }
+        }
+
         @usableFromInline typealias Output = W3C_XML.Name
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
 
@@ -305,6 +317,12 @@ extension W3C_XML.Parse {
     @usableFromInline
     struct NonEmptyTextContent<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
     where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
+        @usableFromInline var body: Never {
+            borrowing get {
+                return fatalError("\(Self.self) is a leaf: implement its conformance requirements directly")
+            }
+        }
+
         @usableFromInline typealias Output = String
         @usableFromInline typealias Failure = W3C_XML.Parse.Error
 
