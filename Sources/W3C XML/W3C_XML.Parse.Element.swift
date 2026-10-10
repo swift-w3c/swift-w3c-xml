@@ -5,11 +5,6 @@ extension W3C_XML.Parse {
 
     public struct Attribute<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
     where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
-        public var body: Never {
-            borrowing get {
-                return fatalError("\(Self.self) is a leaf: implement its conformance requirements directly")
-            }
-        }
 
         public typealias Output = W3C_XML.Attribute
         public typealias Failure = W3C_XML.Parse.Error
@@ -72,11 +67,6 @@ extension W3C_XML.Parse {
 
     public struct Element<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
     where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
-        public var body: Never {
-            borrowing get {
-                return fatalError("\(Self.self) is a leaf: implement its conformance requirements directly")
-            }
-        }
 
         public typealias Output = W3C_XML.Element
         public typealias Failure = W3C_XML.Parse.Error
@@ -189,11 +179,6 @@ extension W3C_XML.Parse {
 
     public struct Content<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
     where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
-        public var body: Never {
-            borrowing get {
-                return fatalError("\(Self.self) is a leaf: implement its conformance requirements directly")
-            }
-        }
 
         public typealias Output = [W3C_XML.Content]
         public typealias Failure = W3C_XML.Parse.Error
