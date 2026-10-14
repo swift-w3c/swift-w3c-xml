@@ -1,4 +1,4 @@
-public enum __W3CXMLParserError: Swift.Error, Sendable, Hashable {
+public enum __W3CXMLParserError: Swift::Error, Sendable, Hashable {
 
     case lexer(__W3CXMLLexerError)
 

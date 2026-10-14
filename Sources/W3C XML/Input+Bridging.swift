@@ -1,7 +1,6 @@
 public import Cursor
 
 extension Cursor.`Protocol` where Element: Copyable & Escapable, Failure == Never {
-    /// Peek through the actual cursor checkpoint rather than copying an Input facade.
     @inlinable
     package mutating func xmlPeek() -> Element? {
         let saved = checkpoint

@@ -119,14 +119,14 @@ struct `Parser Tests` {
 struct ErrorHandlingTests {
     @Test
     func `Reject unclosed element`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse("<root>")
         }
     }
 
     @Test
     func `Reject mismatched tags`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse("<root></other>")
         }
     }
@@ -155,105 +155,105 @@ struct ErrorHandlingTests {
 
     @Test
     func `Reject missing root element`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse("")
         }
     }
 
     @Test
     func `Reject multiple root elements`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse("<a/><b/>")
         }
     }
 
     @Test
     func `Reject unterminated comment`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse("<root><!-- unterminated</root>")
         }
     }
 
     @Test
     func `Reject unterminated CDATA`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse("<root><![CDATA[unterminated</root>")
         }
     }
 
     @Test
     func `Reject unterminated attribute value`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse(#"<root attr="unterminated>"#)
         }
     }
 
     @Test
     func `Reject invalid entity reference`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse("<root>&invalid;</root>")
         }
     }
 
     @Test
     func `Reject unterminated entity reference`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse("<root>&amp</root>")
         }
     }
 
     @Test
     func `Reject invalid numeric character reference`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse("<root>&#xZZZ;</root>")
         }
     }
 
     @Test
     func `Reject less-than in attribute value`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse(#"<root attr="a<b"/>"#)
         }
     }
 
     @Test
     func `Reject duplicate attributes`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse(#"<root id="1" id="2"/>"#)
         }
     }
 
     @Test
     func `Reject invalid element name starting with number`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse("<123/>")
         }
     }
 
     @Test
     func `Reject unterminated processing instruction`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse("<?xml version=\"1.0\"")
         }
     }
 
     @Test
     func `Reject invalid XML declaration`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse("<?xml version=\"2.0\"?><root/>")
         }
     }
 
     @Test
     func `Reject double hyphen in comment`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse("<root><!-- -- --></root>")
         }
     }
 
     @Test
     func `Reject text before root element`() {
-        #expect(throws: (any Swift.Error).self) {
+        #expect(throws: (any Swift::Error).self) {
             _ = try W3C_XML.parse("text<root/>")
         }
     }

@@ -40,7 +40,7 @@ extension W3C_XML.Parse.Depth {
 
 extension W3C_XML.Parse {
 
-    public enum Error: Swift.Error, Sendable, Hashable {
+    public enum Error: Swift::Error, Sendable, Hashable {
 
         case depthExceeded(limit: Int)
 

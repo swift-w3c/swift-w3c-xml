@@ -1,6 +1,5 @@
 import ASCII
 import Byte
-import Cursor
 public import Cursor
 import Parser
 

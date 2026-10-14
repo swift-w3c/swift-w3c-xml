@@ -2,10 +2,8 @@ public import Buffer_Linear_Primitive
 public import Buffer_Linear
 import Byte
 import Byte
-import Cursor
-import Cursor
 public import Cursor
-public import Ownership_Shared_Primitive
+import Ownership_Shared_Primitive
 import Parser
 
 extension W3C_XML {
@@ -179,7 +177,7 @@ extension W3C_XML.Parser {
 
         var attributes: [W3C_XML.Attribute] = []
         var namespaces: [W3C_XML.Namespace] = []
-        var seenAttributes: Swift.Set<String> = Swift.Set()
+        var seenAttributes: Swift::Set<String> = Swift::Set()
 
         var isEmpty = false
 

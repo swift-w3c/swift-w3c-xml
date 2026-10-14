@@ -1,9 +1,7 @@
-public import Machine
+import Machine
 import ASCII
 import Byte
 import Byte
-import Cursor
-import Cursor
 public import Cursor
 import Parser_Machine
 import Parser
@@ -99,7 +97,7 @@ extension W3C_XML.Parse {
 
         @inlinable
         package func matchLiteral(_ input: inout Input, _ string: StaticString) -> Bool {
-            let bytes = string.withUTF8Buffer { unsafe Swift.Array($0) }
+            let bytes = string.withUTF8Buffer { unsafe Swift::Array($0) }
 
             let saved = input.checkpoint
             for expected in bytes {
@@ -214,7 +212,7 @@ extension W3C_XML.Parse {
 
         @inlinable
         package func matchLiteral(_ input: inout Input, _ string: StaticString) -> Bool {
-            let bytes = string.withUTF8Buffer { unsafe Swift.Array($0) }
+            let bytes = string.withUTF8Buffer { unsafe Swift::Array($0) }
 
             let saved = input.checkpoint
             for expected in bytes {
@@ -488,7 +486,7 @@ extension W3C_XML {
         _ bytes: Bytes,
         maxDepth: Int = 10000
     ) throws(Parse.Error) -> Document
-    where Bytes: Swift.Collection<UInt8>, Bytes: Sendable {
+    where Bytes: Swift::Collection<UInt8>, Bytes: Sendable {
         var input = bytes.map(Byte.init(bitPattern:))[...]
 
         Parse.Whitespace<ArraySlice<Byte>>().parse(&input)

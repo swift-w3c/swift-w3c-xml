@@ -95,7 +95,7 @@ extension W3C_XML.Parse {
 
             var attributes: [W3C_XML.Attribute] = []
             var namespaces: [W3C_XML.Namespace] = []
-            var seenAttributes: Swift.Set<String> = Swift.Set()
+            var seenAttributes: Swift::Set<String> = Swift::Set()
 
             while true {
                 Whitespace<Input>().parse(&input)

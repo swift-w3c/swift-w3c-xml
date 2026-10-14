@@ -1,4 +1,4 @@
-public enum __W3CXMLLexerError: Swift.Error, Sendable, Hashable {
+public enum __W3CXMLLexerError: Swift::Error, Sendable, Hashable {
 
     case invalidCharacter(Unicode.Scalar, at: W3C_XML.Position)
 

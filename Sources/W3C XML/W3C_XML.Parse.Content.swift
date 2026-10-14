@@ -243,7 +243,7 @@ extension W3C_XML.Parse {
         _ string: StaticString
     ) throws(W3C_XML.Parse.Error)
     where Input.Element == Byte, Input.Failure == Never {
-        let bytes = string.withUTF8Buffer { unsafe Swift.Array($0) }
+        let bytes = string.withUTF8Buffer { unsafe Swift::Array($0) }
         let expectedString = String(decoding: bytes, as: UTF8.self)
 
         for expected in bytes {
