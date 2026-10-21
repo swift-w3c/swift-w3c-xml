@@ -24,7 +24,8 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/swift-atoms/swift-parser.git",
-            branch: "main", traits: ["Append", "CollectionLeaves", "IteratorLeaves", "Map", "Product", "Skip", "Collection", "Either", "Iterator"]
+            branch: "main",
+            traits: ["Append", "CollectionLeaves", "IteratorLeaves", "Map", "Product", "Skip", "Collection", "Either", "Iterator"]
         ),
         .package(
             url: "https://github.com/swift-molecules/swift-parser-machine.git",
@@ -36,7 +37,9 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/swift-atoms/swift-ascii.git",
-            branch: "main", traits: ["Parser"]),
+            branch: "main",
+            traits: ["Parser"]
+        ),
     ],
     targets: [
         .target(
@@ -69,14 +72,15 @@ let package = Package(
 )
 
 for target in package.targets where ![.system, .binary, .plugin, .macro].contains(target.type) {
-    target.swiftSettings = (target.swiftSettings ?? []) + [
-        .strictMemorySafety(),
-        .enableUpcomingFeature("ExistentialAny"),
-        .enableUpcomingFeature("InternalImportsByDefault"),
-        .enableUpcomingFeature("MemberImportVisibility"),
-        .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
-        .enableUpcomingFeature("InferIsolatedConformances"),
-        .enableExperimentalFeature("Lifetimes"),
-        .treatAllWarnings(as: .error),
-    ]
+    target.swiftSettings =
+        (target.swiftSettings ?? []) + [
+            .strictMemorySafety(),
+            .enableUpcomingFeature("ExistentialAny"),
+            .enableUpcomingFeature("InternalImportsByDefault"),
+            .enableUpcomingFeature("MemberImportVisibility"),
+            .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
+            .enableUpcomingFeature("InferIsolatedConformances"),
+            .enableExperimentalFeature("Lifetimes"),
+            .treatAllWarnings(as: .error),
+        ]
 }

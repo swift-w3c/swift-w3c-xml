@@ -1,7 +1,7 @@
-import Machine
 public import Cursor
-import Parser_Machine
+import Machine
 import Parser
+import Parser_Machine
 
 extension W3C_XML.Parse {
 
@@ -216,11 +216,11 @@ extension W3C_XML.Parse {
                 )
 
                 let contentAndEndTag: Expr<([W3C_XML.Content], W3C_XML.Name)> = Machine::Machine.Parser.sequence(
-                        content,
-                        endTagAny,
-                        combine: { ($0, $1) },
-                        in: &builder
-                    )
+                    content,
+                    endTagAny,
+                    combine: { ($0, $1) },
+                    in: &builder
+                )
 
                 let emptyElement: Expr<W3C_XML.Element> = startTag.tryMap(
                     { start throws(W3C_XML.Parse.Error) -> W3C_XML.Element in

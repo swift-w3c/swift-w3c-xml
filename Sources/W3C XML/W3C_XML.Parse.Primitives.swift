@@ -181,14 +181,12 @@ extension W3C_XML.Parse {
                 throw .unexpectedEndOfInput(expected: "entity or character reference")
             }
 
-            if next == ASCII.Code.numberSign.byte {
-
-                _ = input.next()
-                return try parseCharRef(&input)
-            } else {
+            guard next == ASCII.Code.numberSign.byte else {
 
                 return try parseEntityRef(&input)
             }
+            _ = input.next()
+            return try parseCharRef(&input)
         }
 
         @usableFromInline

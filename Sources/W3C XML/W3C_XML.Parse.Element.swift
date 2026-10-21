@@ -235,12 +235,11 @@ extension W3C_XML.Parse {
                 } else {
 
                     let text = CharData<Input>().parse(&input)
-                    if !text.isEmpty {
-                        appendText(&content, text)
-                    } else {
+                    guard !text.isEmpty else {
 
                         break
                     }
+                    appendText(&content, text)
                 }
             }
 

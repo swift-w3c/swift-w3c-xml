@@ -183,7 +183,7 @@ extension W3C_XML.Lexer {
             }
 
             if byte == ASCII.Code.lessThanSign.byte {
-                throw .invalidCharacter(Unicode.Scalar(UInt32(byte.bitPattern))!, at: position)
+                throw .invalidCharacter(Unicode.Scalar(byte.bitPattern), at: position)
             }
 
             if byte == ASCII.Code.ampersand.byte {
@@ -218,7 +218,7 @@ extension W3C_XML.Lexer {
         }
 
         guard byte == ASCII.Code.greaterThanSign.byte else {
-            throw .invalidCharacter(Unicode.Scalar(UInt32(byte.bitPattern))!, at: position)
+            throw .invalidCharacter(Unicode.Scalar(byte.bitPattern), at: position)
         }
 
         advance()
@@ -246,7 +246,7 @@ extension W3C_XML.Lexer {
             return try lexDoctype(startPos: startPos)
 
         default:
-            throw .invalidCharacter(Unicode.Scalar(UInt32(byte.bitPattern))!, at: position)
+            throw .invalidCharacter(Unicode.Scalar(byte.bitPattern), at: position)
         }
     }
 
@@ -268,7 +268,7 @@ extension W3C_XML.Lexer {
                     advance()
                     guard input.xmlPeek() == ASCII.Code.greaterThanSign.byte else {
                         throw .invalidCharacter(
-                            Unicode.Scalar(UInt32(input.xmlPeek()?.bitPattern ?? 0))!,
+                            Unicode.Scalar(input.xmlPeek()?.bitPattern ?? 0),
                             at: position
                         )
                     }
@@ -383,8 +383,7 @@ extension W3C_XML.Lexer {
         var text = ""
         var depth = 1
 
-        while !(input.xmlPeek() == nil) && depth > 0 {
-            let byte = input.xmlPeek()!
+        while let byte = input.xmlPeek(), depth > 0 {
 
             if byte == ASCII.Code.leftBracket.byte {
                 depth += 1
@@ -598,8 +597,10 @@ extension W3C_XML.Lexer {
     ) throws(Error) -> Unicode.Scalar {
         var refString = ""
 
-        if input.xmlPeek() == ASCII.Code.x.byte || input.xmlPeek() == ASCII.Code.X.byte {
-            refString.append(Character(UnicodeScalar(input.xmlPeek()!.underlying)))
+        if let first = input.xmlPeek(),
+            first == ASCII.Code.x.byte || first == ASCII.Code.X.byte
+        {
+            refString.append(Character(UnicodeScalar(first.underlying)))
             advance()
         }
 
@@ -658,12 +659,11 @@ extension W3C_XML.Lexer {
             } else if byte.bitPattern >= 0x80 {
 
                 let scalar = try consumeUTF8Scalar()
-                if W3C_XML.isNameChar(scalar) {
-                    name.append(Character(scalar))
-                } else {
+                guard W3C_XML.isNameChar(scalar) else {
 
                     break
                 }
+                name.append(Character(scalar))
             } else {
                 break
             }

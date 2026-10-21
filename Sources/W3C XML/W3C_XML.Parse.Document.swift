@@ -1,10 +1,9 @@
-import Machine
 import ASCII
 import Byte
-import Byte
 public import Cursor
-import Parser_Machine
+import Machine
 import Parser
+import Parser_Machine
 
 extension W3C_XML.Parse {
 
