@@ -1,5 +1,5 @@
 public import Buffer_Linear
-public import Buffer_Linear_Primitive
+internal import Buffer_Linear_Primitive
 import Byte
 public import Cursor
 import Ownership_Shared_Primitive
