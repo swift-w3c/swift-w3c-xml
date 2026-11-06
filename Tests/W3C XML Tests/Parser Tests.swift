@@ -259,7 +259,9 @@ struct ErrorHandlingTests {
     }
 }
 
-extension W3C_XML.Encoder {
+enum `W3C_XML.Encoder Tests` {}
+
+extension `W3C_XML.Encoder Tests` {
     @Suite("W3C_XML Encoder Tests")
     struct Test {
         @Test
@@ -524,7 +526,9 @@ struct TypeTests {
     }
 }
 
-extension W3C_XML {
+enum `W3C_XML Tests` {}
+
+extension `W3C_XML Tests` {
     @Suite("W3C_XML Character Validation Tests")
     struct Test {
         @Test
