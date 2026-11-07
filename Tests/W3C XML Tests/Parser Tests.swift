@@ -447,8 +447,8 @@ struct ParserEdgeCases {
     }
 }
 
-@Suite("W3C_XML Type Tests")
-struct TypeTests {
+@Suite
+struct `W3C_XML Type Tests` {
     @Test
     func `Name parses prefix and local`() {
         let name = W3C_XML.Name("prefix:local")
