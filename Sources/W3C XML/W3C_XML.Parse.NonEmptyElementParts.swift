@@ -1,4 +1,4 @@
-public import Cursor
+import Cursor
 import Machine
 import Parser
 import Parser_Machine
