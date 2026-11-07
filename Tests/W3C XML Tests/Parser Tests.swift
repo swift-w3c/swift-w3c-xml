@@ -364,165 +364,169 @@ extension `W3C_XML.Encoder Tests` {
     }
 }
 
-@Suite(
-    "W3C_XML Parser Edge Cases"
-)
-struct ParserEdgeCases {
-    @Test
-    func `Parse empty element with explicit close tag`() throws {
-        let doc = try W3C_XML.parse("<root></root>")
-        #expect(doc.root.content.isEmpty)
-    }
-
-    @Test
-    func `Parse whitespace-only content`() throws {
-        let doc = try W3C_XML.parse("<root>   \n\t  </root>")
-        #expect(doc.root.textContent == "   \n\t  ")
-    }
-
-    @Test
-    func `Parse mixed content`() throws {
-        let doc = try W3C_XML.parse("<root>text<b>bold</b>more</root>")
-        #expect(doc.root.content.count == 3)
-        #expect(doc.root.textContent == "textmore")
-        #expect(doc.root.child("b")?.textContent == "bold")
-    }
-
-    @Test
-    func `Parse attribute with single quotes`() throws {
-        let doc = try W3C_XML.parse("<root attr='value'/>")
-        #expect(doc.root.attribute("attr") == "value")
-    }
-
-    @Test
-    func `Parse empty attribute value`() throws {
-        let doc = try W3C_XML.parse(#"<root attr=""/>"#)
-        #expect(doc.root.attribute("attr")?.isEmpty == true)
-    }
-
-    @Test
-    func `Parse multiple attributes`() throws {
-        let doc = try W3C_XML.parse(#"<root a="1" b="2" c="3"/>"#)
-        #expect(doc.root.attributes.count == 3)
-        #expect(doc.root.attribute("a") == "1")
-        #expect(doc.root.attribute("b") == "2")
-        #expect(doc.root.attribute("c") == "3")
-    }
-
-    @Test
-    func `Parse nested elements 10 deep`() throws {
-        var xml = ""
-        for _ in 0..<10 {
-            xml += "<a>"
+extension `Parser Tests` {
+    @Suite(
+        "W3C_XML Parser Edge Cases"
+    )
+    struct ParserEdgeCases {
+        @Test
+        func `Parse empty element with explicit close tag`() throws {
+            let doc = try W3C_XML.parse("<root></root>")
+            #expect(doc.root.content.isEmpty)
         }
-        xml += "deep"
-        for _ in 0..<10 {
-            xml += "</a>"
+
+        @Test
+        func `Parse whitespace-only content`() throws {
+            let doc = try W3C_XML.parse("<root>   \n\t  </root>")
+            #expect(doc.root.textContent == "   \n\t  ")
         }
-        let doc = try W3C_XML.parse(xml)
-        #expect(doc.root.name.local == "a")
-    }
 
-    @Test
-    func `Parse adjacent text nodes`() throws {
+        @Test
+        func `Parse mixed content`() throws {
+            let doc = try W3C_XML.parse("<root>text<b>bold</b>more</root>")
+            #expect(doc.root.content.count == 3)
+            #expect(doc.root.textContent == "textmore")
+            #expect(doc.root.child("b")?.textContent == "bold")
+        }
 
-        let doc = try W3C_XML.parse("<root>a&amp;b</root>")
-        #expect(doc.root.textContent == "a&b")
-    }
+        @Test
+        func `Parse attribute with single quotes`() throws {
+            let doc = try W3C_XML.parse("<root attr='value'/>")
+            #expect(doc.root.attribute("attr") == "value")
+        }
 
-    @Test
-    func `Parse element with all content types`() throws {
-        let doc = try W3C_XML.parse(
-            """
-            <root>
-                text
-                <child/>
-                <![CDATA[cdata]]>
-                <!--comment-->
-                <?pi data?>
-            </root>
-            """
-        )
-        #expect(doc.root.content.count >= 5)
+        @Test
+        func `Parse empty attribute value`() throws {
+            let doc = try W3C_XML.parse(#"<root attr=""/>"#)
+            #expect(doc.root.attribute("attr")?.isEmpty == true)
+        }
+
+        @Test
+        func `Parse multiple attributes`() throws {
+            let doc = try W3C_XML.parse(#"<root a="1" b="2" c="3"/>"#)
+            #expect(doc.root.attributes.count == 3)
+            #expect(doc.root.attribute("a") == "1")
+            #expect(doc.root.attribute("b") == "2")
+            #expect(doc.root.attribute("c") == "3")
+        }
+
+        @Test
+        func `Parse nested elements 10 deep`() throws {
+            var xml = ""
+            for _ in 0..<10 {
+                xml += "<a>"
+            }
+            xml += "deep"
+            for _ in 0..<10 {
+                xml += "</a>"
+            }
+            let doc = try W3C_XML.parse(xml)
+            #expect(doc.root.name.local == "a")
+        }
+
+        @Test
+        func `Parse adjacent text nodes`() throws {
+
+            let doc = try W3C_XML.parse("<root>a&amp;b</root>")
+            #expect(doc.root.textContent == "a&b")
+        }
+
+        @Test
+        func `Parse element with all content types`() throws {
+            let doc = try W3C_XML.parse(
+                """
+                <root>
+                    text
+                    <child/>
+                    <![CDATA[cdata]]>
+                    <!--comment-->
+                    <?pi data?>
+                </root>
+                """
+            )
+            #expect(doc.root.content.count >= 5)
+        }
     }
 }
 
-@Suite
-struct `W3C_XML Type Tests` {
-    @Test
-    func `Name parses prefix and local`() {
-        let name = W3C_XML.Name("prefix:local")
-        #expect(name.prefix == "prefix")
-        #expect(name.local == "local")
-        #expect(name.qualified == "prefix:local")
-    }
+extension `Parser Tests` {
+    @Suite
+    struct `W3C_XML Type Tests` {
+        @Test
+        func `Name parses prefix and local`() {
+            let name = W3C_XML.Name("prefix:local")
+            #expect(name.prefix == "prefix")
+            #expect(name.local == "local")
+            #expect(name.qualified == "prefix:local")
+        }
 
-    @Test
-    func `Name without prefix`() {
-        let name = W3C_XML.Name("local")
-        #expect(name.prefix == nil)
-        #expect(name.local == "local")
-        #expect(name.qualified == "local")
-    }
+        @Test
+        func `Name without prefix`() {
+            let name = W3C_XML.Name("local")
+            #expect(name.prefix == nil)
+            #expect(name.local == "local")
+            #expect(name.qualified == "local")
+        }
 
-    @Test
-    func `Namespace equality`() {
-        let ns1 = W3C_XML.Namespace(prefix: "ex", uri: "http://example.com")
-        let ns2 = W3C_XML.Namespace(prefix: "ex", uri: "http://example.com")
-        #expect(ns1 == ns2)
-    }
+        @Test
+        func `Namespace equality`() {
+            let ns1 = W3C_XML.Namespace(prefix: "ex", uri: "http://example.com")
+            let ns2 = W3C_XML.Namespace(prefix: "ex", uri: "http://example.com")
+            #expect(ns1 == ns2)
+        }
 
-    @Test
-    func `Attribute equality`() {
-        let attr1 = W3C_XML.Attribute(name: "id", value: "123")
-        let attr2 = W3C_XML.Attribute(name: "id", value: "123")
-        #expect(attr1 == attr2)
-    }
+        @Test
+        func `Attribute equality`() {
+            let attr1 = W3C_XML.Attribute(name: "id", value: "123")
+            let attr2 = W3C_XML.Attribute(name: "id", value: "123")
+            #expect(attr1 == attr2)
+        }
 
-    @Test
-    func `Content element accessor`() {
-        let element = W3C_XML.Element(name: "child")
-        let content = W3C_XML.Content.element(element)
-        #expect(content.element?.name.local == "child")
-        #expect(content.isElement)
-    }
+        @Test
+        func `Content element accessor`() {
+            let element = W3C_XML.Element(name: "child")
+            let content = W3C_XML.Content.element(element)
+            #expect(content.element?.name.local == "child")
+            #expect(content.isElement)
+        }
 
-    @Test
-    func `Element children filter`() {
-        let element = W3C_XML.Element(
-            name: "root",
-            content: [
-                .element(W3C_XML.Element(name: "a")),
-                .text("text"),
-                .element(W3C_XML.Element(name: "b")),
-                .comment("comment"),
-            ]
-        )
-        #expect(element.children.count == 2)
-    }
+        @Test
+        func `Element children filter`() {
+            let element = W3C_XML.Element(
+                name: "root",
+                content: [
+                    .element(W3C_XML.Element(name: "a")),
+                    .text("text"),
+                    .element(W3C_XML.Element(name: "b")),
+                    .comment("comment"),
+                ]
+            )
+            #expect(element.children.count == 2)
+        }
 
-    @Test
-    func `Element subscript by name`() {
-        let element = W3C_XML.Element(
-            name: "root",
-            content: [.element(W3C_XML.Element(name: "child", content: [.text("value")]))]
-        )
-        #expect(element["child"]?.textContent == "value")
-        #expect(element["nonexistent"] == nil)
-    }
+        @Test
+        func `Element subscript by name`() {
+            let element = W3C_XML.Element(
+                name: "root",
+                content: [.element(W3C_XML.Element(name: "child", content: [.text("value")]))]
+            )
+            #expect(element["child"]?.textContent == "value")
+            #expect(element["nonexistent"] == nil)
+        }
 
-    @Test
-    func `Element subscript by index`() {
-        let element = W3C_XML.Element(
-            name: "root",
-            content: [
-                .element(W3C_XML.Element(name: "first")),
-                .element(W3C_XML.Element(name: "second")),
-            ]
-        )
-        #expect(element[0]?.name.local == "first")
-        #expect(element[1]?.name.local == "second")
-        #expect(element[99] == nil)
+        @Test
+        func `Element subscript by index`() {
+            let element = W3C_XML.Element(
+                name: "root",
+                content: [
+                    .element(W3C_XML.Element(name: "first")),
+                    .element(W3C_XML.Element(name: "second")),
+                ]
+            )
+            #expect(element[0]?.name.local == "first")
+            #expect(element[1]?.name.local == "second")
+            #expect(element[99] == nil)
+        }
     }
 }
 
