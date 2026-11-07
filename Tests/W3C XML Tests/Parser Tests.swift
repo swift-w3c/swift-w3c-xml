@@ -599,11 +599,11 @@ struct DeepNestingTests {
     @Test
     func `Parse 1000-level deep nesting without stack overflow`() throws {
         var xml = ""
-        for i in 0..<1000 {
+        (0..<1000).forEach { i in
             xml += "<level\(i)>"
         }
         xml += "deep"
-        for i in (0..<1000).reversed() {
+        (0..<1000).reversed().forEach { i in
             xml += "</level\(i)>"
         }
 
@@ -611,7 +611,7 @@ struct DeepNestingTests {
         #expect(doc.root.name.local == "level0")
 
         var current: W3C_XML.Element? = doc.root
-        for i in 1..<1000 {
+        (1..<1000).forEach { i in
             current = current?.child("level\(i)")
             #expect(current != nil, "Missing level\(i)")
         }
@@ -621,11 +621,11 @@ struct DeepNestingTests {
     @Test
     func `Parse 500-level deep nesting with attributes`() throws {
         var xml = ""
-        for i in 0..<500 {
+        (0..<500).forEach { i in
             xml += #"<level\#(i) id="\#(i)">"#
         }
         xml += "bottom"
-        for i in (0..<500).reversed() {
+        (0..<500).reversed().forEach { i in
             xml += "</level\(i)>"
         }
 
@@ -633,7 +633,7 @@ struct DeepNestingTests {
         #expect(doc.root.attribute("id") == "0")
 
         var current: W3C_XML.Element? = doc.root
-        for i in 1..<500 {
+        (1..<500).forEach { i in
             current = current?.child("level\(i)")
             #expect(current?.attribute("id") == "\(i)")
         }
@@ -642,11 +642,11 @@ struct DeepNestingTests {
     @Test
     func `Depth limit is enforced`() {
         var xml = ""
-        for i in 0..<600 {
+        (0..<600).forEach { i in
             xml += "<a\(i)>"
         }
         xml += "x"
-        for i in (0..<600).reversed() {
+        (0..<600).reversed().forEach { i in
             xml += "</a\(i)>"
         }
 
