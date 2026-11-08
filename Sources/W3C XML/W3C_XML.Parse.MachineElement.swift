@@ -1,4 +1,4 @@
-import Cursor
+public import Cursor
 import Machine
 import Parser
 import Parser_Machine
@@ -26,13 +26,136 @@ extension W3C_XML.Parse {
         }
     }
 
+    @usableFromInline
+    struct StartTag<Input: Cursor.`Protocol`>: Parser::Parsing,
+        Sendable
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
+
+        @usableFromInline typealias Output = StartTagOutput
+        @usableFromInline typealias Failure = W3C_XML.Parse.Error
+
+        @usableFromInline
+        init() {}
+
+        @usableFromInline
+        func parse(_ input: inout Input) throws(Failure) -> Output {
+
+            guard input.xmlPeek() == ASCII.Code.lessThanSign.byte else {
+                throw .expected("<")
+            }
+            _ = input.next()
+
+            let name = try Name<Input>().parse(&input)
+
+            var attributes: [W3C_XML.Attribute] = []
+            var namespaces: [W3C_XML.Namespace] = []
+            var seenAttributes: Swift::Set<String> = Swift::Set()
+
+            while true {
+                Whitespace<Input>().parse(&input)
+
+                guard let byte = input.xmlPeek() else {
+                    throw .unexpectedEndOfInput(expected: "> or />")
+                }
+
+                if byte == ASCII.Code.greaterThanSign.byte {
+                    _ = input.next()
+                    return StartTagOutput(
+                        name: name,
+                        attributes: attributes,
+                        namespaces: namespaces,
+                        isEmpty: false
+                    )
+                }
+
+                if byte == ASCII.Code.solidus.byte {
+                    _ = input.next()
+                    guard input.xmlPeek() == ASCII.Code.greaterThanSign.byte else {
+                        throw .expected(">")
+                    }
+                    _ = input.next()
+                    return StartTagOutput(
+                        name: name,
+                        attributes: attributes,
+                        namespaces: namespaces,
+                        isEmpty: true
+                    )
+                }
+
+                let attr = try Attribute<Input>().parse(&input)
+
+                if attr.name.qualified == "xmlns" {
+                    namespaces.append(W3C_XML.Namespace(prefix: nil, uri: attr.value))
+                } else if attr.name.prefix == "xmlns" {
+                    namespaces.append(W3C_XML.Namespace(prefix: attr.name.local, uri: attr.value))
+                } else {
+
+                    guard !seenAttributes.contains(attr.name.qualified) else {
+                        throw .duplicateAttribute(name: attr.name.qualified)
+                    }
+                    seenAttributes.insert(attr.name.qualified)
+                    attributes.append(attr)
+                }
+            }
+        }
+    }
 }
 
 extension W3C_XML.Parse {
+
+    @usableFromInline
+    struct EndTagAny<Input: Cursor.`Protocol`>: Parser::Parsing,
+        Sendable
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
+
+        @usableFromInline typealias Output = W3C_XML.Name
+        @usableFromInline typealias Failure = W3C_XML.Parse.Error
+
+        @usableFromInline
+        init() {}
+
+        @usableFromInline
+        func parse(_ input: inout Input) throws(Failure) -> W3C_XML.Name {
+
+            guard input.xmlPeek() == ASCII.Code.lessThanSign.byte else {
+                throw .expected("</")
+            }
+            _ = input.next()
+
+            guard input.xmlPeek() == ASCII.Code.solidus.byte else {
+                throw .expected("</")
+            }
+            _ = input.next()
+
+            let endName = try Name<Input>().parse(&input)
+
+            Whitespace<Input>().parse(&input)
+
+            guard input.xmlPeek() == ASCII.Code.greaterThanSign.byte else {
+                throw .expected(">")
+            }
+            _ = input.next()
+
+            return endName
+        }
+    }
 }
 
 extension W3C_XML.Parse {
 
+    @usableFromInline
+    struct NonEmptyElementParts: Sendable {
+        @usableFromInline let start: StartTagOutput
+        @usableFromInline let content: [W3C_XML.Content]
+        @usableFromInline let endName: W3C_XML.Name
+
+        @usableFromInline
+        init(start: StartTagOutput, content: [W3C_XML.Content], endName: W3C_XML.Name) {
+            self.start = start
+            self.content = content
+            self.endName = endName
+        }
+    }
 
     static func machineElement<Input: Cursor.`Protocol`>(
         maxDepth: Int = 10000
@@ -180,4 +303,52 @@ extension W3C_XML.Parse {
 }
 
 extension W3C_XML.Parse {
+
+    @usableFromInline
+    struct NonEmptyTextContent<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
+    where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
+
+        @usableFromInline typealias Output = String
+        @usableFromInline typealias Failure = W3C_XML.Parse.Error
+
+        @usableFromInline
+        init() {}
+
+        @usableFromInline
+        func parse(_ input: inout Input) throws(Failure) -> String {
+            var result: [Byte] = []
+            var iterationCount = 0
+            let maxIterations = 1_000_000
+
+            while let byte = input.xmlPeek() {
+                iterationCount += 1
+                precondition(
+                    iterationCount < maxIterations,
+                    "NonEmptyTextContent: runaway loop detected"
+                )
+
+                if byte == ASCII.Code.lessThanSign.byte {
+
+                    break
+                } else if byte == ASCII.Code.ampersand.byte {
+
+                    let resolved = try Reference<Input>().parse(&input)
+                    result.append(contentsOf: resolved.utf8.map(Byte.init(bitPattern:)))
+                } else {
+
+                    let text = CharData<Input>().parse(&input)
+                    if text.isEmpty {
+                        break
+                    }
+                    result.append(contentsOf: text.utf8.map(Byte.init(bitPattern:)))
+                }
+            }
+
+            guard !result.isEmpty else {
+                throw .expected("text content")
+            }
+
+            return String(decoding: result, as: UTF8.self)
+        }
+    }
 }
