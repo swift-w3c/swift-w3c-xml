@@ -1,4 +1,4 @@
-public import Cursor
+import Cursor
 import Parser
 
 
