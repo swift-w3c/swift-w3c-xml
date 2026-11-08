@@ -3,10 +3,6 @@ import Byte
 public import Cursor
 import Parser
 
-import ASCII
-import Byte
-public import Cursor
-import Parser
 
 extension W3C_XML.Parse {
     public struct RequiredWhitespace<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable

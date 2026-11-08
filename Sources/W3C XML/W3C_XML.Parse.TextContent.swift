@@ -1,8 +1,6 @@
 public import Cursor
 import Parser
 
-public import Cursor
-import Parser
 
 extension W3C_XML.Parse {
     public struct TextContent<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable

@@ -3,10 +3,6 @@ import Machine
 import Parser
 import Parser_Machine
 
-public import Cursor
-import Machine
-import Parser
-import Parser_Machine
 
 extension W3C_XML.Parse {
     @usableFromInline
