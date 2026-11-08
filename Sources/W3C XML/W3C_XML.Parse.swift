@@ -8,6 +8,19 @@ extension W3C_XML {
 }
 
 extension W3C_XML.Parse {
+
+    public struct Depth: Sendable, Hashable {
+
+        public let value: Int
+
+        public let limit: Int
+
+        @inlinable
+        public init(value: Int = 0, limit: Int = 512) {
+            self.value = value
+            self.limit = limit
+        }
+    }
 }
 
 extension W3C_XML.Parse.Depth {
@@ -24,6 +37,29 @@ extension W3C_XML.Parse.Depth {
 }
 
 extension W3C_XML.Parse {
+
+    public enum Error: Swift::Error, Sendable, Hashable {
+
+        case depthExceeded(limit: Int)
+
+        case expected(String)
+
+        case mismatchedTags(open: String, close: String)
+
+        case invalidName
+
+        case invalidCharacterReference(String)
+
+        case unknownEntity(String)
+
+        case unexpectedEndOfInput(expected: String)
+
+        case duplicateAttribute(name: String)
+
+        case multipleRootElements
+
+        case missingRootElement
+    }
 }
 
 extension W3C_XML.Parse.Error: CustomStringConvertible {
