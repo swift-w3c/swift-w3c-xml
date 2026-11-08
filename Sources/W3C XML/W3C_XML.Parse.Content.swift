@@ -2,54 +2,51 @@ public import Cursor
 import Parser
 
 extension W3C_XML.Parse {
-
     public struct CharData<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
     where Input: Sendable, Input.Element == Byte, Input.Failure == Never {
-
-        public typealias Output = String
-        public typealias Failure = Never
-
         @inlinable
         public init() {}
+    }
+}
 
-        @inlinable
-        public func parse(_ input: inout Input) -> Output {
-            var bytes: [Byte] = []
+extension W3C_XML.Parse.CharData {
+    public typealias Output = String
 
-            while let byte = input.xmlPeek() {
+    public typealias Failure = Never
 
-                if byte == ASCII.Code.lessThanSign.byte || byte == ASCII.Code.ampersand.byte {
-                    break
-                }
+    @inlinable
+    public func parse(_ input: inout Input) -> Output {
+        var bytes: [Byte] = []
 
-                if byte == ASCII.Code.rightBracket.byte {
+        while let byte = input.xmlPeek() {
+            if byte == ASCII.Code.lessThanSign.byte || byte == ASCII.Code.ampersand.byte {
+                break
+            }
 
-                    let saved = input.checkpoint
+            if byte == ASCII.Code.rightBracket.byte {
+                let saved = input.checkpoint
+                _ = input.next()
+                if input.xmlPeek() == ASCII.Code.rightBracket.byte {
                     _ = input.next()
-                    if input.xmlPeek() == ASCII.Code.rightBracket.byte {
-                        _ = input.next()
-                        if input.xmlPeek() == ASCII.Code.greaterThanSign.byte {
-
-                            input.seek(to: saved)
-                            break
-                        }
-
-                        bytes.append(ASCII.Code.rightBracket.byte)
-                        bytes.append(ASCII.Code.rightBracket.byte)
-                        continue
+                    if input.xmlPeek() == ASCII.Code.greaterThanSign.byte {
+                        input.seek(to: saved)
+                        break
                     }
 
                     bytes.append(ASCII.Code.rightBracket.byte)
+                    bytes.append(ASCII.Code.rightBracket.byte)
                     continue
                 }
-                bytes.append(byte)
-                _ = input.next()
+
+                bytes.append(ASCII.Code.rightBracket.byte)
+                continue
             }
-
-            return String(decoding: bytes, as: UTF8.self)
+            bytes.append(byte)
+            _ = input.next()
         }
+
+        return String(decoding: bytes, as: UTF8.self)
     }
-
 }
 
 extension W3C_XML.Parse {
@@ -62,7 +59,6 @@ extension W3C_XML.Parse {
 }
 
 extension W3C_XML.Parse {
-
     @inlinable
     package static func expectLiteral<Input: Cursor.`Protocol`>(
         _ input: inout Input,
