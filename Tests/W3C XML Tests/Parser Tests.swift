@@ -262,7 +262,7 @@ struct ErrorHandlingTests {
 enum `W3C_XML.Encoder Tests` {}
 
 extension `W3C_XML.Encoder Tests` {
-    @Suite("W3C_XML Encoder Tests")
+    @Suite
     struct Test {
         @Test
         func `Encode empty element`() {
@@ -533,7 +533,7 @@ extension `Parser Tests` {
 enum `W3C_XML Tests` {}
 
 extension `W3C_XML Tests` {
-    @Suite("W3C_XML Character Validation Tests")
+    @Suite
     struct Test {
         @Test
         func `isWhitespace`() {
