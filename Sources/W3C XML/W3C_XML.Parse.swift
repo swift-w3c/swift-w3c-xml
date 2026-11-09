@@ -59,6 +59,18 @@ extension W3C_XML.Parse {
         case multipleRootElements
 
         case missingRootElement
+
+        /// A reference to an external or unparsed entity, which is never resolved.
+        case externalEntity(String)
+
+        /// An entity whose replacement text references itself, directly or indirectly.
+        case recursiveEntity(String)
+
+        /// Entity references nested deeper than ``W3C_XML/Entity/Limits/depth``.
+        case entityDepthExceeded(limit: Int)
+
+        /// Entity expansions producing more than ``W3C_XML/Entity/Limits/expandedBytes``.
+        case entityExpansionExceeded(limit: Int)
     }
 }
 
@@ -94,6 +106,18 @@ extension W3C_XML.Parse.Error: CustomStringConvertible {
 
         case .missingRootElement:
             return "Missing root element"
+
+        case .externalEntity(let name):
+            return "External entity reference is not resolved: &\(name);"
+
+        case .recursiveEntity(let name):
+            return "Recursive entity reference: &\(name);"
+
+        case .entityDepthExceeded(let limit):
+            return "Entity references nested deeper than \(limit)"
+
+        case .entityExpansionExceeded(let limit):
+            return "Entity expansion exceeds \(limit) bytes"
         }
     }
 }

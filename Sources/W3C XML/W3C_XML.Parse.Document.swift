@@ -377,26 +377,33 @@ extension W3C_XML.Parse {
 
 extension W3C_XML {
 
+    /// Parses a document, including the replacement text of general entities declared in
+    /// its internal DTD subset within `entityLimits`. External entities are never resolved.
     public static func parse(
         _ string: String,
-        maxDepth: Int = 10000
+        maxDepth: Int = 10000,
+        entityLimits: Entity.Limits = Entity.Limits()
     ) throws(Parse.Error) -> Document {
         var input = [Byte](utf8: String(string))[...]
-        return try parseDocument(&input, maxDepth: maxDepth)
+        return try parseDocument(&input, maxDepth: maxDepth, entityLimits: entityLimits)
     }
 
+    /// Parses a document, including the replacement text of general entities declared in
+    /// its internal DTD subset within `entityLimits`. External entities are never resolved.
     public static func parse<Bytes>(
         _ bytes: Bytes,
-        maxDepth: Int = 10000
+        maxDepth: Int = 10000,
+        entityLimits: Entity.Limits = Entity.Limits()
     ) throws(Parse.Error) -> Document
     where Bytes: Swift::Collection<UInt8>, Bytes: Sendable {
         var input = [Byte](bitPatterns: bytes)[...]
-        return try parseDocument(&input, maxDepth: maxDepth)
+        return try parseDocument(&input, maxDepth: maxDepth, entityLimits: entityLimits)
     }
 
     static func parseDocument(
         _ input: inout ArraySlice<Byte>,
-        maxDepth: Int
+        maxDepth: Int,
+        entityLimits: Entity.Limits
     ) throws(Parse.Error) -> Document {
         Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
 
@@ -430,6 +437,19 @@ extension W3C_XML {
                 throw .expected("comment or DOCTYPE")
             } else {
                 break
+            }
+        }
+
+        if let subset = doctype?.internalSubset {
+            let declarations = try Entity.Declarations(subset: subset)
+            if !declarations.isEmpty {
+                var expansion = Entity.Expansion(
+                    declarations: declarations,
+                    limits: entityLimits,
+                    maxDepth: maxDepth
+                )
+                let expanded = try expansion.markup(input.map(\.bitPattern))
+                input = expanded.map(Byte.init(bitPattern:))[...]
             }
         }
 
