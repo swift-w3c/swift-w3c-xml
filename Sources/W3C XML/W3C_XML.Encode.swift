@@ -172,6 +172,8 @@ extension W3C_XML.Encoder {
         buffer.append(ASCII.Code.greaterThanSign.byte.underlying)
     }
 
+    /// Writes a processing instruction, separating each `?>` in its data with a space,
+    /// since the data cannot contain it and has no escape.
     @inlinable
     package mutating func encodeInstruction<Buffer: RangeReplaceableCollection>(
         _ instruction: W3C_XML.Instruction,
@@ -184,7 +186,16 @@ extension W3C_XML.Encoder {
 
         if let data = instruction.data {
             buffer.append(ASCII.Code.sp.byte.underlying)
-            buffer.append(contentsOf: Swift::Array(data.utf8))
+            var previous: UInt8?
+            for byte in data.utf8 {
+                if byte == ASCII.Code.greaterThanSign.byte.underlying,
+                    previous == ASCII.Code.questionMark.byte.underlying
+                {
+                    buffer.append(ASCII.Code.sp.byte.underlying)
+                }
+                buffer.append(byte)
+                previous = byte
+            }
         }
 
         buffer.append(contentsOf: [
@@ -274,18 +285,54 @@ extension W3C_XML.Encoder {
             encodeText(text, into: &buffer)
 
         case .cdata(let text):
-            buffer.append(contentsOf: Swift::Array("<![CDATA[".utf8))
-            buffer.append(contentsOf: Swift::Array(text.utf8))
-            buffer.append(contentsOf: Swift::Array("]]>".utf8))
+            encodeCDATA(text, into: &buffer)
 
         case .comment(let text):
-            buffer.append(contentsOf: Swift::Array("<!--".utf8))
-            buffer.append(contentsOf: Swift::Array(text.utf8))
-            buffer.append(contentsOf: Swift::Array("-->".utf8))
+            encodeComment(text, into: &buffer)
 
         case .instruction(let pi):
             encodeInstruction(pi, into: &buffer)
         }
+    }
+
+    /// Writes a CDATA section, splitting it around each `]]>` so the text never ends the section early.
+    @inlinable
+    package mutating func encodeCDATA<Buffer: RangeReplaceableCollection>(
+        _ text: String,
+        into buffer: inout Buffer
+    ) where Buffer.Element == UInt8 {
+        buffer.append(contentsOf: Swift::Array("<![CDATA[".utf8))
+        var brackets = 0
+        for byte in text.utf8 {
+            if byte == ASCII.Code.greaterThanSign.byte.underlying, brackets >= 2 {
+                buffer.append(contentsOf: Swift::Array("]]><![CDATA[".utf8))
+            }
+            buffer.append(byte)
+            brackets = byte == ASCII.Code.rightBracket.byte.underlying ? brackets + 1 : 0
+        }
+        buffer.append(contentsOf: Swift::Array("]]>".utf8))
+    }
+
+    /// Writes a comment, separating each `--` and a final `-` with a space,
+    /// since a comment cannot contain them and has no escape.
+    @inlinable
+    package mutating func encodeComment<Buffer: RangeReplaceableCollection>(
+        _ text: String,
+        into buffer: inout Buffer
+    ) where Buffer.Element == UInt8 {
+        buffer.append(contentsOf: Swift::Array("<!--".utf8))
+        var previous: UInt8?
+        for byte in text.utf8 {
+            if byte == ASCII.Code.hyphen.byte.underlying, previous == ASCII.Code.hyphen.byte.underlying {
+                buffer.append(ASCII.Code.sp.byte.underlying)
+            }
+            buffer.append(byte)
+            previous = byte
+        }
+        if previous == ASCII.Code.hyphen.byte.underlying {
+            buffer.append(ASCII.Code.sp.byte.underlying)
+        }
+        buffer.append(contentsOf: Swift::Array("-->".utf8))
     }
 
     @inlinable
