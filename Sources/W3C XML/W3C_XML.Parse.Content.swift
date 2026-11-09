@@ -61,7 +61,7 @@ extension W3C_XML.Parse {
 
         @inlinable
         public func parse(_ input: inout Input) throws(Failure) -> Output {
-            var result = ""
+            var bytes: [Byte] = []
 
             while let byte = input.xmlPeek() {
                 if byte == ASCII.Code.lessThanSign.byte {
@@ -69,14 +69,14 @@ extension W3C_XML.Parse {
                 } else if byte == ASCII.Code.ampersand.byte {
 
                     let resolved = try Reference<Input>().parse(&input)
-                    result += resolved
+                    bytes.append(contentsOf: resolved.utf8.map(Byte.init(bitPattern:)))
                 } else {
 
-                    result.append(Character(UnicodeScalar(try input.xmlTake(expected: "character").bitPattern)))
+                    bytes.append(try input.xmlTake(expected: "character"))
                 }
             }
 
-            return result
+            return String(decoding: bytes, as: UTF8.self)
         }
     }
 }
