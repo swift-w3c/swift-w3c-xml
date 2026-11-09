@@ -317,16 +317,8 @@ extension W3C_XML.Parse {
         @usableFromInline
         func parse(_ input: inout Input) throws(Failure) -> String {
             var result: [Byte] = []
-            var iterationCount = 0
-            let maxIterations = 1_000_000
 
             while let byte = input.xmlPeek() {
-                iterationCount += 1
-                precondition(
-                    iterationCount < maxIterations,
-                    "NonEmptyTextContent: runaway loop detected"
-                )
-
                 if byte == ASCII.Code.lessThanSign.byte {
 
                     break
