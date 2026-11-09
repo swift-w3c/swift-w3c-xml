@@ -486,7 +486,7 @@ extension W3C_XML {
         maxDepth: Int = 10000
     ) throws(Parse.Error) -> Document
     where Bytes: Swift::Collection<UInt8>, Bytes: Sendable {
-        var input = bytes.map(Byte.init(bitPattern:))[...]
+        var input = [Byte](bitPatterns: bytes)[...]
 
         Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
 
