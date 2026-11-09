@@ -152,22 +152,27 @@ extension W3C_XML.Parse {
             if input.xmlPeek() == ASCII.Code.leftBracket.byte {
                 _ = input.next()
                 var bytes: [Byte] = []
-                var depth = 1
 
-                while depth > 0 {
+                while true {
                     guard let byte = input.xmlPeek() else {
                         throw .unexpectedEndOfInput(expected: "]")
                     }
-                    if byte == ASCII.Code.leftBracket.byte {
-                        depth += 1
-                    } else if byte == ASCII.Code.rightBracket.byte {
-                        depth -= 1
-                        if depth == 0 {
-                            _ = input.next()
-                            break
-                        }
+                    if byte == ASCII.Code.rightBracket.byte {
+                        _ = input.next()
+                        break
                     }
-                    bytes.append(try input.xmlTake(expected: "character"))
+                    if byte == ASCII.Code.quotationMark.byte || byte == ASCII.Code.apostrophe.byte {
+                        bytes.append(try input.xmlTake(expected: "character"))
+                        try copy(&input, through: [byte], into: &bytes)
+                    } else if matchLiteral(&input, "<!--") {
+                        bytes.append(contentsOf: [Byte](utf8: "<!--"))
+                        try copy(&input, through: [Byte](utf8: "-->"), into: &bytes)
+                    } else if matchLiteral(&input, "<?") {
+                        bytes.append(contentsOf: [Byte](utf8: "<?"))
+                        try copy(&input, through: [Byte](utf8: "?>"), into: &bytes)
+                    } else {
+                        bytes.append(try input.xmlTake(expected: "character"))
+                    }
                 }
                 internalSubset = String(decoding: bytes, as: UTF8.self)
             }
@@ -185,6 +190,21 @@ extension W3C_XML.Parse {
                 systemID: systemID,
                 internalSubset: internalSubset
             )
+        }
+
+        @inlinable
+        package func copy(
+            _ input: inout Input,
+            through terminator: [Byte],
+            into bytes: inout [Byte]
+        ) throws(Failure) {
+            let expected = String(decoding: terminator, as: UTF8.self)
+            let start = bytes.count
+            while true {
+                bytes.append(try input.xmlTake(expected: expected))
+                guard bytes.count - start >= terminator.count else { continue }
+                if bytes[(bytes.count - terminator.count)...].elementsEqual(terminator) { return }
+            }
         }
 
         @inlinable
@@ -246,7 +266,7 @@ extension W3C_XML.Parse {
         public func parse(_ input: inout Input) throws(Failure) -> Output {
             var declaration: W3C_XML.Declaration? = nil
             var doctype: W3C_XML.Doctype? = nil
-            var prologue: [W3C_XML.Instruction] = []
+            var prologue: [W3C_XML.Content] = []
             var root: W3C_XML.Element? = nil
             var epilogue: [W3C_XML.Content] = []
 
@@ -271,7 +291,7 @@ extension W3C_XML.Parse {
                         } else {
                             let pi = try ProcessingInstruction<Input>().parse(&input)
                             if root == nil {
-                                prologue.append(pi)
+                                prologue.append(.instruction(pi))
                             } else {
                                 epilogue.append(.instruction(pi))
                             }
@@ -288,7 +308,9 @@ extension W3C_XML.Parse {
 
                             input.seek(to: saved)
                             let text = try Comment<Input>().parse(&input)
-                            if root != nil {
+                            if root == nil {
+                                prologue.append(.comment(text))
+                            } else {
                                 epilogue.append(.comment(text))
                             }
 
@@ -360,63 +382,53 @@ extension W3C_XML {
         maxDepth: Int = 10000
     ) throws(Parse.Error) -> Document {
         var input = [Byte](utf8: String(string))[...]
+        return try parseDocument(&input, maxDepth: maxDepth)
+    }
 
+    public static func parse<Bytes>(
+        _ bytes: Bytes,
+        maxDepth: Int = 10000
+    ) throws(Parse.Error) -> Document
+    where Bytes: Swift::Collection<UInt8>, Bytes: Sendable {
+        var input = [Byte](bitPatterns: bytes)[...]
+        return try parseDocument(&input, maxDepth: maxDepth)
+    }
+
+    static func parseDocument(
+        _ input: inout ArraySlice<Byte>,
+        maxDepth: Int
+    ) throws(Parse.Error) -> Document {
         Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
 
         var declaration: Declaration?
-        if let byte = input.xmlPeek(), byte == ASCII.Code.lessThanSign.byte {
-            let saved = input.checkpoint
-            _ = input.next()
-            if let next = input.xmlPeek(), next == ASCII.Code.questionMark.byte {
-                input.seek(to: saved)
-                do {
-                    declaration = try Parse.XMLDeclaration<ArraySlice<Byte>>().parse(&input)
-                } catch {
-
-                    input.seek(to: saved)
-                }
-            } else {
-                input.seek(to: saved)
-            }
+        if Parse.Document<ArraySlice<Byte>>().isXMLDeclaration(&input) {
+            declaration = try Parse.XMLDeclaration<ArraySlice<Byte>>().parse(&input)
         }
 
-        var prologue: [Instruction] = []
+        var doctype: Doctype?
+        var prologue: [Content] = []
         while true {
             Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
-            guard let byte = input.xmlPeek(), byte == ASCII.Code.lessThanSign.byte else { break }
+            guard let byte = input.xmlPeek() else { throw .missingRootElement }
+            guard byte == ASCII.Code.lessThanSign.byte else { throw .expected("<") }
 
             let saved = input.checkpoint
             _ = input.next()
-            guard let next = input.xmlPeek() else {
-                input.seek(to: saved)
-                break
-            }
+            let next = input.xmlPeek()
+            _ = input.next()
+            let third = input.xmlPeek()
+            input.seek(to: saved)
 
             if next == ASCII.Code.questionMark.byte {
-
-                input.seek(to: saved)
-                do {
-                    let pi = try Parse.ProcessingInstruction<ArraySlice<Byte>>().parse(&input)
-                    prologue.append(pi)
-                    continue
-                } catch {
-                    input.seek(to: saved)
-                    break
-                }
+                prologue.append(.instruction(try Parse.ProcessingInstruction<ArraySlice<Byte>>().parse(&input)))
+            } else if next == ASCII.Code.exclamationPoint.byte, third == ASCII.Code.hyphen.byte {
+                prologue.append(.comment(try Parse.Comment<ArraySlice<Byte>>().parse(&input)))
+            } else if next == ASCII.Code.exclamationPoint.byte, third == ASCII.Code.D.byte {
+                guard doctype == nil else { throw .expected("one DOCTYPE") }
+                doctype = try Parse.Doctype<ArraySlice<Byte>>().parse(&input)
             } else if next == ASCII.Code.exclamationPoint.byte {
-
-                input.seek(to: saved)
-
-                do {
-                    _ = try Parse.Comment<ArraySlice<Byte>>().parse(&input)
-                    continue
-                } catch {
-                    input.seek(to: saved)
-                    break
-                }
+                throw .expected("comment or DOCTYPE")
             } else {
-
-                input.seek(to: saved)
                 break
             }
         }
@@ -429,97 +441,29 @@ extension W3C_XML {
         var epilogue: [Content] = []
         while true {
             Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
-            guard let byte = input.xmlPeek(), byte == ASCII.Code.lessThanSign.byte else { break }
+            guard let byte = input.xmlPeek() else { break }
+            guard byte == ASCII.Code.lessThanSign.byte else { throw .expected("end of input") }
 
             let saved = input.checkpoint
             _ = input.next()
-            guard let next = input.xmlPeek() else {
-                input.seek(to: saved)
-                break
-            }
+            let next = input.xmlPeek()
+            input.seek(to: saved)
 
             if next == ASCII.Code.questionMark.byte {
-
-                input.seek(to: saved)
-                do {
-                    let pi = try Parse.ProcessingInstruction<ArraySlice<Byte>>().parse(&input)
-                    epilogue.append(.instruction(pi))
-                    continue
-                } catch {
-                    input.seek(to: saved)
-                    break
-                }
+                epilogue.append(.instruction(try Parse.ProcessingInstruction<ArraySlice<Byte>>().parse(&input)))
             } else if next == ASCII.Code.exclamationPoint.byte {
-
-                input.seek(to: saved)
-                do {
-                    let comment = try Parse.Comment<ArraySlice<Byte>>().parse(&input)
-                    epilogue.append(.comment(comment))
-                    continue
-                } catch {
-                    input.seek(to: saved)
-                    break
-                }
+                epilogue.append(.comment(try Parse.Comment<ArraySlice<Byte>>().parse(&input)))
             } else {
-
-                input.seek(to: saved)
-                throw Parse.Error.expected("end of input (multiple root elements not allowed)")
+                throw .multipleRootElements
             }
-        }
-
-        Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
-        if !(input.xmlPeek() == nil) {
-            throw Parse.Error.expected("end of input (multiple root elements not allowed)")
         }
 
         return Document(
             declaration: declaration,
-            doctype: nil,
+            doctype: doctype,
             root: root,
             prologue: prologue,
             epilogue: epilogue
-        )
-    }
-
-    public static func parse<Bytes>(
-        _ bytes: Bytes,
-        maxDepth: Int = 10000
-    ) throws(Parse.Error) -> Document
-    where Bytes: Swift::Collection<UInt8>, Bytes: Sendable {
-        var input = [Byte](bitPatterns: bytes)[...]
-
-        Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
-
-        var declaration: Declaration?
-        if let byte = input.xmlPeek(), byte == ASCII.Code.lessThanSign.byte {
-            let saved = input.checkpoint
-            _ = input.next()
-            if let next = input.xmlPeek(), next == ASCII.Code.questionMark.byte {
-                input.seek(to: saved)
-                do {
-                    declaration = try Parse.XMLDeclaration<ArraySlice<Byte>>().parse(&input)
-                } catch {
-
-                    input.seek(to: saved)
-                }
-            } else {
-                input.seek(to: saved)
-            }
-        }
-
-        Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
-
-        let machineParser =
-            Parse.machineElement(maxDepth: maxDepth)
-            as Machine::Machine.Parser.Parser<ArraySlice<Byte>, Element, Parse.Error>
-        let root = try machineParser.parse(&input)
-
-        return Document(
-            declaration: declaration,
-            doctype: nil,
-            root: root,
-            prologue: [],
-            epilogue: []
         )
     }
 

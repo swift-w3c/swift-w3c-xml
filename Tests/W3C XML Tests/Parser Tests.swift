@@ -97,7 +97,7 @@ struct `Parser Tests` {
             """
         )
         #expect(doc.prologue.count == 1)
-        #expect(doc.prologue[0].target == "xml-stylesheet")
+        #expect(doc.prologue[0].instruction?.target == "xml-stylesheet")
     }
 
     @Test

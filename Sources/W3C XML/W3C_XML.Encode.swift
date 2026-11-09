@@ -95,8 +95,8 @@ extension W3C_XML.Encoder {
             }
         }
 
-        for instruction in document.prologue {
-            encodeInstruction(instruction, into: &buffer)
+        for content in document.prologue {
+            encodeContent(content, into: &buffer)
             if options.prettyPrint {
                 buffer.append(ASCII.Code.lf.byte.underlying)
             }

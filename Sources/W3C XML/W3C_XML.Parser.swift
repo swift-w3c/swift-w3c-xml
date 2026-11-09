@@ -47,7 +47,7 @@ extension W3C_XML.Parser {
     public mutating func parse() throws(Error) -> W3C_XML.Document {
         var declaration: W3C_XML.Declaration?
         var doctype: W3C_XML.Doctype?
-        var prologue: [W3C_XML.Instruction] = []
+        var prologue: [W3C_XML.Content] = []
         var root: W3C_XML.Element?
         var epilogue: [W3C_XML.Content] = []
 
@@ -61,13 +61,15 @@ extension W3C_XML.Parser {
 
             case .instruction(let pi):
                 if root == nil {
-                    prologue.append(pi)
+                    prologue.append(.instruction(pi))
                 } else {
                     epilogue.append(.instruction(pi))
                 }
 
             case .comment(let text):
-                if root != nil {
+                if root == nil {
+                    prologue.append(.comment(text))
+                } else {
                     epilogue.append(.comment(text))
                 }
 

@@ -8,7 +8,8 @@ extension W3C_XML {
 
         public var root: Element
 
-        public var prologue: [Instruction]
+        /// The comments and processing instructions between the declaration and the root, in order.
+        public var prologue: [Content]
 
         public var epilogue: [Content]
 
@@ -17,7 +18,7 @@ extension W3C_XML {
             declaration: Declaration? = nil,
             doctype: Doctype? = nil,
             root: Element,
-            prologue: [Instruction] = [],
+            prologue: [Content] = [],
             epilogue: [Content] = []
         ) {
             self.declaration = declaration
@@ -43,8 +44,8 @@ extension W3C_XML.Document: CustomStringConvertible {
             result += "\n"
         }
 
-        for instruction in prologue {
-            result += instruction.description
+        for item in prologue {
+            result += item.description
             result += "\n"
         }
 
