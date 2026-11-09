@@ -163,13 +163,13 @@ extension W3C_XML.Parse {
                     }
                     if byte == ASCII.Code.quotationMark.byte || byte == ASCII.Code.apostrophe.byte {
                         bytes.append(try input.xmlTake(expected: "character"))
-                        try copy(&input, through: [byte], into: &bytes)
+                        try copyBytes(&input, through: [byte], into: &bytes)
                     } else if matchLiteral(&input, "<!--") {
                         bytes.append(contentsOf: [Byte](utf8: "<!--"))
-                        try copy(&input, through: [Byte](utf8: "-->"), into: &bytes)
+                        try copyBytes(&input, through: [Byte](utf8: "-->"), into: &bytes)
                     } else if matchLiteral(&input, "<?") {
                         bytes.append(contentsOf: [Byte](utf8: "<?"))
-                        try copy(&input, through: [Byte](utf8: "?>"), into: &bytes)
+                        try copyBytes(&input, through: [Byte](utf8: "?>"), into: &bytes)
                     } else {
                         bytes.append(try input.xmlTake(expected: "character"))
                     }
@@ -193,7 +193,7 @@ extension W3C_XML.Parse {
         }
 
         @inlinable
-        package func copy(
+        package func copyBytes(
             _ input: inout Input,
             through terminator: [Byte],
             into bytes: inout [Byte]
