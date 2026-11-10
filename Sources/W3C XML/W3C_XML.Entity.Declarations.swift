@@ -13,8 +13,6 @@ extension W3C_XML.Entity {
 
         var external: Swift::Set<String> = []
 
-        var isEmpty: Bool { replacements.isEmpty && external.isEmpty }
-
         init(subset: String) throws(W3C_XML.Parse.Error) {
             let bytes = Swift::Array(subset.utf8)
             var index = 0
@@ -185,13 +183,11 @@ extension W3C_XML.Entity.Declarations {
             }
             index += 1
         }
-        let name = String(decoding: bytes[start..<index], as: UTF8.self)
-        guard let first = name.unicodeScalars.first, W3C_XML.isNameStartChar(first),
-            name.unicodeScalars.allSatisfy(W3C_XML.isNameChar)
-        else {
-            throw .invalidName
-        }
-        return (name, index)
+        guard index > start else { throw .invalidName }
+        var input = [Byte](bitPatterns: bytes[start..<index])[...]
+        let name = try W3C_XML.Parse.Name<ArraySlice<Byte>>().parse(&input)
+        guard input.isEmpty else { throw .invalidName }
+        return (name.qualified, index)
     }
 
     static func literal(
@@ -223,4 +219,8 @@ extension W3C_XML.Entity.Declarations {
         }
         throw .unexpectedEndOfInput(expected: ">")
     }
+}
+
+extension W3C_XML.Entity.Declarations {
+    var isEmpty: Bool { replacements.isEmpty && external.isEmpty }
 }

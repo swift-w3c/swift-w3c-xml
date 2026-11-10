@@ -111,6 +111,24 @@ extension W3C_XML.Parse {
     }
 }
 
+extension W3C_XML.Parse.Doctype {
+
+    @inlinable
+    package func copyBytes(
+        _ input: inout Input,
+        through terminator: [Byte],
+        into bytes: inout [Byte]
+    ) throws(Failure) {
+        let expected = String(decoding: terminator, as: UTF8.self)
+        let start = bytes.count
+        while true {
+            bytes.append(try input.xmlTake(expected: expected))
+            guard bytes.count - start >= terminator.count else { continue }
+            if bytes[(bytes.count - terminator.count)...].elementsEqual(terminator) { return }
+        }
+    }
+}
+
 extension W3C_XML.Parse {
 
     public struct Doctype<Input: Cursor.`Protocol`>: Parser::Parsing, Sendable
@@ -190,21 +208,6 @@ extension W3C_XML.Parse {
                 systemID: systemID,
                 internalSubset: internalSubset
             )
-        }
-
-        @inlinable
-        package func copyBytes(
-            _ input: inout Input,
-            through terminator: [Byte],
-            into bytes: inout [Byte]
-        ) throws(Failure) {
-            let expected = String(decoding: terminator, as: UTF8.self)
-            let start = bytes.count
-            while true {
-                bytes.append(try input.xmlTake(expected: expected))
-                guard bytes.count - start >= terminator.count else { continue }
-                if bytes[(bytes.count - terminator.count)...].elementsEqual(terminator) { return }
-            }
         }
 
         @inlinable

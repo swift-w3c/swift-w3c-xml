@@ -86,7 +86,7 @@ extension `W3C_XML.Entity Tests` {
             #expect(throws: W3C_XML.Parse.Error.entityDepthExceeded(limit: 2)) {
                 _ = try W3C_XML.parse(
                     #"<!DOCTYPE r [<!ENTITY e1 "&e2;"><!ENTITY e2 "&e3;"><!ENTITY e3 "x">]><r>&e1;</r>"#,
-                    entityLimits: W3C_XML.Entity.Limits(depth: 2)
+                    entityLimits: { var limits = W3C_XML.Entity.Limits(); limits.depth = 2; return limits }()
                 )
             }
         }
@@ -108,7 +108,7 @@ extension `W3C_XML.Entity Tests` {
                 ]><r>&l9;</r>
                 """
             #expect(throws: W3C_XML.Parse.Error.entityExpansionExceeded(limit: 10_000)) {
-                _ = try W3C_XML.parse(document, entityLimits: W3C_XML.Entity.Limits(expandedBytes: 10_000))
+                _ = try W3C_XML.parse(document, entityLimits: { var limits = W3C_XML.Entity.Limits(); limits.expandedBytes = 10_000; return limits }())
             }
         }
 

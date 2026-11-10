@@ -9,10 +9,11 @@ extension W3C_XML.Entity {
         /// The most bytes all entity expansions in one document may produce together.
         public var expandedBytes: Int
 
+        /// Sixteen levels of nesting and 4 MiB of expanded text; set either property to change it.
         @inlinable
-        public init(depth: Int = 16, expandedBytes: Int = 1 << 22) {
-            self.depth = depth
-            self.expandedBytes = expandedBytes
+        public init() {
+            self.depth = 16
+            self.expandedBytes = 1 << 22
         }
     }
 }
