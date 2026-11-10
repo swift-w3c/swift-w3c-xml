@@ -42,16 +42,20 @@ extension W3C_XML {
 
         public var escapeApostrophe: Bool
 
+        public var escapeQuotesInText: Bool
+
         public init(
             prettyPrint: Bool = false,
             indent: String = "  ",
             includeDeclaration: Bool = true,
-            escapeApostrophe: Bool = false
+            escapeApostrophe: Bool = false,
+            escapeQuotesInText: Bool = false
         ) {
             self.prettyPrint = prettyPrint
             self.indent = indent
             self.includeDeclaration = includeDeclaration
             self.escapeApostrophe = escapeApostrophe
+            self.escapeQuotesInText = escapeQuotesInText
         }
     }
 }
@@ -350,6 +354,12 @@ extension W3C_XML.Encoder {
 
             case UInt32(UInt8.ascii.greaterThanSign):
                 buffer.append(contentsOf: Swift::Array("&gt;".utf8))
+
+            case UInt32(UInt8.ascii.quotationMark) where options.escapeQuotesInText:
+                buffer.append(contentsOf: Swift::Array("&quot;".utf8))
+
+            case UInt32(UInt8.ascii.apostrophe) where options.escapeQuotesInText:
+                buffer.append(contentsOf: Swift::Array("&apos;".utf8))
 
             default:
                 encodeScalarUTF8(scalar, into: &buffer)
