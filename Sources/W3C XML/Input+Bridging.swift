@@ -1,3 +1,4 @@
+import Byte
 public import Cursor
 
 extension Cursor.`Protocol` where Element: Copyable & Escapable, Failure == Never {
@@ -15,5 +16,17 @@ extension Cursor.`Protocol` where Element: Copyable & Escapable, Failure == Neve
             throw .unexpectedEndOfInput(expected: expected)
         }
         return element
+    }
+}
+
+extension Cursor.`Protocol` where Element == Byte, Failure == Never {
+    @inlinable
+    package mutating func xmlSkipByteOrderMark() -> Bool {
+        let saved = checkpoint
+        if next()?.bitPattern == 0xEF, next()?.bitPattern == 0xBB, next()?.bitPattern == 0xBF {
+            return true
+        }
+        seek(to: saved)
+        return false
     }
 }

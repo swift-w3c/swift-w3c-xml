@@ -67,6 +67,9 @@ extension W3C_XML.Lexer {
 
     @inlinable
     package mutating func lexContent() throws(Error) -> W3C_XML.Token? {
+        if position == W3C_XML.Position.start, input.xmlSkipByteOrderMark() {
+            position = W3C_XML.Position(offset: 3, line: 1, column: 1)
+        }
         guard let byte = input.xmlPeek() else {
             return nil
         }

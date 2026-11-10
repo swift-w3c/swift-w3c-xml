@@ -408,6 +408,7 @@ extension W3C_XML {
         maxDepth: Int,
         entityLimits: Entity.Limits
     ) throws(Parse.Error) -> Document {
+        _ = input.xmlSkipByteOrderMark()
         Parse.Whitespace<ArraySlice<Byte>>().parse(&input)
 
         var declaration: Declaration?

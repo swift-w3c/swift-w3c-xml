@@ -26,6 +26,17 @@ extension `W3C_XML.parse Tests` {
         }
 
         @Test
+        func `a UTF-8 byte order mark before the document is skipped`() throws {
+            let bytes: [UInt8] = [0xEF, 0xBB, 0xBF] + Array("<?xml version=\"1.0\"?><a/>".utf8)
+            let doc = try W3C_XML.parse(bytes)
+            #expect(doc.declaration?.version == .v1_0)
+            #expect(doc.root.name.local == "a")
+            #expect(try W3C_XML.parse("\u{FEFF}<a/>").root.name.local == "a")
+            var parser = W3C_XML.Parser([Byte](bitPatterns: bytes)[...])
+            #expect(try parser.parse().root.name.local == "a")
+        }
+
+        @Test
         func `text after the root is refused`() {
             #expect(throws: W3C_XML.Parse.Error.self) {
                 _ = try W3C_XML.parse("<a/>text")
